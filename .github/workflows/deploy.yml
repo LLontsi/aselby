@@ -39,17 +39,17 @@ jobs:
 
       - name: Create .env.prod
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "cat > ${{ env.APP_DIR }}/.env.prod << 'ENVEOF'
-          SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
-          DEBUG=False
-          ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
-          DB_NAME=aselby_db
-          DB_USER=postgres
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          DB_HOST=aselby_db
-          DB_PORT=5432
-          DJANGO_SETTINGS_MODULE=config.settings.prod
-          ENVEOF"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "printf '%s\n' \
+            'SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}' \
+            'DEBUG=False' \
+            'ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}' \
+            'DB_NAME=aselby_db' \
+            'DB_USER=postgres' \
+            'DB_PASSWORD=${{ secrets.DB_PASSWORD }}' \
+            'DB_HOST=aselby_db' \
+            'DB_PORT=5432' \
+            'DJANGO_SETTINGS_MODULE=config.settings.prod' \
+            > ${{ env.APP_DIR }}/.env.prod"
 
       - name: Launch stack
         run: |
