@@ -65,13 +65,19 @@ a { text-decoration: none; }
 /* ============================================================
    NAVBAR PUBLIQUE
    ============================================================ */
+/* ============================================================
+   NAVBAR — Mobile first (comme portfolio maurotech.xyz)
+   Mobile  : header simple (logo + btn user) + bottom-nav fixe
+   Desktop : navbar horizontale classique
+   ============================================================ */
+
+/* ── Header — toujours visible ── */
 .navbar-pub {
   background-color: var(--primary);
   position: sticky;
   top: 0;
   z-index: 1000;
   box-shadow: 0 2px 10px rgba(0,0,0,.2);
-  transition: all var(--t-norm) var(--ease-in-out);
 }
 .navbar-pub-inner {
   display: flex;
@@ -102,8 +108,10 @@ a { text-decoration: none; }
   display: block;
   line-height: 1.2;
 }
+
+/* ── Menu desktop — caché sur mobile ── */
 .navbar-pub-menu {
-  display: flex;
+  display: none; /* mobile : caché, desktop : flex via @media */
   list-style: none;
   gap: .25rem;
   align-items: center;
@@ -141,42 +149,117 @@ a { text-decoration: none; }
 .navbar-pub-btn::after { display: none !important; }
 .navbar-pub-btn:hover { background: var(--accent-light) !important; transform: translateY(-2px); box-shadow: var(--shadow-md); }
 
-/* Hamburger */
-.hamburger {
-  display: none;
-  flex-direction: column;
-  gap: 5px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-}
-.hamburger span {
-  display: block;
-  width: 24px; height: 2px;
-  background: white;
-  border-radius: var(--radius-full);
-  transition: all var(--t-norm) var(--ease-in-out);
-}
-.hamburger.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.hamburger.active span:nth-child(2) { opacity: 0; }
-.hamburger.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+/* Hamburger — caché (remplacé par bottom-nav) */
+.hamburger { display: none !important; }
 
+/* ── Bouton user icône (mobile seulement) ── */
+.navbar-pub-btn-mobile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: var(--accent);
+  color: var(--primary-dark) !important;
+  text-decoration: none;
+  flex-shrink: 0;
+  border-radius: 10px;
+  padding: 6px 10px;
+  transition: background .2s, transform .2s;
+  min-width: 56px;
+}
+.navbar-pub-btn-mobile i {
+  font-size: 1rem;
+  line-height: 1;
+}
+.navbar-pub-btn-mobile span {
+  font-size: .52rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--primary-dark);
+}
+.navbar-pub-btn-mobile:hover {
+  background: var(--accent-light);
+  transform: scale(1.03);
+}
+
+/* ── Bottom Nav (mobile) — fixe en bas comme le portfolio ── */
+.bottom-nav {
+  display: flex;
+  position: fixed;
+  bottom: 0; left: 0;
+  width: 100%;
+  background: hsla(222, 55%, 15%, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(201,168,76,.25);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 20px rgba(0,0,0,.35);
+  z-index: 999;
+  padding: 0 4px;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 10px 2px 12px;
+  color: rgba(255,255,255,.5);
+  text-decoration: none;
+  transition: color .2s;
+  position: relative;
+  min-width: 0;
+}
+.bottom-nav-item i {
+  font-size: 1.15rem;
+  display: block;
+  transition: transform .2s, color .2s;
+}
+.bottom-nav-item span {
+  font-size: .55rem;
+  font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+}
+.bottom-nav-item.active { color: var(--accent); }
+.bottom-nav-item.active i { transform: translateY(-2px); }
+.bottom-nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 20%; right: 20%;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 0 0 4px 4px;
+}
+.bottom-nav-item:hover { color: rgba(201,168,76,.8); }
+.bottom-nav-item:hover i { transform: translateY(-2px); }
+
+/* ── Desktop (901px+) : menu horizontal, bottom-nav cachée ── */
+@media (min-width: 901px) {
+  .navbar-pub-menu { display: flex; }
+  .navbar-pub-btn-mobile { display: none; }
+  .bottom-nav { display: none; }
+  .footer-pub { margin-bottom: 0; }
+}
+
+/* ── Mobile : padding bas pour ne pas masquer le contenu ── */
 @media (max-width: 900px) {
-  .hamburger { display: flex; }
-  .navbar-pub-menu {
-    position: fixed;
-    top: 0; right: -100%;
-    width: 280px; height: 100vh;
-    flex-direction: column;
-    background: var(--primary-dark);
-    padding: 5rem 2rem 2rem;
-    gap: .5rem;
-    transition: right var(--t-norm) var(--ease-in-out);
-    box-shadow: var(--shadow-xl);
-  }
-  .navbar-pub-menu.active { right: 0; }
-  .navbar-pub-menu a { font-size: 1rem; padding: .7rem 1rem; display: block; }
+  .footer-pub { margin-bottom: 70px; }
+}
+
+/* Très petits écrans */
+@media (max-width: 360px) {
+  .bottom-nav-item span { display: none; }
+  .bottom-nav-item { padding: 14px 2px; }
 }
 
 /* ============================================================
@@ -822,19 +905,52 @@ a { text-decoration: none; }
 @media (max-width: 768px) {
   .activites-timeline::before { left: 20px; }
 }
-.activite-item {
-  display: grid;
-  grid-template-columns: 1fr 40px 1fr;
-  gap: 2rem;
-  margin-bottom: 3rem;
-  align-items: start;
+/* Nouvelle structure simplifiée — fonctionne mobile et desktop */
+.activite-item-mobile {
+  display: flex;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  align-items: flex-start;
 }
-@media (max-width: 768px) {
-  .activite-item { grid-template-columns: 40px 1fr; }
-  .activite-item > *:first-child { display: none; }
+
+/* Desktop : garder l'ancienne grille centrée */
+@media (min-width: 769px) {
+  .activite-item-mobile {
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.activite-dot-mobile {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 4px solid var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 4px rgba(var(--primary-rgb),.15);
+  flex-shrink: 0;
+  z-index: 1;
+}
+.activite-dot-mobile i { font-size: .9rem; color: var(--accent); }
+
+/* Garder l'ancienne classe pour compatibilité */
+.activite-item {
+  display: flex;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  align-items: flex-start;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
 }
 .activite-dot-container {
-  display: flex; justify-content: center;
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
 }
 .activite-dot {
   width: 40px; height: 40px;

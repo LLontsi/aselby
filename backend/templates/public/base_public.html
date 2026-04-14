@@ -3,10 +3,12 @@
 
 {% block body %}
 
-<!-- NAVBAR -->
+<!-- HEADER / NAVBAR -->
 <nav class="navbar-pub">
   <div class="container">
     <div class="navbar-pub-inner">
+
+      <!-- LOGO -->
       <a href="{% url 'public:accueil' %}" class="navbar-pub-logo">
         {% include "partials/logo_svg.html" with taille=40 %}
         <div>
@@ -15,6 +17,7 @@
         </div>
       </a>
 
+      <!-- MENU DESKTOP -->
       <ul class="navbar-pub-menu">
         <li><a href="{% url 'public:accueil' %}" {% if request.resolver_match.url_name == 'accueil' %}class="active"{% endif %}>Accueil</a></li>
         <li><a href="{% url 'public:apropos' %}" {% if request.resolver_match.url_name == 'apropos' %}class="active"{% endif %}>À propos</a></li>
@@ -29,11 +32,57 @@
         {% endif %}
       </ul>
 
-      <button class="hamburger" aria-label="Menu">
-        <span></span><span></span><span></span>
-      </button>
+      <!-- BOUTON ESPACE MEMBRE (mobile uniquement — dans le header) -->
+      {% if request.user.is_authenticated %}
+        <a href="{% if request.user.est_bureau %}{% url 'rapports:dashboard' %}{% else %}{% url 'membre:mon_espace' %}{% endif %}"
+           class="navbar-pub-btn-mobile">
+          <i class="fas fa-user"></i>
+          <span>Mon espace</span>
+        </a>
+      {% else %}
+        <a href="{% url 'users:connexion' %}"
+           class="navbar-pub-btn-mobile">
+          <i class="fas fa-user"></i>
+          <span>Espace membre</span>
+        </a>
+      {% endif %}
+
     </div>
   </div>
+</nav>
+
+<!-- BOTTOM NAV (mobile uniquement — comme le portfolio) -->
+<nav class="bottom-nav" aria-label="Navigation mobile">
+  <a href="{% url 'public:accueil' %}"
+     class="bottom-nav-item {% if request.resolver_match.url_name == 'accueil' %}active{% endif %}">
+    <i class="fas fa-home"></i>
+    <span>Accueil</span>
+  </a>
+  <a href="{% url 'public:apropos' %}"
+     class="bottom-nav-item {% if request.resolver_match.url_name == 'apropos' %}active{% endif %}">
+    <i class="fas fa-users"></i>
+    <span>À propos</span>
+  </a>
+  <a href="{% url 'public:annonces' %}"
+     class="bottom-nav-item {% if request.resolver_match.url_name == 'annonces' %}active{% endif %}">
+    <i class="fas fa-bullhorn"></i>
+    <span>Annonces</span>
+  </a>
+  <a href="{% url 'public:activites' %}"
+     class="bottom-nav-item {% if request.resolver_match.url_name == 'activites' %}active{% endif %}">
+    <i class="fas fa-calendar-alt"></i>
+    <span>Activités</span>
+  </a>
+  <a href="{% url 'public:faq' %}"
+     class="bottom-nav-item {% if request.resolver_match.url_name == 'faq' %}active{% endif %}">
+    <i class="fas fa-question-circle"></i>
+    <span>FAQ</span>
+  </a>
+  <a href="{% url 'public:contact' %}"
+     class="bottom-nav-item {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">
+    <i class="fas fa-envelope"></i>
+    <span>Contact</span>
+  </a>
 </nav>
 
 {% block contenu %}{% endblock %}

@@ -20,29 +20,38 @@ body{overflow-x:hidden}
 .mobile-nav-bar{
   display:none;
   position:fixed;bottom:0;left:0;right:0;
-  z-index:9999;background:#fff;
-  border-top:2px solid #E8E9EC;
-  box-shadow:0 -3px 16px rgba(0,0,0,.12);
+  z-index:9999;
+  background:hsla(222,55%,15%,.95);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border-top:1px solid rgba(201,168,76,.2);
+  border-radius:16px 16px 0 0;
+  box-shadow:0 -4px 24px rgba(0,0,0,.4);
+  padding-bottom:env(safe-area-inset-bottom);
 }
 .mobile-nav-bar-inner{
-  display:flex;align-items:stretch;width:100%;min-height:58px;
+  display:flex;align-items:stretch;width:100%;min-height:60px;
 }
 .mnb-item{
   flex:1;display:flex;flex-direction:column;
   align-items:center;justify-content:center;
-  padding:.55rem .05rem .45rem;
-  color:#ADB5BD;text-decoration:none;
-  font-weight:700;text-transform:uppercase;
-  letter-spacing:.3px;
-  border-top:3px solid transparent;
-  transition:color .15s,background .15s;
+  padding:10px 2px 12px;
+  color:rgba(255,255,255,.45);text-decoration:none;
+  font-weight:600;text-transform:uppercase;
+  letter-spacing:.04em;
+  transition:color .2s;
   -webkit-tap-highlight-color:transparent;
-  gap:.15rem;min-width:0;overflow:hidden;
+  gap:3px;min-width:0;position:relative;
 }
-.mnb-item i{font-size:1.2rem;display:block;flex-shrink:0;line-height:1}
-.mnb-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1}
-.mnb-item.active{color:#1B2B5E;border-top-color:#C9A84C}
-.mnb-item:active{background:rgba(27,43,94,.05)}
+.mnb-item i{font-size:1.15rem;display:block;line-height:1;transition:transform .2s,color .2s}
+.mnb-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1;font-size:.52rem}
+.mnb-item.active{color:#C9A84C}
+.mnb-item.active i{transform:translateY(-2px)}
+.mnb-item.active::before{content:'';position:absolute;top:0;left:15%;right:15%;height:2px;background:#C9A84C;border-radius:0 0 4px 4px}
+.mnb-item:hover{color:rgba(201,168,76,.8)}
+.mnb-cta i{background:#C9A84C;color:#1B2B5E;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:transform .2s,background .2s;margin-bottom:1px}
+.mnb-cta{color:rgba(255,255,255,.65)}
+.mnb-cta.active i,.mnb-cta:hover i{background:#D4B86A;transform:scale(1.1)}
 
 /* ============================================================
    TABLETTE 701px–1024px
@@ -259,6 +268,9 @@ body{overflow-x:hidden}
     <a href="{% url 'membre:mes_tontines' %}" class="mnb-item {% if request.resolver_match.url_name == 'mes_tontines' %}active{% endif %}">
       <i class="fas fa-clock"></i><span>Tontines</span>
     </a>
+    <a href="{% url 'membre:saisir_versement' %}" class="mnb-item mnb-cta {% if request.resolver_match.url_name == 'saisir_versement' %}active{% endif %}">
+      <i class="fas fa-plus-circle"></i><span>Verser</span>
+    </a>
     <a href="{% url 'membre:mes_prets' %}" class="mnb-item {% if request.resolver_match.url_name == 'mes_prets' %}active{% endif %}">
       <i class="fas fa-dollar-sign"></i><span>Prêts</span>
     </a>
@@ -268,7 +280,6 @@ body{overflow-x:hidden}
     <a href="{% url 'membre:demander_pret' %}" class="mnb-item {% if request.resolver_match.url_name == 'demander_pret' %}active{% endif %}">
       <i class="fas fa-hand-holding-usd"></i><span>Prêt +</span>
     </a>
-    <li><a href="{% url 'membre:saisir_versement' %}">Saisir mon versement</a></li>
   </div>
 </nav>
 
