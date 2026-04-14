@@ -1,0 +1,42 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block _titre %}{% if annonce %}Modifier{% else %}Nouvelle{% endif %} annonce{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'public:gestion_annonces' %}"><i class="fas fa-arrow-left"></i> Annonces</a></div>
+    <h2>{% if annonce %}Modifier l'annonce{% else %}Nouvelle annonce{% endif %}</h2>
+  </div>
+</div>
+<form method="post" class="admin-form">{% csrf_token %}
+  <div class="form-card">
+    <div class="form-card-title"><i class="fas fa-bullhorn"></i> Contenu</div>
+    <div class="f-group">
+      <label class="f-label">Titre *</label>
+      <input class="f-input" type="text" name="titre" value="{{ annonce.titre|default:'' }}" placeholder="Titre de l'annonce" required>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Contenu *</label>
+      <textarea class="f-textarea" name="contenu" placeholder="Rédigez le contenu..." required>{{ annonce.contenu|default:'' }}</textarea>
+    </div>
+  </div>
+  <div class="form-card">
+    <div class="form-card-title"><i class="fas fa-cog"></i> Options</div>
+    <div class="f-row">
+      <div class="f-group">
+        <label class="f-label">Date de publication</label>
+        <input class="f-input" type="date" name="date_publication" value="{{ annonce.date_publication|date:'Y-m-d'|default:'' }}">
+      </div>
+      <div class="f-group" style="display:flex;align-items:center;padding-top:1.75rem">
+        <label class="f-check">
+          <input type="checkbox" name="est_publiee" {% if not annonce or annonce.est_publiee %}checked{% endif %}>
+          <span>Publier immédiatement</span>
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn-admin primary"><i class="fas fa-save"></i> {% if annonce %}Mettre à jour{% else %}Publier{% endif %}</button>
+    <a href="{% url 'public:gestion_annonces' %}" class="btn-admin ghost">Annuler</a>
+  </div>
+</form>
+{% endblock %}

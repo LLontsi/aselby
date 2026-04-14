@@ -1,0 +1,45 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block _titre %}Activités{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <h2><i class="fas fa-calendar-alt" style="color:var(--accent);margin-right:.5rem"></i>Activités</h2>
+  <a href="{% url 'public:creer_activite' %}" class="btn-admin primary"><i class="fas fa-plus"></i> Nouvelle activité</a>
+</div>
+{% if activites %}
+<div class="table-card">
+  <div class="table-card-head"><h3>Liste des activités ({{ activites|length }})</h3></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Titre</th><th>Date</th><th>Lieu</th><th>Statut</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for a in activites %}
+        <tr>
+          <td style="font-weight:600;color:var(--primary)">{{ a.titre }}</td>
+          <td>{{ a.date|date:"d F Y" }}</td>
+          <td>{{ a.lieu|default:"—" }}</td>
+          <td>{% if a.est_publiee %}<span class="badge green">Publiée</span>{% else %}<span class="badge gray">Masquée</span>{% endif %}</td>
+          <td class="cell-actions">
+            <a href="{% url 'public:modifier_activite' a.pk %}" class="tbl-btn edit"><i class="fas fa-edit"></i></a>
+            <button class="tbl-btn del btn-del" data-nom="{{ a.titre }}" data-url="{% url 'public:supprimer_activite' a.pk %}"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>
+        {% empty %}<tr class="empty-row"><td colspan="5">Aucune activité.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="empty-state"><i class="fas fa-calendar-times"></i><p>Aucune activité créée.</p><a href="{% url 'public:creer_activite' %}" class="btn-admin primary"><i class="fas fa-plus"></i> Créer</a></div>
+{% endif %}
+<div id="del-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Confirmer</h3><span class="modal-x">&times;</span></div>
+    <div class="modal-body"><p>Supprimer <strong id="del-nom"></strong> ?</p><p class="warn">Irréversible.</p></div>
+    <div class="modal-foot"><form method="post" id="del-form">{% csrf_token %}<button type="button" class="btn-admin ghost modal-x">Annuler</button><button type="submit" class="btn-admin red">Supprimer</button></form></div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script>
+document.querySelectorAll('.btn-del').forEach(b=>b.addEventListener('click',()=>{document.getElementById('del-nom').textContent=b.dataset.nom;document.getElementById('del-form').action=b.dataset.url;document.getElementById('del-modal').style.display='flex';}));
+document.querySelectorAll('.modal-x').forEach(x=>x.addEventListener('click',()=>document.getElementById('del-modal').style.display='none'));
+</script>{% endblock %}

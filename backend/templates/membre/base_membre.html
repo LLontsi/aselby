@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+{% load static %}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>{% block titre %}Mon Espace{% endblock %} — ASELBY</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="{% static 'css/aselby-public.css' %}">
+<link rel="stylesheet" href="{% static 'css/aselby-membre.css' %}">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{overflow-x:hidden}
+
+/* === MOBILE NAV BAR === */
+.mobile-nav-bar{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;
+  z-index:9999;background:#fff;
+  border-top:2px solid #E8E9EC;
+  box-shadow:0 -3px 16px rgba(0,0,0,.12);
+}
+.mobile-nav-bar-inner{
+  display:flex;align-items:stretch;width:100%;min-height:58px;
+}
+.mnb-item{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:.55rem .05rem .45rem;
+  color:#ADB5BD;text-decoration:none;
+  font-weight:700;text-transform:uppercase;
+  letter-spacing:.3px;
+  border-top:3px solid transparent;
+  transition:color .15s,background .15s;
+  -webkit-tap-highlight-color:transparent;
+  gap:.15rem;min-width:0;overflow:hidden;
+}
+.mnb-item i{font-size:1.2rem;display:block;flex-shrink:0;line-height:1}
+.mnb-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1}
+.mnb-item.active{color:#1B2B5E;border-top-color:#C9A84C}
+.mnb-item:active{background:rgba(27,43,94,.05)}
+
+/* ============================================================
+   TABLETTE 701px–1024px
+   ============================================================ */
+@media(max-width:1024px){
+  .mobile-nav-bar{display:flex}
+  .membre-sidebar{display:none!important}
+  .membre-grid{grid-template-columns:1fr!important}
+  .membre-section>div{padding-bottom:5.5rem!important}
+  [style*="padding:3rem 0 2.5rem"],[style*="padding: 3rem 0 2.5rem"]{padding:1.75rem 1rem 1.5rem!important}
+  .mnb-item span{font-size:.54rem}
+  .mnb-item i{font-size:1.22rem}
+  /* KPI 2 cols tablette */
+  .kpi-grid{grid-template-columns:repeat(3,1fr)!important;gap:.75rem!important}
+}
+
+/* ============================================================
+   MOBILE ≤700px
+   ============================================================ */
+@media(max-width:700px){
+  /* hero compact */
+  [style*="padding:3rem 0 2.5rem"],[style*="padding: 3rem 0 2.5rem"]{padding:1.1rem .75rem .9rem!important}
+  [style*="font-size:2rem;font-weight:700;color:white"]{font-size:1.2rem!important}
+  [style*="color:rgba(255,255,255,.6);font-size:.85rem"]{font-size:.7rem!important}
+  /* topbar */
+  [style*="padding:0 1.5rem;display:flex"]{padding:0 .75rem!important}
+  [style*="font-size:.8rem;color:rgba(255,255,255,.7)"]{display:none!important}
+  /* container */
+  [style*="max-width:1200px;margin:0 auto;padding:0 1.5rem"]{padding:0 .65rem!important}
+  /* section padding bottom */
+  .membre-section>div{padding-bottom:4.75rem!important}
+
+  /* KPI 2 cols */
+  .kpi-grid{grid-template-columns:1fr 1fr!important;gap:.55rem!important;margin-bottom:.9rem!important}
+  .kpi-card{padding:.7rem .6rem!important;gap:.45rem!important;min-width:0;overflow:hidden}
+  .kpi-icon{width:36px!important;height:36px!important;font-size:.85rem!important;flex-shrink:0!important}
+  .kpi-val{font-size:.95rem!important;word-break:break-word;line-height:1.1}
+  .kpi-lbl{font-size:.58rem!important}
+
+  /* grilles inline 2 cols → 1 col */
+  [style*="grid-template-columns:1fr 1fr"],
+  [style*="grid-template-columns: 1fr 1fr"],
+  [style*="grid-template-columns:1fr 1.6fr"],
+  [style*="grid-template-columns: 1fr 1.6fr"]{grid-template-columns:1fr!important}
+  /* 3-4 cols → 2 cols */
+  [style*="grid-template-columns:repeat(3"],
+  [style*="grid-template-columns: repeat(3"],
+  [style*="grid-template-columns:repeat(4"],
+  [style*="grid-template-columns: repeat(4"]{grid-template-columns:1fr 1fr!important;gap:.55rem!important}
+
+  /* tableaux scroll horizontal propre */
+  .membre-table-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important}
+  .membre-table{font-size:.7rem!important;min-width:460px!important}
+  .membre-table th{font-size:.57rem!important;padding:.45rem .55rem!important;white-space:nowrap!important}
+  .membre-table td{padding:.5rem .55rem!important;white-space:nowrap!important}
+
+  /* cards padding */
+  [style*="padding:1.5rem"],[style*="padding: 1.5rem"]{padding:.85rem!important}
+  [style*="padding:1.75rem"],[style*="padding: 1.75rem"]{padding:.95rem!important}
+  [style*="padding:2rem"],[style*="padding: 2rem"]{padding:.85rem!important}
+
+  /* titres */
+  [style*="font-family:'Playfair Display',serif;font-size:1.1rem"]{font-size:.9rem!important}
+  [style*="font-family:'Playfair Display',serif;font-size:1.05rem"]{font-size:.88rem!important}
+  [style*="font-family:'Playfair Display',serif;font-size:1rem"]{font-size:.85rem!important}
+
+  /* flex headers wrap */
+  [style*="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;padding-bottom:.75rem"]{flex-wrap:wrap;gap:.35rem}
+  [style*="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem"]{flex-wrap:wrap;gap:.35rem}
+
+  /* detail-row colonne */
+  .detail-row{flex-direction:column!important;gap:.1rem;padding:.45rem .8rem!important}
+  .detail-label{width:100%!important;font-size:.68rem!important;color:#999}
+  .detail-value{font-size:.8rem!important}
+
+  /* alertes */
+  .alerte-membre{flex-wrap:wrap;gap:.35rem;padding:.65rem .8rem!important;font-size:.8rem!important}
+
+  /* boutons formulaire colonne */
+  [style*="display:flex;gap:1rem;padding-top:1rem;border-top:1px solid #E8E9EC"]{flex-direction:column!important;gap:.5rem!important}
+  [style*="display:flex;justify-content:flex-end;margin-bottom:1.5rem"]{justify-content:stretch!important}
+  [style*="display:flex;justify-content:flex-end;margin-bottom:1.5rem"] .btn-membre{width:100%!important;justify-content:center!important}
+
+  /* info card */
+  .membre-info-card{font-size:.8rem!important}
+
+  /* navbar */
+  .mnb-item span{font-size:.48rem}
+  .mnb-item i{font-size:1.12rem}
+  .mnb-item{padding:.5rem .03rem .42rem}
+}
+
+/* ============================================================
+   TRÈS PETIT ≤420px
+   ============================================================ */
+@media(max-width:420px){
+  .kpi-grid{grid-template-columns:1fr!important}
+  .mnb-item span{display:none}
+  .mnb-item{padding:.65rem .03rem}
+  .mnb-item i{font-size:1.28rem}
+  .mobile-nav-bar-inner{min-height:52px}
+  [style*="max-width:1200px;margin:0 auto;padding:0 1.5rem"]{padding:0 .5rem!important}
+  [style*="font-size:2rem;font-weight:700;color:white"]{font-size:1.05rem!important}
+  .membre-table{min-width:380px!important}
+}
+</style>
+{% block extra_css %}{% endblock %}
+</head>
+<body style="background:#F4F5F7;margin:0;font-family:'Poppins',sans-serif">
+
+<!-- TOPBAR -->
+<nav style="background:#1B2B5E;padding:.8rem 0;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)">
+  <div style="max-width:1200px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between">
+    <a href="{% url 'public:accueil' %}" style="display:flex;align-items:center;gap:.6rem;text-decoration:none">
+      {% include "partials/logo_svg.html" with taille=32 %}
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:white;letter-spacing:2px">ASELBY</div>
+        <div style="font-size:.55rem;letter-spacing:3px;text-transform:uppercase;color:#C9A84C;line-height:1">ESPACE MEMBRE</div>
+      </div>
+    </a>
+    <div style="display:flex;align-items:center;gap:1rem">
+      <div style="font-size:.8rem;color:rgba(255,255,255,.7)">{{ request.user.nom_complet }}</div>
+      <a href="{% url 'users:deconnexion' %}" style="font-size:.75rem;color:rgba(255,255,255,.5);text-decoration:none;display:flex;align-items:center;gap:.4rem">
+        <i class="fas fa-sign-out-alt"></i> Déconnexion
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO PAGE -->
+<div style="background:linear-gradient(135deg,#111C3F,#1B2B5E);padding:3rem 0 2.5rem;color:white;text-align:center;position:relative;overflow:hidden">
+  <div style="position:absolute;inset:0;background:url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23C9A84C' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")"></div>
+  <div style="position:relative;z-index:2">
+    <div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:white;margin-bottom:.35rem">
+      {% block page_titre %}Mon Espace{% endblock %}
+    </div>
+    <div style="color:rgba(255,255,255,.6);font-size:.85rem">
+      ASELBY — Exercice {{ config_exercice.annee }}
+    </div>
+  </div>
+</div>
+
+<!-- CONTENU -->
+<section class="membre-section">
+  <div style="max-width:1200px;margin:0 auto;padding:0 1.5rem">
+    <div class="membre-grid">
+
+      <!-- SIDEBAR desktop uniquement -->
+      <aside class="membre-sidebar">
+        <div class="profile-card">
+          <div class="profile-avatar">{{ adherent.nom_prenom|slice:":1"|upper }}</div>
+          <div class="profile-nom">{{ adherent.nom_prenom|title }}</div>
+          <div class="profile-matricule">{{ adherent.matricule }}</div>
+          <div class="profile-statut">
+            <span class="badge-actif">{{ adherent.get_statut_display }}</span>
+          </div>
+          {% if adherent.poste_bureau %}
+          <div style="font-size:.75rem;color:#A8863A;font-weight:600;margin-bottom:.5rem">{{ adherent.poste_bureau }}</div>
+          {% endif %}
+        </div>
+
+        <div class="membre-nav">
+          <div class="membre-nav-header"><i class="fas fa-th-large"></i> Mon espace</div>
+          <ul>
+            <li><a href="{% url 'membre:mon_espace' %}" class="{% if request.resolver_match.url_name == 'mon_espace' %}active{% endif %}"><i class="fas fa-home"></i> Tableau de bord</a></li>
+            <li><a href="{% url 'membre:mon_fonds' %}" class="{% if request.resolver_match.url_name == 'mon_fonds' %}active{% endif %}"><i class="fas fa-piggy-bank"></i> Mon fonds de caisse</a></li>
+            <li><a href="{% url 'membre:mes_tontines' %}" class="{% if request.resolver_match.url_name == 'mes_tontines' %}active{% endif %}"><i class="fas fa-clock"></i> Mes tontines</a></li>
+            <li><a href="{% url 'membre:mes_prets' %}" class="{% if request.resolver_match.url_name == 'mes_prets' %}active{% endif %}"><i class="fas fa-dollar-sign"></i> Mes prêts</a></li>
+            <li><a href="{% url 'membre:ma_situation' %}" class="{% if request.resolver_match.url_name == 'ma_situation' %}active{% endif %}"><i class="fas fa-chart-bar"></i> Ma situation</a></li>
+            <li><a href="{% url 'membre:demander_pret' %}" class="{% if request.resolver_match.url_name == 'demander_pret' %}active{% endif %}"><i class="fas fa-hand-holding-usd"></i> Demander un prêt</a></li>
+          </ul>
+        </div>
+
+        <div style="margin-top:1rem;background:white;border-radius:12px;padding:1rem;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+          <div style="font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#ADB5BD;margin-bottom:.75rem">Liens rapides</div>
+          <a href="{% url 'public:accueil' %}" style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:#6C757D;text-decoration:none;padding:.4rem .25rem" onmouseover="this.style.color='#1B2B5E'" onmouseout="this.style.color='#6C757D'">
+            <i class="fas fa-globe" style="width:14px;text-align:center;color:#ADB5BD"></i> Site public
+          </a>
+          <a href="{% url 'users:changer_mot_de_passe' %}" style="display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:#6C757D;text-decoration:none;padding:.4rem .25rem" onmouseover="this.style.color='#1B2B5E'" onmouseout="this.style.color='#6C757D'">
+            <i class="fas fa-key" style="width:14px;text-align:center;color:#ADB5BD"></i> Changer mot de passe
+          </a>
+        </div>
+      </aside>
+
+      <!-- CONTENU PRINCIPAL -->
+      <main>
+        {% if messages %}
+        <div style="margin-bottom:1.5rem">
+          {% for msg in messages %}
+          <div style="display:flex;align-items:center;gap:.7rem;padding:.9rem 1.2rem;border-radius:8px;font-size:.875rem;margin-bottom:.5rem;{% if msg.tags == 'success' %}background:rgba(16,112,90,.07);color:#10705A;border:1px solid rgba(16,112,90,.2){% else %}background:rgba(184,76,76,.07);color:#B84C4C;border:1px solid rgba(184,76,76,.2){% endif %}">
+            <i class="fas {% if msg.tags == 'success' %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+            {{ msg }}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block contenu %}{% endblock %}
+      </main>
+
+    </div>
+  </div>
+</section>
+
+<!-- MOBILE NAV BAR ≤1024px -->
+<nav class="mobile-nav-bar" aria-label="Navigation principale">
+  <div class="mobile-nav-bar-inner">
+    <a href="{% url 'membre:mon_espace' %}" class="mnb-item {% if request.resolver_match.url_name == 'mon_espace' %}active{% endif %}">
+      <i class="fas fa-home"></i><span>Accueil</span>
+    </a>
+    <a href="{% url 'membre:mon_fonds' %}" class="mnb-item {% if request.resolver_match.url_name == 'mon_fonds' %}active{% endif %}">
+      <i class="fas fa-piggy-bank"></i><span>Fonds</span>
+    </a>
+    <a href="{% url 'membre:mes_tontines' %}" class="mnb-item {% if request.resolver_match.url_name == 'mes_tontines' %}active{% endif %}">
+      <i class="fas fa-clock"></i><span>Tontines</span>
+    </a>
+    <a href="{% url 'membre:mes_prets' %}" class="mnb-item {% if request.resolver_match.url_name == 'mes_prets' %}active{% endif %}">
+      <i class="fas fa-dollar-sign"></i><span>Prêts</span>
+    </a>
+    <a href="{% url 'membre:ma_situation' %}" class="mnb-item {% if request.resolver_match.url_name == 'ma_situation' %}active{% endif %}">
+      <i class="fas fa-chart-bar"></i><span>Situation</span>
+    </a>
+    <a href="{% url 'membre:demander_pret' %}" class="mnb-item {% if request.resolver_match.url_name == 'demander_pret' %}active{% endif %}">
+      <i class="fas fa-hand-holding-usd"></i><span>Prêt +</span>
+    </a>
+    <li><a href="{% url 'membre:saisir_versement' %}">Saisir mon versement</a></li>
+  </div>
+</nav>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

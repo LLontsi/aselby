@@ -1,0 +1,115 @@
+{% extends "membre/base_membre.html" %}
+{% load humanize %}
+{% block titre %}Demander un Prêt{% endblock %}
+{% block page_titre %}Demande de Prêt{% endblock %}
+
+{% block contenu %}
+
+{% if pret_actif %}
+<div class="alerte-membre" style="margin-bottom:1.5rem">
+  <i class="fas fa-exclamation-circle"></i>
+  <div>
+    <strong>Demande impossible</strong> — Vous avez déjà un prêt en cours.<br>
+    <span style="font-size:.8rem">Solde restant : {{ pret_actif.solde_restant|floatformat:0|intcomma }} FCFA — Échéance : {{ pret_actif.date_echeance|date:"d/m/Y" }}</span>
+  </div>
+</div>
+<a href="{% url 'membre:mes_prets' %}" class="btn-membre primary">
+  <i class="fas fa-eye"></i> Voir mon prêt en cours
+</a>
+
+{% else %}
+
+<div style="display:grid;grid-template-columns:1fr 1.6fr;gap:1.5rem;align-items:start">
+
+  <!-- Info simulateur -->
+  <div>
+    <div style="background:linear-gradient(135deg,#1B2B5E,#243870);border-radius:14px;padding:1.75rem;color:white;margin-bottom:1.25rem">
+      <div style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;margin-bottom:1.25rem">
+        <i class="fas fa-calculator" style="color:#C9A84C;margin-right:.5rem"></i>Simulateur
+      </div>
+      <div style="font-size:.8rem;color:rgba(255,255,255,.7);margin-bottom:1rem">
+        Taux : <strong style="color:#C9A84C">{{ config_exercice.taux_interet_pret_mensuel }}%/mois</strong>
+        — Formule : Montant × Taux × Durée
+      </div>
+      <div id="sim-result" style="background:rgba(255,255,255,.1);border-radius:10px;padding:1.25rem">
+        <div style="font-size:.7rem;color:rgba(255,255,255,.5);letter-spacing:2px;text-transform:uppercase;margin-bottom:.5rem">Résultat simulation</div>
+        <div id="sim-principal" style="font-size:.9rem;color:rgba(255,255,255,.8)">Montant : —</div>
+        <div id="sim-interet" style="font-size:.9rem;color:#C9A84C">Intérêts : —</div>
+        <div id="sim-total" style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:white;margin-top:.5rem">Total dû : —</div>
+      </div>
+    </div>
+
+    <div class="membre-info-card accent-bg">
+      <div style="font-size:.8rem;color:#6C757D;line-height:1.8">
+        <strong style="color:#1B2B5E">Conditions :</strong><br>
+        • Un seul prêt actif par membre<br>
+        • Remboursement mensuel via saisie<br>
+        • Retard mois 1 : +{{ config_exercice.majoration_retard_mois_1 }}%<br>
+        • Retard mois 2+ : +{{ config_exercice.majoration_retard_mois_2 }}%<br>
+        • Validation requise par le bureau
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulaire -->
+  <div style="background:white;border-radius:14px;padding:2rem;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <h3 style="font-family:'Playfair Display',serif;color:#1B2B5E;font-size:1.1rem;margin:0 0 1.5rem;padding-bottom:.75rem;border-bottom:1px solid #E8E9EC">
+      <i class="fas fa-hand-holding-usd" style="color:#C9A84C;margin-right:.5rem"></i>Formulaire de demande
+    </h3>
+    <form method="post" id="form-pret">{% csrf_token %}
+      <div style="margin-bottom:1.2rem">
+        <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#6C757D;margin-bottom:.5rem">Montant souhaité (FCFA) *</label>
+        <input type="number" name="montant" id="inp-montant" min="0" step="1000" required placeholder="Ex: 500 000"
+          style="width:100%;padding:.8rem 1rem;border:2px solid #E8E9EC;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.9rem;color:#212529 !important;-webkit-text-fill-color:#212529 !important;outline:none;box-sizing:border-box"
+          onfocus="this.style.borderColor='#1B2B5E'" onblur="this.style.borderColor='#E8E9EC'">
+      </div>
+      <div style="margin-bottom:1.2rem">
+        <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#6C757D;margin-bottom:.5rem">Durée souhaitée *</label>
+        <select name="nombre_mois" id="inp-duree" required
+          style="width:100%;padding:.8rem 1rem;border:2px solid #E8E9EC;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.9rem;color:#212529 !important;background:white;outline:none;box-sizing:border-box">
+          <option value="">— Sélectionner une durée —</option>
+          <option value="1">1 mois</option>
+          <option value="2">2 mois</option>
+          <option value="3">3 mois</option>
+          <option value="6">6 mois</option>
+          <option value="9">9 mois</option>
+          <option value="12">12 mois</option>
+        </select>
+      </div>
+      <div style="margin-bottom:1.2rem">
+        <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#6C757D;margin-bottom:.5rem">Objet du prêt</label>
+        <textarea name="motif" rows="3" placeholder="Expliquez brièvement l'objet de votre demande..."
+          style="width:100%;padding:.8rem 1rem;border:2px solid #E8E9EC;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.9rem;color:#212529 !important;-webkit-text-fill-color:#212529 !important;resize:vertical;outline:none;box-sizing:border-box"
+          onfocus="this.style.borderColor='#1B2B5E'" onblur="this.style.borderColor='#E8E9EC'"></textarea>
+      </div>
+      <div style="display:flex;gap:1rem;padding-top:1rem;border-top:1px solid #E8E9EC">
+        <button type="submit" class="btn-membre primary" style="flex:1;justify-content:center">
+          <i class="fas fa-paper-plane"></i> Soumettre ma demande
+        </button>
+        <a href="{% url 'membre:mon_espace' %}" class="btn-membre ghost">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const taux = {{ config_exercice.taux_interet_pret_mensuel }} / 100;
+function simuler() {
+  const montant = parseFloat(document.getElementById('inp-montant').value) || 0;
+  const duree   = parseInt(document.getElementById('inp-duree').value)   || 0;
+  if (montant > 0 && duree > 0) {
+    const interets = montant * taux * duree;
+    const total    = montant + interets;
+    document.getElementById('sim-principal').textContent = 'Montant : ' + montant.toLocaleString('fr-FR') + ' FCFA';
+    document.getElementById('sim-interet').textContent   = 'Intérêts : ' + interets.toLocaleString('fr-FR') + ' FCFA';
+    document.getElementById('sim-total').textContent     = 'Total dû : ' + total.toLocaleString('fr-FR') + ' FCFA';
+  }
+}
+document.getElementById('inp-montant')?.addEventListener('input', simuler);
+document.getElementById('inp-duree')?.addEventListener('change', simuler);
+</script>
+{% endblock %}

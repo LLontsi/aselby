@@ -1,0 +1,1 @@
+# Core n'a pas d'URLs propres

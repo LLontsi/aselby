@@ -1,0 +1,90 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Foyer — Dépenses{% endblock %}
+
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'parametrage:config' %}"><i class="fas fa-arrow-left"></i> Paramétrage</a></div>
+    <h2>Foyer — Virements et dépenses — {{ config_exercice.annee }}</h2>
+  </div>
+</div>
+
+<div class="stats-grid-admin" style="margin-bottom:1.5rem">
+  <div class="stat-card-admin green">
+    <div class="stat-icon-admin"><i class="fas fa-home"></i></div>
+    <div><div class="stat-val">{{ total_entrees|floatformat:0|intcomma }}</div><div class="stat-lbl">Total contributions foyer (FCFA)</div></div>
+  </div>
+  <div class="stat-card-admin red">
+    <div class="stat-icon-admin"><i class="fas fa-arrow-right"></i></div>
+    <div><div class="stat-val">{{ total_sorties|floatformat:0|intcomma }}</div><div class="stat-lbl">Total virements (FCFA)</div></div>
+  </div>
+  <div class="stat-card-admin {% if solde >= 0 %}green{% else %}red{% endif %}">
+    <div class="stat-icon-admin"><i class="fas fa-balance-scale"></i></div>
+    <div><div class="stat-val">{{ solde|floatformat:0|intcomma }}</div><div class="stat-lbl">Solde foyer (FCFA)</div></div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1.4fr;gap:1.5rem">
+
+  <div class="form-card">
+    <div class="form-card-title"><i class="fas fa-plus"></i> Enregistrer un virement</div>
+    <form method="post">{% csrf_token %}
+      <div class="f-group">
+        <label class="f-label">Date *</label>
+        {{ form.date }}
+      </div>
+      <div class="f-group">
+        <label class="f-label">Libellé *</label>
+        {{ form.libelle }}
+      </div>
+      <div class="f-group">
+        <label class="f-label">Montant (FCFA) *</label>
+        {{ form.montant }}
+      </div>
+      {% if form.errors %}
+      <div style="color:#B84C4C;font-size:.8rem;margin-bottom:.75rem">
+        {% for f in form %}{% for e in f.errors %}<div>{{ f.label }} : {{ e }}</div>{% endfor %}{% endfor %}
+      </div>
+      {% endif %}
+      <button type="submit" class="btn-admin primary" style="width:100%">
+        <i class="fas fa-save"></i> Enregistrer le virement
+      </button>
+    </form>
+  </div>
+
+  <div class="table-card">
+    <div class="table-card-head"><h3>Virements enregistrés</h3></div>
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>Date</th><th>Libellé</th><th>Montant</th><th></th></tr></thead>
+        <tbody>
+          {% for dep in depenses %}
+          <tr>
+            <td style="white-space:nowrap">{{ dep.date|date:"d/m/Y" }}</td>
+            <td style="font-weight:500">{{ dep.libelle }}</td>
+            <td style="color:#B84C4C;font-weight:600">{{ dep.montant|floatformat:0|intcomma }} F</td>
+            <td>
+              <form method="post" action="{% url 'parametrage:foyer_depenses_supprimer' dep.pk %}"
+                    style="display:inline" onsubmit="return confirm('Supprimer ?')">
+                {% csrf_token %}
+                <button type="submit" class="tbl-btn delete"><i class="fas fa-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}<tr class="empty-row"><td colspan="4">Aucun virement.</td></tr>{% endfor %}
+        </tbody>
+        {% if depenses %}
+        <tfoot>
+          <tr style="background:var(--gray-50)">
+            <td colspan="2" style="font-weight:700;color:var(--primary)">TOTAL</td>
+            <td style="font-weight:700;color:#B84C4C">{{ total_sorties|floatformat:0|intcomma }} FCFA</td>
+            <td></td>
+          </tr>
+        </tfoot>
+        {% endif %}
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

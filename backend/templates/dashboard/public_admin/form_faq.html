@@ -1,0 +1,40 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block _titre %}{% if faq %}Modifier{% else %}Nouvelle{% endif %} question FAQ{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'public:gestion_faq' %}"><i class="fas fa-arrow-left"></i> FAQ</a></div>
+    <h2>{% if faq %}Modifier la question{% else %}Nouvelle question FAQ{% endif %}</h2>
+  </div>
+</div>
+<form method="post" class="admin-form">{% csrf_token %}
+  <div class="form-card">
+    <div class="form-card-title"><i class="fas fa-question-circle"></i> Question & Réponse</div>
+    <div class="f-group">
+      <label class="f-label">Question *</label>
+      <input class="f-input" type="text" name="question" value="{{ faq.question|default:'' }}" placeholder="Quelle est la question ?" required>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Réponse *</label>
+      <textarea class="f-textarea" name="reponse" placeholder="Rédigez la réponse..." required>{{ faq.reponse|default:'' }}</textarea>
+    </div>
+    <div class="f-row">
+      <div class="f-group">
+        <label class="f-label">Ordre d'affichage</label>
+        <input class="f-input" type="number" name="ordre" value="{{ faq.ordre|default:0 }}" min="0">
+        <div class="f-help">Plus petit numéro = affiché en premier.</div>
+      </div>
+      <div class="f-group" style="display:flex;align-items:center;padding-top:1.75rem">
+        <label class="f-check">
+          <input type="checkbox" name="est_publiee" {% if not faq or faq.est_publiee %}checked{% endif %}>
+          <span>Publier sur le site</span>
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn-admin primary"><i class="fas fa-save"></i> Enregistrer</button>
+    <a href="{% url 'public:gestion_faq' %}" class="btn-admin ghost">Annuler</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Répartition des Intérêts{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'fonds:etat' %}"><i class="fas fa-arrow-left"></i> Fonds de caisse</a></div>
+    <h2>Répartir les intérêts du mois</h2>
+  </div>
+</div>
+<div style="max-width:580px">
+  <div class="info-card accent-border" style="margin-bottom:1.5rem">
+    <div style="font-size:.875rem;color:var(--gray-600);line-height:1.7">
+      <i class="fas fa-info-circle" style="color:var(--accent-dark)"></i>
+      Saisissez le pool d'intérêts décidé par le bureau. L'application répartit proportionnellement aux bases de calcul.
+      Seuls les adhérents dont le fonds dépasse <strong>{{ config_exercice.seuil_eligibilite_interets|floatformat:0|intcomma }} FCFA</strong> sont éligibles.
+    </div>
+  </div>
+  <div class="form-card">
+    <div class="form-card-title"><i class="fas fa-percentage"></i> Paramètres de répartition</div>
+    <form method="post">{% csrf_token %}
+      <div class="f-row">
+        <div class="f-group">
+          <label class="f-label">Mois *</label>
+          <input class="f-input" type="number" name="mois" min="1" max="12" placeholder="1-12" required>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Année *</label>
+          <input class="f-input" type="number" name="annee" value="{{ config_exercice.annee }}" required>
+        </div>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Pool d'intérêts à répartir (FCFA) *</label>
+        <input class="f-input" type="number" name="pool_interets" min="0" step="100" required placeholder="Ex: 500000">
+        <div class="f-help">Ce montant sera réparti proportionnellement entre les adhérents éligibles.</div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-admin primary"><i class="fas fa-calculator"></i> Répartir maintenant</button>
+        <a href="{% url 'fonds:etat' %}" class="btn-admin ghost">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

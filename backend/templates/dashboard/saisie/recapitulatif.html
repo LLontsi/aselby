@@ -1,0 +1,36 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Récapitulatif Saisie{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'saisie:formulaire' %}?mois={{ mois }}&annee={{ annee }}"><i class="fas fa-arrow-left"></i> Retour saisie</a></div>
+    <h2>Récapitulatif — {{ mois }}/{{ annee }}</h2>
+  </div>
+  <form method="post" action="{% url 'saisie:valider' %}">{% csrf_token %}
+    <input type="hidden" name="mois" value="{{ mois }}"><input type="hidden" name="annee" value="{{ annee }}">
+    <button type="submit" class="btn-admin green"><i class="fas fa-check-double"></i> Valider tout</button>
+  </form>
+</div>
+<div class="table-card">
+  <div class="table-card-head"><h3>{{ saisies|length }} saisie(s)</h3></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Adhérent</th><th>Mode</th><th>Versement total</th><th>Pénalités</th><th>Reste</th><th>Épargne nette</th><th>Validé</th></tr></thead>
+      <tbody>
+        {% for s in saisies %}
+        <tr>
+          <td style="font-weight:600;color:var(--primary)">{{ s.adherent.nom_prenom|title }}</td>
+          <td><span class="badge {% if s.mode_versement == 'BANQUE' %}green{% elif s.mode_versement == 'ESPECES' %}accent{% else %}red{% endif %}">{{ s.get_mode_versement_display }}</span></td>
+          <td>{{ s.versement_banque|add:s.versement_especes|floatformat:0|intcomma }} F</td>
+          <td>{% if s.penalite_echec_appli %}<span style="color:var(--red)">{{ s.penalite_echec_appli|floatformat:0|intcomma }} F</span>{% else %}—{% endif %}</td>
+          <td>{{ s.reste|floatformat:0|intcomma }} F</td>
+          <td><strong style="color:var(--green)">{{ s.epargne_nette|floatformat:0|intcomma }} F</strong></td>
+          <td>{% if s.est_valide %}<span class="badge green"><i class="fas fa-check"></i></span>{% else %}<span class="badge gray">—</span>{% endif %}</td>
+        </tr>
+        {% empty %}<tr class="empty-row"><td colspan="7">Aucune saisie ce mois.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

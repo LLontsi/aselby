@@ -1,0 +1,58 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Prêts{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <h2>Prêts sur Fonds</h2>
+  <a href="{% url 'prets:nouveau' %}" class="btn-admin primary"><i class="fas fa-plus"></i> Nouveau prêt</a>
+</div>
+<div class="stats-grid-admin">
+  <div class="stat-card-admin accent"><div class="stat-icon-admin"><i class="fas fa-dollar-sign"></i></div><div><div class="stat-val">{{ prets_en_cours|length }}</div><div class="stat-lbl">En cours</div></div></div>
+  <div class="stat-card-admin red"><div class="stat-icon-admin"><i class="fas fa-exclamation"></i></div><div><div class="stat-val">{{ prets_en_retard|length }}</div><div class="stat-lbl">En retard</div></div></div>
+  <div class="stat-card-admin green"><div class="stat-icon-admin"><i class="fas fa-check"></i></div><div><div class="stat-val">{{ prets_soldes|length }}</div><div class="stat-lbl">Soldés</div></div></div>
+</div>
+{% if prets_en_retard %}
+<div class="table-card" style="margin-bottom:1.5rem;border-top:3px solid var(--red)">
+  <div class="table-card-head">
+    <h3 style="color:var(--red)"><i class="fas fa-exclamation-triangle"></i> Non-remboursements</h3>
+    <a href="{% url 'prets:rapport_retards' %}" class="btn-admin ghost" style="font-size:.8rem">Rapport complet</a>
+  </div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Adhérent</th><th>Solde restant</th><th>Retard</th><th>Pénalité applicable</th></tr></thead>
+      <tbody>
+        {% for p in prets_en_retard %}
+        <tr>
+          <td style="font-weight:600;color:var(--primary)">{{ p.adherent.nom_prenom|title }}</td>
+          <td style="color:var(--red);font-weight:600">{{ p.solde_restant|floatformat:0|intcomma }} FCFA</td>
+          <td><span class="badge red">{{ p.nb_mois_retard }} mois</span></td>
+          <td>{% if p.nb_mois_retard == 1 %}+{{ config_exercice.majoration_retard_mois_1 }}%{% else %}+{{ config_exercice.majoration_retard_mois_2 }}%{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+<div class="table-card">
+  <div class="table-card-head"><h3>Tous les prêts</h3></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Adhérent</th><th>Montant initial</th><th>Total dû</th><th>Remboursé</th><th>Reste</th><th>Statut</th><th></th></tr></thead>
+      <tbody>
+        {% for p in prets %}
+        <tr>
+          <td style="font-weight:600;color:var(--primary)">{{ p.adherent.nom_prenom|title }}</td>
+          <td>{{ p.montant_principal|floatformat:0|intcomma }}</td>
+          <td>{{ p.montant_total_du|floatformat:0|intcomma }}</td>
+          <td style="color:var(--green)">{{ p.montant_rembourse|floatformat:0|intcomma }}</td>
+          <td style="font-weight:600">{{ p.solde_restant|floatformat:0|intcomma }}</td>
+          <td><span class="badge {% if p.statut == 'EN_COURS' %}primary{% elif p.statut == 'EN_RETARD' %}red{% else %}green{% endif %}">{{ p.get_statut_display }}</span></td>
+          <td><a href="{% url 'prets:detail' p.pk %}" class="tbl-btn view"><i class="fas fa-eye"></i></a></td>
+        </tr>
+        {% empty %}<tr class="empty-row"><td colspan="7">Aucun prêt.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

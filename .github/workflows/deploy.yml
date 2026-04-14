@@ -1,0 +1,61 @@
+name: Deploy ASELBY
+
+on:
+  push:
+    branches: [main]
+
+env:
+  APP_DIR: "/home/${{ secrets.SSH_USER }}/aselby"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: Create app directory
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} \
+            "sudo mkdir -p ${{ env.APP_DIR }}/docker/dump"
+
+      - name: Deploy files
+        run: |
+          rsync -avz --delete \
+            --exclude=.git \
+            --exclude=__pycache__ \
+            --exclude="*.pyc" \
+            --exclude=".env.prod" \
+            --exclude="docker/dump/*" \
+            ./ ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ env.APP_DIR }}
+
+      - name: Create .env.prod
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "cat > ${{ env.APP_DIR }}/.env.prod << 'ENVEOF'
+          SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
+          DEBUG=False
+          ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
+          DB_NAME=aselby_db
+          DB_USER=aselby_user
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_HOST=aselby_db
+          DB_PORT=5432
+          DJANGO_SETTINGS_MODULE=config.settings.prod
+          ENVEOF"
+
+      - name: Launch stack
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            cd ${{ env.APP_DIR }}
+            sudo docker compose -f docker-compose.yml down || true
+            sudo docker compose -f docker-compose.yml up -d --build
+            sudo docker image prune -f
+          EOF

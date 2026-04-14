@@ -1,0 +1,29 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Adhérents Inactifs{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'adherents:liste' %}"><i class="fas fa-arrow-left"></i> Adhérents actifs</a></div>
+    <h2>Adhérents Inactifs — {{ adherents|length }}</h2>
+  </div>
+</div>
+<div class="table-card">
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Matricule</th><th>Nom complet</th><th>Date réception</th><th>Téléphone</th><th></th></tr></thead>
+      <tbody>
+        {% for a in adherents %}
+        <tr>
+          <td style="font-weight:700;color:var(--primary)">{{ a.matricule }}</td>
+          <td style="font-weight:600">{{ a.nom_prenom|title }}</td>
+          <td>{{ a.date_reception|date:"d/m/Y"|default:"—" }}</td>
+          <td>{{ a.telephone1|default:"—" }}</td>
+          <td><a href="{% url 'adherents:fiche' a.matricule %}" class="tbl-btn view"><i class="fas fa-eye"></i></a></td>
+        </tr>
+        {% empty %}<tr class="empty-row"><td colspan="5">Aucun adhérent inactif.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

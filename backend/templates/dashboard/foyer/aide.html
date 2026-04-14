@@ -1,0 +1,49 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Enregistrer une aide{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'mutuelle:etat' %}"><i class="fas fa-arrow-left"></i> Mutuelle</a></div>
+    <h2>Enregistrer une aide mutuelle</h2>
+  </div>
+</div>
+<div style="max-width:620px">
+  <div class="form-card">
+    <div class="form-card-title"><i class="fas fa-hand-holding-heart"></i> Détails de l'aide</div>
+    <form method="post">{% csrf_token %}
+      <div class="f-group">
+        <label class="f-label">Adhérent bénéficiaire *</label>
+        <select class="f-select" name="adherent_matricule" required>
+          <option value="">— Sélectionner —</option>
+          {% for a in adherents %}
+          <option value="{{ a.matricule }}">{{ a.matricule }} — {{ a.nom_prenom|title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Événement *</label>
+        <input class="f-input" type="text" name="evenement" placeholder="Ex: Décès d'un parent, naissance..." required>
+      </div>
+      <div class="f-row">
+        <div class="f-group">
+          <label class="f-label">Date *</label>
+          <input class="f-input" type="date" name="date" required>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Montant de l'aide (FCFA) *</label>
+          <input class="f-input" type="number" name="montant" min="0" step="1000" required placeholder="Ex: 50000">
+        </div>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Observations</label>
+        <textarea class="f-textarea" name="observations" placeholder="Notes additionnelles..." style="min-height:80px"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-admin primary"><i class="fas fa-save"></i> Enregistrer</button>
+        <a href="{% url 'mutuelle:etat' %}" class="btn-admin ghost">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

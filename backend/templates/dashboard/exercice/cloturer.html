@@ -1,0 +1,32 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block _titre %}Clôturer l'exercice{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'exercice:cassation' %}"><i class="fas fa-arrow-left"></i> Cassation</a></div>
+    <h2>Clôturer l'exercice {{ config_exercice.annee }}</h2>
+  </div>
+</div>
+<div style="max-width:600px">
+  <div class="info-card red-border">
+    <h3><i class="fas fa-exclamation-triangle" style="color:var(--red)"></i> Action irréversible</h3>
+    <div style="font-size:.9rem;color:var(--gray-600);line-height:1.8;margin-top:.5rem">
+      La clôture de l'exercice {{ config_exercice.annee }} est une opération définitive. Avant de procéder, assurez-vous que toutes les saisies, enchères, prêts et fiches de cassation sont finalisés.
+    </div>
+  </div>
+  <div class="form-card" style="margin-top:1.5rem">
+    <form method="post">{% csrf_token %}
+      <div class="f-group">
+        <label class="f-check">
+          <input type="checkbox" name="confirmer" required>
+          <span>Je confirme vouloir clôturer définitivement l'exercice {{ config_exercice.annee }}</span>
+        </label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-admin red"><i class="fas fa-lock"></i> Clôturer l'exercice</button>
+        <a href="{% url 'exercice:cassation' %}" class="btn-admin ghost">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

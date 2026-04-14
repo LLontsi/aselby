@@ -1,0 +1,75 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block _titre %}{% if adherent %}Modifier{% else %}Nouvel{% endif %} adhérent{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'adherents:liste' %}"><i class="fas fa-arrow-left"></i> Adhérents</a></div>
+    <h2>{% if adherent %}Modifier — {{ adherent.nom_prenom|title }}{% else %}Nouvel adhérent{% endif %}</h2>
+  </div>
+</div>
+<form method="post" class="admin-form">{% csrf_token %}
+  <div class="form-card">
+    <div class="form-card-title"><i class="fas fa-user"></i> Identité</div>
+    <div class="f-row">
+      <div class="f-group">
+        <label class="f-label">Matricule *</label>
+        <input class="f-input" type="text" name="matricule" value="{{ adherent.matricule|default:'' }}" placeholder="AS20XXXX" required {% if adherent %}readonly{% endif %}>
+      </div>
+      <div class="f-group">
+        <label class="f-label">N° d'ordre</label>
+        <input class="f-input" type="number" name="numero_ordre" value="{{ adherent.numero_ordre|default:'' }}" min="1">
+      </div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Nom et prénom(s) *</label>
+      <input class="f-input" type="text" name="nom_prenom" value="{{ adherent.nom_prenom|default:'' }}" placeholder="NOM Prénom" required>
+    </div>
+    <div class="f-row">
+      <div class="f-group">
+        <label class="f-label">Téléphone 1</label>
+        <input class="f-input" type="text" name="telephone1" value="{{ adherent.telephone1|default:'' }}" placeholder="6XXXXXXXX">
+      </div>
+      <div class="f-group">
+        <label class="f-label">Téléphone 2</label>
+        <input class="f-input" type="text" name="telephone2" value="{{ adherent.telephone2|default:'' }}" placeholder="Optionnel">
+      </div>
+    </div>
+    <div class="f-row">
+      <div class="f-group">
+        <label class="f-label">Résidence</label>
+        <input class="f-input" type="text" name="residence" value="{{ adherent.residence|default:'' }}" placeholder="Quartier, ville">
+      </div>
+      <div class="f-group">
+        <label class="f-label">Fonction/Profession</label>
+        <input class="f-input" type="text" name="fonction" value="{{ adherent.fonction|default:'' }}">
+      </div>
+    </div>
+    <div class="f-row">
+      <div class="f-group">
+        <label class="f-label">Poste au bureau</label>
+        <select class="f-select" name="poste_bureau">
+          <option value="">— Aucun —</option>
+          {% for p in postes %}
+          <option value="{{ p }}" {% if adherent.poste_bureau == p %}selected{% endif %}>{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Statut</label>
+        <select class="f-select" name="statut">
+          <option value="ACTIF" {% if not adherent or adherent.statut == 'ACTIF' %}selected{% endif %}>Actif</option>
+          <option value="INACTIF" {% if adherent.statut == 'INACTIF' %}selected{% endif %}>Inactif</option>
+        </select>
+      </div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Date de réception</label>
+      <input class="f-input" type="date" name="date_reception" value="{{ adherent.date_reception|date:'Y-m-d'|default:'' }}">
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn-admin primary"><i class="fas fa-save"></i> {% if adherent %}Mettre à jour{% else %}Créer l'adhérent{% endif %}</button>
+    <a href="{% url 'adherents:liste' %}" class="btn-admin ghost">Annuler</a>
+  </div>
+</form>
+{% endblock %}

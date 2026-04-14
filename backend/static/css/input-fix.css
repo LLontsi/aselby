@@ -1,0 +1,24 @@
+/* ---- Fix input texte visible ---- */
+.champ-input {
+  color: #212529 !important;
+  -webkit-text-fill-color: #212529 !important;
+}
+.champ-input:focus {
+  color: #212529 !important;
+  -webkit-text-fill-color: #212529 !important;
+  background: #ffffff !important;
+}
+.champ-input:-webkit-autofill,
+.champ-input:-webkit-autofill:hover,
+.champ-input:-webkit-autofill:focus,
+.champ-input:-webkit-autofill:active {
+  -webkit-text-fill-color: #212529 !important;
+  -webkit-box-shadow: 0 0 0 1000px #f4f5f7 inset !important;
+  box-shadow: 0 0 0 1000px #f4f5f7 inset !important;
+  caret-color: #212529 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+.champ-input::placeholder {
+  color: #adb5bd !important;
+  -webkit-text-fill-color: #adb5bd !important;
+}

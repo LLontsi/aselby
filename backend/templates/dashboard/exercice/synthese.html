@@ -1,0 +1,130 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Synthèse Exercice{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'exercice:cassation' %}"><i class="fas fa-arrow-left"></i> Cassation</a></div>
+    <h2>Synthèse Exercice {{ config_exercice.annee }}</h2>
+  </div>
+  <div style="display:flex;gap:.75rem">
+    <a href="{% url 'exercice:exporter' %}" class="btn-admin green">
+      <i class="fas fa-file-excel"></i> Télécharger Excel complet
+    </a>
+    <a href="{% url 'exercice:cassation' %}" class="btn-admin primary">
+      <i class="fas fa-file-alt"></i> Fiches de cassation
+    </a>
+  </div>
+</div>
+
+<div class="info-card accent-border" style="margin-bottom:1.5rem">
+  <div style="font-size:.875rem;color:var(--gray-600);line-height:1.7">
+    <i class="fas fa-file-excel" style="color:var(--green)"></i>
+    Le fichier Excel généré contient <strong>12 feuilles</strong> identiques à votre fichier TRAVAUXFINEXERCICE :
+    Synthèse des comptes, Fiche de cassation, Fonds de roulement, Frais exceptionnels, Collation, Fonds mutuelle,
+    Pénalités, Foyer, Prêts en circulation, Liste rouge, Intérêts tontines, Disposition des fonds.
+  </div>
+</div>
+
+{% if synthese %}
+<div class="stats-grid-admin" style="margin-bottom:2rem">
+  <div class="stat-card-admin">
+    <div class="stat-icon-admin"><i class="fas fa-piggy-bank"></i></div>
+    <div>
+      <div class="stat-val">{{ synthese.solde|default:0|floatformat:0|intcomma }}</div>
+      <div class="stat-lbl">Solde général (FCFA)</div>
+    </div>
+  </div>
+  <div class="stat-card-admin accent">
+    <div class="stat-icon-admin"><i class="fas fa-wallet"></i></div>
+    <div>
+      <div class="stat-val">{{ synthese.report_fonds_caisse|default:0|floatformat:0|intcomma }}</div>
+      <div class="stat-lbl">Report fonds caisse (FCFA)</div>
+    </div>
+  </div>
+  <div class="stat-card-admin green">
+    <div class="stat-icon-admin"><i class="fas fa-heart"></i></div>
+    <div>
+      <div class="stat-val">{{ synthese.report_mutuelle|default:0|floatformat:0|intcomma }}</div>
+      <div class="stat-lbl">Report mutuelle (FCFA)</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tableau synthèse -->
+<div class="table-card">
+  <div class="table-card-head"><h3>Synthèse des comptes — {{ config_exercice.annee }}</h3></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr><th>#</th><th>Rubrique</th><th>Report à nouveau</th><th>Entrées</th><th>Sorties</th><th>Solde</th></tr>
+      </thead>
+      <tbody>
+        {% with s=synthese %}
+        <tr><td>1</td><td style="font-weight:600">Fonds de caisse et reconduction</td>
+          <td>{{ s.report_fonds_caisse|floatformat:0|intcomma }}</td>
+          <td style="color:var(--green)">{{ s.entrees_fonds_caisse|floatformat:0|intcomma }}</td>
+          <td style="color:var(--red)">{{ s.sorties_fonds_caisse|floatformat:0|intcomma }}</td>
+          <td><strong>{{ s.solde|default:0|floatformat:0|intcomma }}</strong></td>
+        </tr>
+        <tr><td>2</td><td style="font-weight:600">Fonds de roulement</td>
+          <td>{{ s.report_fonds_roulement|floatformat:0|intcomma }}</td>
+          <td style="color:var(--green)">{{ s.entrees_fonds_roulement|floatformat:0|intcomma }}</td>
+          <td style="color:var(--red)">{{ s.sorties_fonds_roulement|floatformat:0|intcomma }}</td>
+          <td><strong>{{ s.solde|default:0|floatformat:0|intcomma }}</strong></td>
+        </tr>
+        <tr><td>3</td><td style="font-weight:600">Frais exceptionnels</td>
+          <td>{{ s.report_frais_exceptionnels|floatformat:0|intcomma }}</td>
+          <td style="color:var(--green)">{{ s.entrees_frais_excep|floatformat:0|intcomma }}</td>
+          <td style="color:var(--red)">{{ s.sorties_frais_excep|floatformat:0|intcomma }}</td>
+          <td><strong>{{ s.solde|default:0|floatformat:0|intcomma }}</strong></td>
+        </tr>
+        <tr><td>4</td><td style="font-weight:600">Mutuelle / Complément mutuel</td>
+          <td>{{ s.report_mutuelle|floatformat:0|intcomma }}</td>
+          <td style="color:var(--green)">{{ s.entrees_mutuelle|floatformat:0|intcomma }}</td>
+          <td style="color:var(--red)">{{ s.sorties_mutuelle|floatformat:0|intcomma }}</td>
+          <td><strong>{{ s.solde|default:0|floatformat:0|intcomma }}</strong></td>
+        </tr>
+        <tr><td>5</td><td style="font-weight:600">Inscription</td>
+          <td>{{ s.report_inscription|floatformat:0|intcomma }}</td>
+          <td style="color:var(--green)">{{ s.entrees_inscription|floatformat:0|intcomma }}</td>
+          <td>—</td>
+          <td><strong>{{ s.solde|default:0|floatformat:0|intcomma }}</strong></td>
+        </tr>
+        <tr><td>6</td><td style="font-weight:600">Pénalités paiement espèces</td>
+          <td>{{ s.report_penalites|floatformat:0|intcomma }}</td>
+          <td style="color:var(--green)">{{ s.entrees_penalites|floatformat:0|intcomma }}</td>
+          <td style="color:var(--red)">{{ s.sorties_penalites|floatformat:0|intcomma }}</td>
+          <td><strong>{{ s.solde|default:0|floatformat:0|intcomma }}</strong></td>
+        </tr>
+        <tr><td>7</td><td style="font-weight:600">Collation</td>
+          <td>{{ s.report_collation|floatformat:0|intcomma }}</td>
+          <td style="color:var(--green)">{{ s.entrees_collation|floatformat:0|intcomma }}</td>
+          <td style="color:var(--red)">{{ s.sorties_collation|floatformat:0|intcomma }}</td>
+          <td><strong>{{ s.solde|default:0|floatformat:0|intcomma }}</strong></td>
+        </tr>
+        <tr><td>8</td><td style="font-weight:600">Foyer</td>
+          <td>{{ s.report_foyer|floatformat:0|intcomma }}</td>
+          <td style="color:var(--green)">{{ s.entrees_foyer|floatformat:0|intcomma }}</td>
+          <td style="color:var(--red)">{{ s.sorties_foyer|floatformat:0|intcomma }}</td>
+          <td><strong>{{ s.solde|default:0|floatformat:0|intcomma }}</strong></td>
+        </tr>
+        {% endwith %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% else %}
+<div class="empty-state">
+  <i class="fas fa-chart-bar"></i>
+  <p>Aucune synthèse enregistrée pour l'exercice {{ config_exercice.annee }}.</p>
+  <p style="font-size:.85rem;color:var(--gray-400);margin:.5rem 0 1.5rem">
+    Complétez toutes les saisies avant de générer le fichier Excel.
+  </p>
+  <a href="{% url 'exercice:exporter' %}" class="btn-admin green">
+    <i class="fas fa-file-excel"></i> Télécharger le fichier Excel avec les données disponibles
+  </a>
+</div>
+{% endif %}
+{% endblock %}

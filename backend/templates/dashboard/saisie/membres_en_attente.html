@@ -1,0 +1,302 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Saisies membres en attente{% endblock %}
+
+{% block contenu %}
+<div class="page-header-admin">
+  <h2>Saisies membres en attente de validation</h2>
+  {% if nb_en_attente > 0 %}
+  <span class="badge red" style="font-size:.9rem;padding:.5rem 1rem">
+    {{ nb_en_attente }} en attente
+  </span>
+  {% endif %}
+</div>
+
+{% if nb_en_attente == 0 %}
+<div class="empty-state">
+  <i class="fas fa-check-circle" style="color:#10705A"></i>
+  <p>Aucune saisie en attente. Toutes les saisies membres sont traitées.</p>
+</div>
+
+{% else %}
+<div class="membre-info-card accent-bg" style="margin-bottom:1.5rem">
+  <i class="fas fa-info-circle" style="color:#A8863A"></i>
+  Les membres ont soumis ces versements depuis leur espace. Validez après vérification.
+  <br>
+  <strong>Si le versement est en espèces</strong>, vous pouvez décider d'appliquer ou non la pénalité de
+  <strong>{{ config_exercice.penalite_especes|floatformat:0|intcomma }} F</strong> avant de valider.
+</div>
+
+<div class="table-card">
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Adhérent</th>
+          <th>Mois</th>
+          <th>Versement banque</th>
+          <th>N° chèque</th>
+          <th>Versement espèces</th>
+          <th>Pénalité espèces</th>
+          <th>Total soumis</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in saisies %}
+        <tr id="row-{{ s.pk }}">
+
+          <!-- Adhérent -->
+          <td>
+            <div style="font-weight:600;color:var(--primary)">{{ s.adherent.nom_prenom|title }}</div>
+            <div style="font-size:.72rem;color:var(--gray-400)">{{ s.adherent.matricule }}</div>
+          </td>
+
+          <!-- Mois -->
+          <td style="font-weight:600">{{ s.mois }}/{{ s.annee }}</td>
+
+          <!-- Versement banque -->
+          <td style="color:#10705A;font-weight:600">
+            {% if s.versement_banque and s.versement_banque > 0 %}
+              {{ s.versement_banque|floatformat:0|intcomma }} F
+            {% else %}—{% endif %}
+          </td>
+
+          <!-- N° chèque -->
+          <td>{{ s.numero_cheque_pret|default:"—" }}</td>
+
+          <!-- Versement espèces -->
+          <td style="color:#A8863A;font-weight:600">
+            {% if s.versement_especes and s.versement_especes > 0 %}
+              {{ s.versement_especes|floatformat:0|intcomma }} F
+            {% else %}—{% endif %}
+          </td>
+
+          <!-- Pénalité espèces : checkbox si mode ESPÈCES -->
+          <td>
+            {% if s.versement_especes and s.versement_especes > 0 %}
+            <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;
+                          background:rgba(201,168,76,.08);border:1.5px solid var(--accent);
+                          border-radius:8px;padding:.4rem .7rem;white-space:nowrap">
+              <input type="checkbox"
+                     class="chk-pen-esp"
+                     data-pk="{{ s.pk }}"
+                     {% if s.penalite_especes_appliquee %}checked{% endif %}
+                     style="width:14px;height:14px;cursor:pointer;accent-color:#A8863A">
+              <span style="font-size:.72rem;font-weight:600;color:#A8863A">
+                Pénalité<br>{{ config_exercice.penalite_especes|floatformat:0|intcomma }} F
+              </span>
+            </label>
+            {% else %}
+            <span style="color:var(--gray-300);font-size:.8rem">—</span>
+            {% endif %}
+          </td>
+
+          <!-- Total -->
+          <td style="font-weight:700;color:var(--primary)">
+            {{ s.versement_banque|add:s.versement_especes|floatformat:0|intcomma }} F
+          </td>
+
+          <!-- Actions -->
+          <td>
+            <div style="display:flex;gap:.4rem;align-items:center">
+
+              <!-- VALIDER : bouton ouvre la mini-modal de confirmation -->
+              <button type="button"
+                      class="tbl-btn view btn-valider"
+                      data-pk="{{ s.pk }}"
+                      data-nom="{{ s.adherent.nom_prenom }}"
+                      data-mois="{{ s.mois }}"
+                      data-annee="{{ s.annee }}"
+                      data-especes="{{ s.versement_especes }}"
+                      title="Valider"
+                      style="background:rgba(16,112,90,.1);color:#10705A;border-color:rgba(16,112,90,.2)">
+                <i class="fas fa-check"></i>
+              </button>
+
+              <!-- REJETER -->
+              <button type="button" class="tbl-btn delete btn-rejeter"
+                      data-pk="{{ s.pk }}"
+                      data-nom="{{ s.adherent.nom_prenom }}"
+                      title="Rejeter">
+                <i class="fas fa-times"></i>
+              </button>
+
+              <!-- CORRIGER -->
+              <a href="{% url 'saisie:formulaire' %}?mois={{ s.mois }}&annee={{ s.annee }}"
+                 class="tbl-btn edit" title="Corriger dans la saisie admin">
+                <i class="fas fa-edit"></i>
+              </a>
+
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL VALIDATION
+═══════════════════════════════════════════════════════════ -->
+<div id="modal-valider" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
+     z-index:9999;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:14px;padding:2rem;max-width:460px;width:92%">
+    <h3 style="margin:0 0 .5rem;color:#1B2B5E">
+      <i class="fas fa-check-circle" style="color:#10705A"></i>
+      Valider la saisie
+    </h3>
+    <p id="modal-val-infos" style="color:#6C757D;font-size:.85rem;margin:.5rem 0 1.25rem"></p>
+
+    <!-- Pénalité espèces dans la modal — visible si versement espèces -->
+    <div id="modal-val-pen-bloc" style="display:none;margin-bottom:1.25rem">
+      <div style="background:rgba(201,168,76,.08);border:1.5px solid #C9A84C;
+                  border-radius:10px;padding:.85rem 1rem">
+        <label style="display:flex;align-items:center;gap:.75rem;cursor:pointer">
+          <input type="checkbox" id="modal-chk-pen"
+                 style="width:18px;height:18px;accent-color:#A8863A;cursor:pointer">
+          <div>
+            <div style="font-weight:700;font-size:.88rem;color:#1B2B5E">
+              <i class="fas fa-exclamation-triangle" style="color:#A8863A"></i>
+              Appliquer la pénalité espèces
+            </div>
+            <div style="font-size:.75rem;color:#6C757D;margin-top:.1rem">
+              <strong style="color:#A8863A">{{ config_exercice.penalite_especes|floatformat:0|intcomma }} F</strong>
+              — Décision du bureau
+            </div>
+          </div>
+          <div id="modal-badge-pen" style="display:none;margin-left:auto;background:#A8863A;
+               color:white;border-radius:6px;padding:.2rem .6rem;font-size:.78rem;font-weight:700">
+            −{{ config_exercice.penalite_especes|floatformat:0|intcomma }} F
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <form method="post" id="form-valider" action="">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="valider">
+      <!-- Ce champ sera mis à jour par JS selon l'état de la checkbox -->
+      <input type="hidden" name="penalite_especes_appliquee" id="hidden-pen-esp" value="">
+
+      <div style="display:flex;gap:.75rem;justify-content:flex-end">
+        <button type="button" onclick="document.getElementById('modal-valider').style.display='none'"
+          style="padding:.6rem 1.2rem;border:1px solid #E8E9EC;border-radius:8px;
+                 background:white;cursor:pointer;font-size:.875rem">Annuler</button>
+        <button type="submit"
+          style="padding:.6rem 1.4rem;border:none;border-radius:8px;
+                 background:#10705A;color:white;cursor:pointer;font-weight:600;font-size:.875rem">
+          <i class="fas fa-check"></i> Valider
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL REJET
+═══════════════════════════════════════════════════════════ -->
+<div id="modal-rejet" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
+     z-index:9999;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:14px;padding:2rem;max-width:480px;width:90%">
+    <h3 style="margin:0 0 1rem;color:#1B2B5E">
+      Rejeter la saisie de <span id="modal-nom-rejet"></span>
+    </h3>
+    <form method="post" id="form-rejet" action="">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="rejeter">
+      <div style="margin-bottom:1rem">
+        <label style="display:block;font-size:.75rem;font-weight:600;color:#6C757D;margin-bottom:.4rem">
+          Motif du rejet (optionnel)
+        </label>
+        <textarea name="motif" rows="3" placeholder="Ex: Montant incorrect, chèque non reçu..."
+          style="width:100%;padding:.75rem;border:2px solid #E8E9EC;border-radius:8px;
+                 font-family:'Poppins',sans-serif;font-size:.875rem;resize:none;
+                 outline:none;box-sizing:border-box"></textarea>
+      </div>
+      <div style="display:flex;gap:.75rem;justify-content:flex-end">
+        <button type="button"
+          onclick="document.getElementById('modal-rejet').style.display='none'"
+          style="padding:.6rem 1.2rem;border:1px solid #E8E9EC;border-radius:8px;
+                 background:white;cursor:pointer">Annuler</button>
+        <button type="submit"
+          style="padding:.6rem 1.2rem;border:none;border-radius:8px;
+                 background:#B84C4C;color:white;cursor:pointer;font-weight:600">
+          <i class="fas fa-times"></i> Rejeter
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+// ── Toggle badge pénalité dans la modal de validation ────────────────
+const modalChkPen  = document.getElementById('modal-chk-pen');
+const modalBadgePen = document.getElementById('modal-badge-pen');
+if (modalChkPen) {
+  modalChkPen.addEventListener('change', function() {
+    modalBadgePen.style.display = this.checked ? 'block' : 'none';
+    document.getElementById('hidden-pen-esp').value = this.checked ? '1' : '';
+  });
+}
+
+// ── Ouvrir modal validation ──────────────────────────────────────────
+document.querySelectorAll('.btn-valider').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const pk      = btn.dataset.pk;
+    const nom     = btn.dataset.nom;
+    const mois    = btn.dataset.mois;
+    const annee   = btn.dataset.annee;
+    const especes = parseFloat(btn.dataset.especes || '0');
+
+    // URL de la form
+    document.getElementById('form-valider').action = `/saisie/valider-membre/${pk}/`;
+
+    // Infos textuelles
+    document.getElementById('modal-val-infos').textContent =
+      `${nom} — ${mois}/${annee}`;
+
+    // Pénalité espèces : afficher seulement si versement espèces > 0
+    const blocPen = document.getElementById('modal-val-pen-bloc');
+    if (especes > 0) {
+      blocPen.style.display = 'block';
+      // Restituer l'état de la checkbox de la ligne
+      const chkLigne = document.querySelector(`.chk-pen-esp[data-pk="${pk}"]`);
+      const estCochee = chkLigne ? chkLigne.checked : false;
+      modalChkPen.checked = estCochee;
+      modalBadgePen.style.display = estCochee ? 'block' : 'none';
+      document.getElementById('hidden-pen-esp').value = estCochee ? '1' : '';
+    } else {
+      blocPen.style.display = 'none';
+      modalChkPen.checked = false;
+      document.getElementById('hidden-pen-esp').value = '';
+    }
+
+    document.getElementById('modal-valider').style.display = 'flex';
+  });
+});
+
+// ── Ouvrir modal rejet ───────────────────────────────────────────────
+document.querySelectorAll('.btn-rejeter').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('modal-nom-rejet').textContent = btn.dataset.nom;
+    document.getElementById('form-rejet').action = `/saisie/valider-membre/${btn.dataset.pk}/`;
+    document.getElementById('modal-rejet').style.display = 'flex';
+  });
+});
+
+// ── Fermeture en cliquant hors modal ────────────────────────────────
+['modal-valider', 'modal-rejet'].forEach(id => {
+  const m = document.getElementById(id);
+  if (m) m.addEventListener('click', e => { if (e.target === m) m.style.display = 'none'; });
+});
+</script>
+{% endblock %}

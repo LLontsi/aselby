@@ -1,0 +1,213 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Paramétrage Exercice{% endblock %}
+
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <h2>Paramétrage — Exercice {% if config_exercice %}{{ config_exercice.annee }}{% else %}Nouveau{% endif %}</h2>
+    <div style="font-size:.8rem;color:var(--gray-400);margin-top:.2rem">
+      {% if fige %}<span style="color:#B84C4C;font-weight:600"><i class="fas fa-lock"></i> Exercice ouvert — paramètres figés</span>
+      {% else %}<span style="color:#10705A"><i class="fas fa-edit"></i> Définissez tous les paramètres avant d'ouvrir l'exercice</span>{% endif %}
+    </div>
+  </div>
+  {% if fige %}
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+    <a href="{% url 'parametrage:fonds_roulement' %}" class="btn-admin ghost"><i class="fas fa-coins"></i> Fonds roulement</a>
+    <a href="{% url 'parametrage:frais_exceptionnels' %}" class="btn-admin ghost"><i class="fas fa-receipt"></i> Frais excep.</a>
+    <a href="{% url 'parametrage:collation' %}" class="btn-admin ghost"><i class="fas fa-utensils"></i> Collation</a>
+    <a href="{% url 'parametrage:agios' %}" class="btn-admin ghost"><i class="fas fa-university"></i> Agios</a>
+    <a href="{% url 'parametrage:autres_depenses' %}" class="btn-admin ghost"><i class="fas fa-file-invoice"></i> Autres dépenses</a>
+  </div>
+  {% endif %}
+</div>
+
+{% if fige %}
+<!-- VUE LECTURE SEULE -->
+{% include "dashboard/parametrage/_config_readonly.html" %}
+
+{% else %}
+<!-- FORMULAIRE DE CONFIGURATION -->
+<form method="post">{% csrf_token %}
+
+  <!-- TONTINES -->
+  <div class="form-card" style="margin-bottom:1.5rem">
+    <div class="form-card-title"><i class="fas fa-clock" style="color:#C9A84C"></i> Tontines — Niveaux et taux</div>
+    <div class="f-row">
+      <div class="f-group">
+        <label class="f-label">Taux mensuel T35 (FCFA) *</label>
+        {{ form.taux_t35 }}
+        <div class="f-help">Montant de tontine pur T35</div>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Versement mensuel par part T35 (FCFA) *</label>
+        {{ form.versement_t35 }}
+        <div class="f-help">Versement réel (tontine + épargne). Ex: 60 000 F</div>
+      </div>
+    </div>
+    <div class="f-row">
+      <div class="f-group">
+        <label class="f-label">Taux mensuel T75 (FCFA) *</label>
+        {{ form.taux_t75 }}
+      </div>
+      <div class="f-group">
+        <label class="f-label">Taux mensuel T100 (FCFA) *</label>
+        {{ form.taux_t100 }}
+      </div>
+      <div class="f-group">
+        <label class="f-label">Diviseur intérêts T35 *</label>
+        {{ form.diviseur_interet_t35 }}
+        <div class="f-help">Nb parts total T35 pour répartition intérêts</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FONDS DE CAISSE & COTISATIONS MENSUELLES -->
+  <div class="form-card" style="margin-bottom:1.5rem">
+    <div class="form-card-title"><i class="fas fa-piggy-bank" style="color:#C9A84C"></i> Fonds de caisse — Cotisations mensuelles par adhérent</div>
+    <div class="info-card accent-border" style="margin-bottom:1rem;font-size:.82rem;color:var(--gray-500)">
+      <i class="fas fa-info-circle" style="color:#A8863A"></i>
+      Ces montants sont déduits du reste de chaque adhérent chaque mois saisi.
+      L'admin saisit les sorties réelles (avec libellé) dans les rubriques dédiées.
+    </div>
+    <div class="f-row">
+      <div class="f-group">
+        <label class="f-label">Fonds de roulement / adhérent / mois (FCFA) *</label>
+        {{ form.fonds_roulement_mensuel }}
+        <div class="f-help">Cotisation mensuelle. Ex: 1 000 F (= 12 000 F/an)</div>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Frais exceptionnels / adhérent / mois (FCFA) *</label>
+        {{ form.frais_exceptionnels_mensuel }}
+        <div class="f-help">Ex: 1 000 F/mois</div>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Collation / adhérent / mois (FCFA) *</label>
+        {{ form.collation_mensuelle }}
+        <div class="f-help">Ex: 4 000 F/mois</div>
+      </div>
+    </div>
+    <div class="f-row">
+      <div class="f-group">
+        <label class="f-label">Cotisation mutuelle / adhérent / mois (FCFA)</label>
+        {{ form.mutuelle_mensuelle }}
+        <div class="f-help">0 si pas de cotisation mensuelle fixe</div>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Frais d'inscription nouvel adhérent (FCFA)</label>
+        {{ form.montant_inscription }}
+        <div class="f-help">Ex: 25 000 F</div>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Seuil éligibilité intérêts fonds (FCFA)</label>
+        {{ form.seuil_eligibilite_interets }}
+        <div class="f-help">Fonds minimum pour percevoir des intérêts. Ex: 900 000 F</div>
+      </div>
+    </div>
+    <div class="f-row">
+      <div class="f-group">
+        <label class="f-label">Complément fonds fin d'exercice (FCFA)</label>
+        {{ form.complement_fonds_fin_exercice }}
+        <div class="f-help">Complément versé par l'asso si fonds insuffisant</div>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Complément mutuelle fin d'exercice (FCFA)</label>
+        {{ form.complement_mutuelle_fin_exercice }}
+        <div class="f-help">Ex: 30 000 F par adhérent</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PÉNALITÉS -->
+  <div class="form-card" style="margin-bottom:1.5rem">
+    <div class="form-card-title"><i class="fas fa-exclamation-triangle" style="color:#C9A84C"></i> Pénalités</div>
+    <div class="f-row">
+      <div class="f-group">
+        <label class="f-label">Pénalité versement espèces (FCFA) *</label>
+        {{ form.penalite_especes }}
+      </div>
+      <div class="f-group" style="display:flex;align-items:center;gap:.5rem;padding-top:1.5rem">
+        {{ form.penalite_especes_active }}
+        <label style="font-size:.875rem;color:var(--gray-600)">Pénalité espèces active</label>
+      </div>
+      <div class="f-group">
+        <label class="f-label">% pénalité échec tontine *</label>
+        {{ form.pourcentage_penalite_echec }}
+        <div class="f-help">Ex: 20%</div>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Nb max échecs avant liste rouge *</label>
+        {{ form.nb_echecs_max_avant_liste_rouge }}
+      </div>
+    </div>
+  </div>
+
+  <!-- PRÊTS -->
+  <div class="form-card" style="margin-bottom:1.5rem">
+    <div class="form-card-title"><i class="fas fa-dollar-sign" style="color:#C9A84C"></i> Prêts</div>
+    <div class="f-row">
+      <div class="f-group">
+        <label class="f-label">Taux intérêt prêt (%/mois) *</label>
+        {{ form.taux_interet_pret_mensuel }}
+        <div class="f-help">Ex: 1%/mois = 12%/an</div>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Majoration retard mois 1 (%) *</label>
+        {{ form.majoration_retard_mois_1 }}
+      </div>
+      <div class="f-group">
+        <label class="f-label">Majoration retard mois 2+ (%) *</label>
+        {{ form.majoration_retard_mois_2 }}
+      </div>
+    </div>
+    <div class="f-row">
+      <div class="f-group">
+        <label class="f-label">Montant minimum prêt (FCFA)</label>
+        {{ form.montant_min_pret }}
+        <div class="f-help">0 = pas de minimum</div>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Montant maximum prêt (FCFA)</label>
+        {{ form.montant_max_pret }}
+        <div class="f-help">Ex: 2 000 000 F</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOYER -->
+  <div class="form-card" style="margin-bottom:1.5rem">
+    <div class="form-card-title"><i class="fas fa-home" style="color:#C9A84C"></i> Foyer</div>
+    <div class="f-row">
+      <div class="f-group">
+        <label class="f-label">Contribution foyer sur lot principal (FCFA) *</label>
+        {{ form.contribution_foyer_lot_principal }}
+        <div class="f-help">Ex: 150 000 F — obligatoire si lot principal obtenu</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOUTONS -->
+  <div class="form-actions">
+    <button type="submit" name="sauvegarder" class="btn-admin primary">
+      <i class="fas fa-save"></i> Enregistrer la configuration
+    </button>
+    {% if not config_exercice or not config_exercice.est_ouvert %}
+    <button type="submit" name="ouvrir" class="btn-admin green"
+            onclick="return confirm('Confirmer l\'ouverture de l\'exercice {{ form.instance.annee }} ? Les paramètres seront figés.')">
+      <i class="fas fa-play"></i> Enregistrer et ouvrir l\'exercice
+    </button>
+    {% endif %}
+  </div>
+
+  {% if form.errors %}
+  <div class="alerte-admin" style="margin-top:1rem">
+    <i class="fas fa-exclamation-circle"></i>
+    {% for field, errors in form.errors.items %}
+      {% for e in errors %}<div>{{ e }}</div>{% endfor %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</form>
+{% endif %}
+{% endblock %}

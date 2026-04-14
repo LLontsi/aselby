@@ -1,0 +1,125 @@
+{% extends "membre/base_membre.html" %}
+{% load humanize %}
+{% block titre %}Mon état mensuel{% endblock %}
+{% block page_titre %}Mon état — {{ mois }}/{{ annee }}{% endblock %}
+
+{% block contenu %}
+<div style="max-width:600px">
+
+  <!-- VERSEMENT -->
+  <div style="background:white;border-radius:14px;padding:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:1.25rem">
+    <h3 style="font-family:'Playfair Display',serif;color:#1B2B5E;font-size:1rem;margin:0 0 1rem;padding-bottom:.75rem;border-bottom:1px solid #E8E9EC">
+      <i class="fas fa-wallet" style="color:#C9A84C"></i> Versement total
+    </h3>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:.875rem;color:#6C757D">Montant versé ce mois</span>
+      <span style="font-size:1.3rem;font-weight:700;color:#1B2B5E">{{ etat.versement_total|floatformat:0|intcomma }} FCFA</span>
+    </div>
+    {% if etat.versement_total == 0 %}
+    <div style="margin-top:.75rem;padding:.6rem .875rem;background:#FFF3CD;border-radius:8px;font-size:.78rem;color:#856404">
+      <i class="fas fa-exclamation-triangle"></i> Aucun versement ce mois — pénalité d'échec applicable
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- DÉDUCTIONS PRIORITAIRES -->
+  <div style="background:white;border-radius:14px;padding:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:1.25rem">
+    <h3 style="font-family:'Playfair Display',serif;color:#1B2B5E;font-size:1rem;margin:0 0 1rem;padding-bottom:.75rem;border-bottom:1px solid #E8E9EC">
+      <i class="fas fa-minus-circle" style="color:#B84C4C"></i> Déductions (ordre de priorité)
+    </h3>
+
+    <!-- Tontines -->
+    {% for code, t in etat.tontines_dues.items %}
+    <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #F0F0F0">
+      <div>
+        <span style="font-weight:600;font-size:.875rem;color:#1B2B5E">Tontine {{ code }}</span>
+        <span style="font-size:.72rem;color:#ADB5BD;margin-left:.5rem">{{ t.nombre_parts }} part(s)</span>
+        <div style="font-size:.7rem;color:#10705A">✓ Priorité 1 — obligatoire</div>
+      </div>
+      <span style="font-weight:600;color:#B84C4C">-{{ t.montant|floatformat:0|intcomma }} F</span>
+    </div>
+    {% endfor %}
+
+    <!-- Fonds de caisse -->
+    <div style="padding:.5rem 0;border-bottom:1px solid #F0F0F0">
+      <div style="display:flex;justify-content:space-between">
+        <div>
+          <span style="font-weight:600;font-size:.875rem;color:#1B2B5E">Fonds de caisse</span>
+          <div style="font-size:.7rem;color:#10705A">✓ Priorité 2 — charges fixes</div>
+        </div>
+        <span style="font-weight:600;color:#B84C4C">-{{ etat.charges_fixes|floatformat:0|intcomma }} F</span>
+      </div>
+      <div style="font-size:.72rem;color:#ADB5BD;margin-top:.25rem;padding-left:.5rem">
+        Fonds roulement {{ etat.fonds_roulement|floatformat:0|intcomma }} F +
+        Frais excep. {{ etat.frais_exceptionnels|floatformat:0|intcomma }} F +
+        Collation {{ etat.collation|floatformat:0|intcomma }} F
+      </div>
+    </div>
+
+    <!-- Mutuelle -->
+    {% if etat.mutuelle > 0 %}
+    <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #F0F0F0">
+      <div>
+        <span style="font-weight:600;font-size:.875rem;color:#1B2B5E">Cotisation mutuelle</span>
+        <div style="font-size:.7rem;color:#10705A">✓ Priorité 3</div>
+      </div>
+      <span style="font-weight:600;color:#B84C4C">-{{ etat.mutuelle|floatformat:0|intcomma }} F</span>
+    </div>
+    {% endif %}
+
+    <!-- Pénalités -->
+    {% if etat.penalite > 0 %}
+    <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #F0F0F0">
+      <div>
+        <span style="font-weight:600;font-size:.875rem;color:#A8863A">Pénalité</span>
+        <div style="font-size:.7rem;color:#A8863A">Priorité 4</div>
+      </div>
+      <span style="font-weight:600;color:#B84C4C">-{{ etat.penalite|floatformat:0|intcomma }} F</span>
+    </div>
+    {% endif %}
+
+    <!-- Remboursement prêt -->
+    {% if etat.pret %}
+    <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #F0F0F0">
+      <div>
+        <span style="font-weight:600;font-size:.875rem;color:#6C757D">Remboursement prêt</span>
+        <div style="font-size:.7rem;color:#6C757D">Priorité 5 — déduit seulement si solde suffisant</div>
+        <div style="font-size:.72rem;color:#ADB5BD">Solde restant prêt : {{ etat.pret.solde_restant|floatformat:0|intcomma }} F</div>
+      </div>
+      {% if etat.peut_rembourser %}
+      <span style="font-weight:600;color:#B84C4C">-{{ etat.remboursement_pret|floatformat:0|intcomma }} F</span>
+      {% else %}
+      <span style="font-size:.78rem;color:#ADB5BD;font-style:italic">Versement insuffisant</span>
+      {% endif %}
+    </div>
+    {% if etat.dette_pret_restante > 0 %}
+    <div style="padding:.4rem .75rem;background:#FFF3CD;border-radius:6px;margin-top:.25rem;font-size:.75rem;color:#856404">
+      <i class="fas fa-info-circle"></i> Solde prêt restant après ce mois : {{ etat.dette_pret_restante|floatformat:0|intcomma }} FCFA
+    </div>
+    {% endif %}
+    {% endif %}
+  </div>
+
+  <!-- RESTE -->
+  <div style="background:{% if etat.reste_final >= 0 %}#E8F5E9{% else %}#FFEBEE{% endif %};border-radius:14px;padding:1.25rem 1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span style="font-weight:700;color:#1B2B5E">
+        {% if etat.reste_final >= 0 %}
+        <i class="fas fa-check-circle" style="color:#10705A"></i> Reste à percevoir
+        {% else %}
+        <i class="fas fa-exclamation-circle" style="color:#B84C4C"></i> Déficit (à rattraper)
+        {% endif %}
+      </span>
+      <span style="font-size:1.4rem;font-weight:700;color:{% if etat.reste_final >= 0 %}#10705A{% else %}#B84C4C{% endif %}">
+        {{ etat.reste_final|floatformat:0|intcomma }} FCFA
+      </span>
+    </div>
+    {% if etat.reste_final < 0 %}
+    <div style="font-size:.78rem;color:#B84C4C;margin-top:.5rem">
+      Ce montant sera reporté sur le prochain versement ou déduit du lot.
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

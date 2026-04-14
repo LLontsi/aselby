@@ -1,0 +1,52 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Enchères — Lots{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'tontines:tableau' %}"><i class="fas fa-arrow-left"></i> Tontines</a></div>
+    <h2>Attribution des lots par enchères</h2>
+  </div>
+</div>
+<div style="max-width:680px">
+  <div class="info-card accent-border" style="margin-bottom:1.5rem">
+    <div style="font-size:.875rem;color:var(--gray-600);line-height:1.7">
+      <i class="fas fa-info-circle" style="color:var(--accent-dark)"></i>
+      Les lots sont attribués lors de chaque séance du 3ème dimanche. Saisissez ici l'adhérent retenu suite aux enchères ainsi que le montant d'intérêt accepté.
+    </div>
+  </div>
+  <div class="form-card">
+    <div class="form-card-title"><i class="fas fa-gavel"></i> Enregistrer une attribution</div>
+    <form method="post" class="admin-form">{% csrf_token %}
+      <div class="f-row">
+        <div class="f-group">
+          <label class="f-label">Niveau tontine *</label>
+          <select class="f-select" name="niveau">
+            <option value="T35">T35</option><option value="T75">T75</option><option value="T100">T100</option>
+          </select>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Adhérent attributaire *</label>
+          <select class="f-select" name="adherent_matricule">
+            {% for a in adherents %}
+            <option value="{{ a.matricule }}">{{ a.matricule }} — {{ a.nom_prenom|title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Montant du lot (FCFA)</label>
+          <input class="f-input" type="number" name="montant_lot" min="0" step="1000" placeholder="0">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Intérêt offert (FCFA)</label>
+          <input class="f-input" type="number" name="interet_lot" min="0" step="500" placeholder="0">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-admin primary"><i class="fas fa-save"></i> Enregistrer l'attribution</button>
+        <a href="{% url 'tontines:tableau' %}" class="btn-admin ghost">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

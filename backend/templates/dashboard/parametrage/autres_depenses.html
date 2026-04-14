@@ -1,0 +1,74 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Autres Dépenses{% endblock %}
+
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'parametrage:config' %}"><i class="fas fa-arrow-left"></i> Paramétrage</a></div>
+    <h2>Autres Dépenses — {{ config_exercice.annee }}</h2>
+  </div>
+</div>
+
+<div class="membre-info-card accent-bg" style="margin-bottom:1.5rem">
+  <i class="fas fa-info-circle" style="color:#A8863A"></i>
+  Dépenses exceptionnelles libres : achat terrain, frais notaire, commissions, etc.
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1.4fr;gap:1.5rem">
+
+  <div class="form-card">
+    <div class="form-card-title"><i class="fas fa-plus"></i> Enregistrer une dépense</div>
+    <form method="post">{% csrf_token %}
+      <div class="f-group">
+        <label class="f-label">Date *</label>
+        {{ form.date }}
+      </div>
+      <div class="f-group">
+        <label class="f-label">Libellé *</label>
+        {{ form.libelle }}
+      </div>
+      <div class="f-group">
+        <label class="f-label">Montant (FCFA) *</label>
+        {{ form.montant }}
+      </div>
+      {% if form.errors %}
+      <div style="color:#B84C4C;font-size:.8rem;margin-bottom:.75rem">
+        {% for f in form %}{% for e in f.errors %}<div>{{ f.label }} : {{ e }}</div>{% endfor %}{% endfor %}
+      </div>
+      {% endif %}
+      <button type="submit" class="btn-admin primary" style="width:100%">
+        <i class="fas fa-save"></i> Enregistrer
+      </button>
+    </form>
+  </div>
+
+  <div class="table-card">
+    <div class="table-card-head">
+      <h3>Dépenses enregistrées</h3>
+      <span style="font-weight:700;color:#B84C4C">Total : {{ total|floatformat:0|intcomma }} FCFA</span>
+    </div>
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>Date</th><th>Libellé</th><th>Montant</th><th></th></tr></thead>
+        <tbody>
+          {% for dep in depenses %}
+          <tr>
+            <td style="white-space:nowrap">{{ dep.date|date:"d/m/Y" }}</td>
+            <td style="font-weight:500">{{ dep.libelle }}</td>
+            <td style="color:#B84C4C;font-weight:600">{{ dep.montant|floatformat:0|intcomma }} F</td>
+            <td>
+              <form method="post" action="{% url 'parametrage:autres_depenses_supprimer' dep.pk %}"
+                    style="display:inline" onsubmit="return confirm('Supprimer ?')">
+                {% csrf_token %}
+                <button type="submit" class="tbl-btn delete"><i class="fas fa-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}<tr class="empty-row"><td colspan="4">Aucune dépense.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

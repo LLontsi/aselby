@@ -1,0 +1,83 @@
+{% extends "base_root.html" %}
+{% load static %}
+
+{% block body %}
+
+<!-- NAVBAR -->
+<nav class="navbar-pub">
+  <div class="container">
+    <div class="navbar-pub-inner">
+      <a href="{% url 'public:accueil' %}" class="navbar-pub-logo">
+        {% include "partials/logo_svg.html" with taille=40 %}
+        <div>
+          <span class="navbar-pub-logo-nom">ASELBY</span>
+          <span class="navbar-pub-logo-sub">Élites Bangou</span>
+        </div>
+      </a>
+
+      <ul class="navbar-pub-menu">
+        <li><a href="{% url 'public:accueil' %}" {% if request.resolver_match.url_name == 'accueil' %}class="active"{% endif %}>Accueil</a></li>
+        <li><a href="{% url 'public:apropos' %}" {% if request.resolver_match.url_name == 'apropos' %}class="active"{% endif %}>À propos</a></li>
+        <li><a href="{% url 'public:annonces' %}" {% if request.resolver_match.url_name == 'annonces' %}class="active"{% endif %}>Annonces</a></li>
+        <li><a href="{% url 'public:activites' %}" {% if request.resolver_match.url_name == 'activites' %}class="active"{% endif %}>Activités</a></li>
+        <li><a href="{% url 'public:faq' %}" {% if request.resolver_match.url_name == 'faq' %}class="active"{% endif %}>FAQ</a></li>
+        <li><a href="{% url 'public:contact' %}" {% if request.resolver_match.url_name == 'contact' %}class="active"{% endif %}>Contact</a></li>
+        {% if request.user.is_authenticated %}
+          <li><a href="{% if request.user.est_bureau %}{% url 'rapports:dashboard' %}{% else %}{% url 'membre:mon_espace' %}{% endif %}" class="navbar-pub-btn">Mon espace</a></li>
+        {% else %}
+          <li><a href="{% url 'users:connexion' %}" class="navbar-pub-btn">Espace membre</a></li>
+        {% endif %}
+      </ul>
+
+      <button class="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+{% block contenu %}{% endblock %}
+
+<!-- FOOTER -->
+<footer class="footer-pub">
+  <div class="container">
+    <div class="footer-pub-grid">
+      <div class="footer-pub-col">
+        <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:1.2rem">
+          {% include "partials/logo_svg.html" with taille=44 %}
+          <div>
+            <span class="footer-pub-logo-nom">ASELBY</span>
+            <div style="font-size:.65rem;letter-spacing:3px;text-transform:uppercase;color:rgba(201,168,76,.7)">Élites Bangou de Yaoundé</div>
+          </div>
+        </div>
+        <p>Association des Élites Bangou de Yaoundé — tontine professionnelle fondée en 2016. Unis par la solidarité, portés par l'excellence.</p>
+      </div>
+      <div class="footer-pub-col">
+        <h4>Navigation</h4>
+        <ul>
+          <li><a href="{% url 'public:accueil' %}"><i class="fas fa-chevron-right"></i> Accueil</a></li>
+          <li><a href="{% url 'public:apropos' %}"><i class="fas fa-chevron-right"></i> À propos</a></li>
+          <li><a href="{% url 'public:annonces' %}"><i class="fas fa-chevron-right"></i> Annonces</a></li>
+          <li><a href="{% url 'public:activites' %}"><i class="fas fa-chevron-right"></i> Activités</a></li>
+          <li><a href="{% url 'public:faq' %}"><i class="fas fa-chevron-right"></i> FAQ</a></li>
+          <li><a href="{% url 'public:contact' %}"><i class="fas fa-chevron-right"></i> Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-pub-col">
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="#"><i class="fas fa-map-marker-alt"></i> Yaoundé, Cameroun</a></li>
+          <li><a href="#"><i class="fas fa-calendar"></i> Chaque 3ème dimanche</a></li>
+          <li><a href="{% url 'users:connexion' %}"><i class="fas fa-lock"></i> Espace membre</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="footer-pub-bottom">
+    <div class="container">
+      © {% now "Y" %} ASELBY · Yaoundé, Cameroun · <a href="{% url 'users:connexion' %}">Espace membre</a>
+    </div>
+  </div>
+</footer>
+
+{% endblock body %}

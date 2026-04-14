@@ -1,0 +1,51 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Mutuelle{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <h2>Mutuelle — {{ config_exercice.annee }}</h2>
+  <a href="{% url 'mutuelle:nouvelle_aide' %}" class="btn-admin primary"><i class="fas fa-plus"></i> Enregistrer une aide</a>
+</div>
+<div class="stats-grid-admin">
+  <div class="stat-card-admin"><div class="stat-icon-admin"><i class="fas fa-heart"></i></div><div><div class="stat-val">{{ total_cotisations|floatformat:0|intcomma }}</div><div class="stat-lbl">Total cotisations (FCFA)</div></div></div>
+  <div class="stat-card-admin red"><div class="stat-icon-admin"><i class="fas fa-hand-holding-heart"></i></div><div><div class="stat-val">{{ total_aides|floatformat:0|intcomma }}</div><div class="stat-lbl">Total aides versées (FCFA)</div></div></div>
+  <div class="stat-card-admin green"><div class="stat-icon-admin"><i class="fas fa-balance-scale"></i></div><div><div class="stat-val">{{ solde_mutuelle|floatformat:0|intcomma }}</div><div class="stat-lbl">Solde mutuelle (FCFA)</div></div></div>
+</div>
+{% if aides %}
+<div class="table-card" style="margin-bottom:1.5rem">
+  <div class="table-card-head"><h3>Aides versées</h3></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Adhérent</th><th>Événement</th><th>Date</th><th>Montant</th></tr></thead>
+      <tbody>
+        {% for a in aides %}
+        <tr>
+          <td style="font-weight:600;color:var(--primary)">{{ a.adherent.nom_prenom|title }}</td>
+          <td>{{ a.evenement }}</td>
+          <td>{{ a.date|date:"d/m/Y" }}</td>
+          <td style="color:var(--red);font-weight:600">{{ a.montant|floatformat:0|intcomma }} FCFA</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+<div class="table-card">
+  <div class="table-card-head"><h3>Cotisations par adhérent</h3></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Adhérent</th><th>Cotisations payées</th><th>Total versé</th></tr></thead>
+      <tbody>
+        {% for item in cotisations_par_adherent %}
+        <tr>
+          <td style="font-weight:600;color:var(--primary)">{{ item.adherent__nom_prenom|title }}</td>
+          <td>{{ item.nb }}</td>
+          <td style="color:var(--green);font-weight:600">{{ item.total|floatformat:0|intcomma }} FCFA</td>
+        </tr>
+        {% empty %}<tr class="empty-row"><td colspan="3">Aucune cotisation.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

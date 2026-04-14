@@ -1,0 +1,40 @@
+version: '3.9'
+
+# Développement local — sans Nginx
+# Accès direct : http://localhost:8000
+# Django sert les statiques automatiquement (DEBUG=True)
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: aselby_db
+      POSTGRES_USER: aselby_user
+      POSTGRES_PASSWORD: aselby_pass
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  web:
+    build: ./backend
+    restart: unless-stopped
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.dev
+      - DB_HOST=db
+      - DB_NAME=aselby_db
+      - DB_USER=aselby_user
+      - DB_PASSWORD=aselby_pass
+      - DEBUG=True
+      - SECRET_KEY=dev-secret-key-not-for-production
+    depends_on:
+      - db
+
+volumes:
+  postgres_data_dev:

@@ -1,0 +1,51 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Adhérents{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <h2>Adhérents — {{ adherents|length }} actif(s)</h2>
+  <a href="{% url 'adherents:nouveau' %}" class="btn-admin primary"><i class="fas fa-user-plus"></i> Nouvel adhérent</a>
+</div>
+<div class="filter-bar">
+  <form method="get" style="display:flex;gap:1rem;width:100%;align-items:flex-end">
+    <div class="f-group" style="flex:1;margin:0">
+      <label class="f-label">Recherche</label>
+      <input class="f-input" type="text" name="q" value="{{ q }}" placeholder="Nom, matricule, résidence...">
+    </div>
+    <button type="submit" class="btn-admin primary" style="height:42px"><i class="fas fa-search"></i> Chercher</button>
+    {% if q %}<a href="{% url 'adherents:liste' %}" class="btn-admin ghost" style="height:42px">Réinitialiser</a>{% endif %}
+  </form>
+</div>
+<div class="table-card">
+  <div class="table-card-head"><h3>Liste des adhérents</h3><a href="{% url 'adherents:inactifs' %}" class="btn-admin ghost" style="font-size:.8rem">Inactifs</a></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>#</th><th>Matricule</th><th>Nom complet</th><th>Résidence</th><th>Téléphone</th><th>Poste bureau</th><th>Statut</th><th></th></tr></thead>
+      <tbody>
+        {% for a in adherents %}
+        <tr>
+          <td style="color:var(--gray-400);font-size:.8rem">{{ a.numero_ordre }}</td>
+          <td style="font-weight:700;color:var(--primary)">{{ a.matricule }}</td>
+          <td style="font-weight:600">{{ a.nom_prenom|title }}</td>
+          <td>{{ a.residence|default:"—" }}</td>
+          <td>{{ a.telephone1|default:"—" }}</td>
+          <td>{% if a.poste_bureau %}<span class="badge accent">{{ a.poste_bureau }}</span>{% else %}<span style="color:var(--gray-400)">Membre</span>{% endif %}</td>
+          <td><span class="badge {% if a.statut == 'ACTIF' %}green{% else %}gray{% endif %}">{{ a.get_statut_display }}</span></td>
+          <td style="display:flex;gap:4px">
+            <a href="{% url 'adherents:fiche' a.matricule %}" class="tbl-btn view" title="Fiche"><i class="fas fa-eye"></i></a>
+            <a href="{% url 'adherents:modifier' a.matricule %}" class="tbl-btn edit" title="Modifier"><i class="fas fa-edit"></i></a>
+          </td>
+        </tr>
+        {% empty %}<tr class="empty-row"><td colspan="8">Aucun adhérent trouvé.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% if page_obj.has_other_pages %}
+<div style="display:flex;justify-content:center;align-items:center;gap:.75rem;margin-top:1.5rem">
+  {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}" class="btn-admin ghost" style="font-size:.8rem">← Préc.</a>{% endif %}
+  <span style="font-size:.875rem;color:var(--gray-500)">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}" class="btn-admin ghost" style="font-size:.8rem">Suiv. →</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

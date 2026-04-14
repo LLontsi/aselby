@@ -1,0 +1,29 @@
+{% extends "public/base_public.html" %}
+{% block titre %}{{ annonce.titre }}{% endblock %}
+
+{% block contenu %}
+<section class="page-hero">
+  <div class="container page-hero-content">
+    <div class="breadcrumb-pub">
+      <a href="{% url 'public:accueil' %}">Accueil</a><span>/</span>
+      <a href="{% url 'public:annonces' %}">Annonces</a><span>/</span>
+      <span>Détail</span>
+    </div>
+    <h1 class="page-hero-title">{{ annonce.titre }}</h1>
+    <p class="page-hero-subtitle">{{ annonce.date_publication|date:"d F Y" }}</p>
+  </div>
+</section>
+
+<section class="section section-bg-white">
+  <div class="container" style="max-width:800px">
+    <div style="background:white;border-radius:var(--radius-lg);padding:2.5rem;box-shadow:var(--shadow-lg);border-top:4px solid var(--accent)" class="animate-on-scroll">
+      <div style="font-size:1.05rem;line-height:1.9;color:var(--gray-700)">{{ annonce.contenu|linebreaks }}</div>
+    </div>
+    <div style="margin-top:2rem;display:flex;justify-content:space-between;align-items:center">
+      <a href="{% url 'public:annonces' %}" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left"></i> Retour aux annonces
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}

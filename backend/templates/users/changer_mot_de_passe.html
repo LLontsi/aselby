@@ -1,0 +1,21 @@
+{% extends "base_root.html" %}{% block titre %}Changer mon mot de passe{% endblock %}
+{% block body_class %}page-connexion{% endblock %}
+{% block body %}
+<div class="bg-pattern"><div class="losange-bg l1"></div></div>
+<div class="connexion-wrapper">
+  <div class="connexion-carte">
+    <div class="connexion-logo">{% include "partials/logo_svg.html" with taille=60 %}<span class="connexion-logo-nom">ASELBY</span></div>
+    <div class="connexion-ligne-or"></div>
+    <p class="connexion-titre">Changer mon mot de passe</p>
+    {% include "partials/messages.html" %}
+    <form method="post">{% csrf_token %}
+      {% for field in form %}
+      <div class="champ-groupe">
+        <label class="champ-label">{{ field.label }}</label>
+        <input class="champ-input" type="password" name="{{ field.html_name }}" required>
+        {% if field.errors %}<span style="color:#FF8888;font-size:12px;font-family:Outfit,sans-serif">{{ field.errors.0 }}</span>{% endif %}
+      </div>{% endfor %}
+      <button type="submit" class="btn-connexion-submit">Mettre à jour</button>
+    </form>
+  </div>
+</div>{% endblock %}

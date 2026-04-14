@@ -1,0 +1,55 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Tontines{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <h2>Tontines — {{ mois }}/{{ annee }}</h2>
+  <div style="display:flex;gap:.5rem">
+    <a href="{% url 'tontines:calendrier' %}" class="btn-admin ghost"><i class="fas fa-calendar"></i> Calendrier</a>
+    <a href="{% url 'tontines:enchere' %}" class="btn-admin primary"><i class="fas fa-gavel"></i> Enchères</a>
+  </div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem;margin-bottom:2rem">
+  {% for session in sessions %}
+  <div class="activity-card-admin">
+    <div class="activity-card-head">
+      <i class="fas fa-layer-group"></i>
+      <h4>Tontine {{ session.niveau.code }}</h4>
+      <span class="badge green" style="margin-left:auto">{{ session.participations.count }} parts</span>
+    </div>
+    <div style="padding:1.25rem">
+      <div class="info-row" style="gap:.75rem">
+        <div class="info-item"><span class="lbl">Taux mensuel</span><span class="val">{{ session.niveau.taux_mensuel|floatformat:0|intcomma }} FCFA</span></div>
+        <div class="info-item"><span class="lbl">Versement/part</span><span class="val">{{ session.niveau.versement_mensuel_par_part|floatformat:0|intcomma }} FCFA</span></div>
+        <div class="info-item"><span class="lbl">Intérêts bureau</span><span class="val accent">{{ session.montant_interet_bureau|floatformat:0|intcomma }} FCFA</span></div>
+        <div class="info-item"><span class="lbl">Intérêt/adhérent</span><span class="val green">{{ session.interet_par_adherent|intcomma }} FCFA</span></div>
+      </div>
+      <div style="margin-top:1rem">
+        <a href="{% url 'tontines:detail_participants' session.niveau.code %}" class="btn-admin outline" style="font-size:.8rem;padding:.45rem 1rem">Détail participants →</a>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="empty-state"><i class="fas fa-clock"></i><p>Aucune session créée pour ce mois.</p></div>
+  {% endfor %}
+</div>
+<div class="table-card">
+  <div class="table-card-head"><h3>Participations du mois</h3></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Adhérent</th><th>Tontine</th><th>Parts</th><th>Mode</th><th>Montant versé</th></tr></thead>
+      <tbody>
+        {% for p in participations %}
+        <tr>
+          <td style="font-weight:600;color:var(--primary)">{{ p.adherent.nom_prenom|title }}</td>
+          <td><span class="badge primary">{{ p.session.niveau.code }}</span></td>
+          <td>{{ p.nombre_parts }}</td>
+          <td><span class="badge {% if p.mode_versement == 'BANQUE' %}green{% else %}accent{% endif %}">{{ p.get_mode_versement_display }}</span></td>
+          <td>{{ p.montant_verse|floatformat:0|intcomma }} FCFA</td>
+        </tr>
+        {% empty %}<tr class="empty-row"><td colspan="5">Aucune participation ce mois.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

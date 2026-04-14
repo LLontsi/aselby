@@ -1,0 +1,79 @@
+{% extends "membre/base_membre.html" %}
+{% load humanize %}
+{% block titre %}Mes Tontines{% endblock %}
+{% block page_titre %}Mes Tontines{% endblock %}
+
+{% block contenu %}
+
+<!-- KPIs -->
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-icon"><i class="fas fa-clock"></i></div>
+    <div><div class="kpi-val">{{ nb_participations }}</div><div class="kpi-lbl">Participations totales</div></div>
+  </div>
+  <div class="kpi-card accent">
+    <div class="kpi-icon"><i class="fas fa-layer-group"></i></div>
+    <div><div class="kpi-val">{{ nb_parts_total }}</div><div class="kpi-lbl">Total parts</div></div>
+  </div>
+  <div class="kpi-card green">
+    <div class="kpi-icon"><i class="fas fa-trophy"></i></div>
+    <div><div class="kpi-val">{{ nb_lots_obtenus }}</div><div class="kpi-lbl">Lots obtenus</div></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-icon"><i class="fas fa-check"></i></div>
+    <div><div class="kpi-val">{{ nb_mois_banque }}</div><div class="kpi-lbl">Mois payés banque</div></div>
+  </div>
+</div>
+
+<!-- Info règles tontines -->
+<div class="membre-info-card accent-bg" style="margin-bottom:1.5rem">
+  <div style="font-size:.8rem;color:#6C757D;line-height:1.8">
+    <i class="fas fa-info-circle" style="color:#A8863A"></i>
+    <strong style="color:#1B2B5E">Règles</strong> — Versement par virement (banque) recommandé.
+    Pénalité espèces : {{ config_exercice.penalite_especes|floatformat:0|intcomma }} FCFA.
+    Pénalité échec : {{ config_exercice.pourcentage_penalite_echec }}% du montant dû.
+    Max {{ config_exercice.nb_echecs_max_avant_liste_rouge }} échecs avant liste rouge.
+  </div>
+</div>
+
+<!-- Niveaux auxquels je participe -->
+{% for niveau_data in niveaux_participation %}
+<div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:1.5rem">
+  <div style="background:linear-gradient(135deg,#1B2B5E,#243870);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between">
+    <div style="color:white">
+      <div style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700">{{ niveau_data.niveau.code }}</div>
+      <div style="font-size:.78rem;color:rgba(255,255,255,.7)">{{ niveau_data.niveau.taux_mensuel|floatformat:0|intcomma }} FCFA / mois par part</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:.7rem;color:#C9A84C;letter-spacing:2px;text-transform:uppercase">Lot annuel</div>
+      <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:#C9A84C">{{ niveau_data.niveau.lot_annuel|floatformat:0|intcomma }} F</div>
+    </div>
+  </div>
+  <div class="membre-table-wrap">
+    <table class="membre-table">
+      <thead><tr><th>Mois</th><th>Parts</th><th>Mode</th><th>Montant versé</th><th>Pén. espèces</th><th>Pén. échec</th><th>Lot principal</th></tr></thead>
+      <tbody>
+        {% for p in niveau_data.participations %}
+        <tr>
+          <td style="font-weight:600;color:#1B2B5E">{{ p.session.mois }}/{{ p.session.annee }}</td>
+          <td>{{ p.nombre_parts }}</td>
+          <td><span class="badge-membre {% if p.mode_versement == 'BANQUE' %}green{% elif p.mode_versement == 'ESPECES' %}accent{% else %}red{% endif %}">{{ p.get_mode_versement_display }}</span></td>
+          <td style="font-weight:600">{{ p.montant_verse|floatformat:0|intcomma }} F</td>
+          <td>{% if p.penalite_especes %}<span style="color:#B84C4C">{{ p.penalite_especes|floatformat:0|intcomma }} F</span>{% else %}—{% endif %}</td>
+          <td>{% if p.penalite_echec %}<span style="color:#B84C4C">{{ p.penalite_echec|floatformat:0|intcomma }} F</span>{% else %}—{% endif %}</td>
+          <td>
+            {% if p.a_obtenu_lot_principal %}
+            <span class="badge-membre green"><i class="fas fa-trophy"></i> {{ p.montant_lot_principal|floatformat:0|intcomma }} F</span>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% empty %}<tr class="empty-row"><td colspan="7">Aucune participation.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% empty %}
+<div class="empty-membre"><i class="fas fa-clock"></i><p>Aucune participation tontine enregistrée.</p></div>
+{% endfor %}
+
+{% endblock %}

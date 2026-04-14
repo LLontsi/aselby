@@ -1,0 +1,130 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Tableau de bord{% endblock %}
+
+{% block contenu %}
+<div class="page-header-admin">
+  <h2>Tableau de bord — {{ mois_courant }}</h2>
+  <a href="{% url 'saisie:formulaire' %}" class="btn-admin primary">
+    <i class="fas fa-plus"></i> Nouvelle saisie
+  </a>
+</div>
+
+<!-- STATS -->
+<div class="stats-grid-admin">
+  <div class="stat-card-admin">
+    <div class="stat-icon-admin"><i class="fas fa-users"></i></div>
+    <div><div class="stat-val">{{ nb_adherents }}</div><div class="stat-lbl">Adhérents actifs</div></div>
+  </div>
+  <div class="stat-card-admin accent">
+    <div class="stat-icon-admin"><i class="fas fa-edit"></i></div>
+    <div><div class="stat-val">{{ nb_saisis }}/{{ nb_total }}</div><div class="stat-lbl">Saisis ce mois</div></div>
+  </div>
+  <div class="stat-card-admin green">
+    <div class="stat-icon-admin"><i class="fas fa-dollar-sign"></i></div>
+    <div><div class="stat-val">{{ prets_en_cours }}</div><div class="stat-lbl">Prêts en cours</div></div>
+  </div>
+  <div class="stat-card-admin red">
+    <div class="stat-icon-admin"><i class="fas fa-exclamation-triangle"></i></div>
+    <div><div class="stat-val">{{ nb_liste_rouge }}</div><div class="stat-lbl">Liste rouge</div></div>
+  </div>
+</div>
+
+<!-- CAISSE DU JOUR -->
+<div class="info-card accent-border">
+  <h3><i class="fas fa-calendar-day"></i> Caisse du Jour — 3ème dimanche {{ mois_courant }}</h3>
+  <div class="info-row">
+    <div class="info-item">
+      <span class="lbl">Saisies</span>
+      <span class="val">{{ nb_saisis }}/{{ nb_total }} adhérents</span>
+    </div>
+    <div class="info-item">
+      <span class="lbl">Entrées prévues</span>
+      <span class="val">{{ entrees_prevues|floatformat:0|intcomma }} FCFA</span>
+    </div>
+    <div class="info-item">
+      <span class="lbl">Dépenses prévues</span>
+      <span class="val">{{ depenses_prevues|floatformat:0|intcomma }} FCFA</span>
+    </div>
+    <div class="info-item">
+      <span class="lbl">Solde disponible</span>
+      <span class="val green">{{ solde_disponible|floatformat:0|intcomma }} FCFA</span>
+    </div>
+  </div>
+</div>
+
+<!-- ALERTES -->
+{% if alertes %}
+<div style="margin-bottom:1.5rem">
+  <div class="section-title-admin"><i class="fas fa-bell"></i> Alertes & Notifications</div>
+  {% for alerte in alertes %}
+  <div class="alerte-admin {% if alerte.type == 'succes' %}green{% elif alerte.type == 'retard' %}red{% endif %}">
+    <i class="fas {% if alerte.type == 'succes' %}fa-check-circle{% elif alerte.type == 'retard' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %}"></i>
+    {{ alerte.message }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ACTIVITÉ -->
+<div class="section-title-admin"><i class="fas fa-history"></i> Activité récente</div>
+<div class="activity-grid-admin">
+
+  <div class="activity-card-admin">
+    <div class="activity-card-head"><i class="fas fa-money-bill-wave"></i><h4>Versements — {{ mois_courant }}</h4></div>
+    <div class="activity-list">
+      {% for s in dernieres_saisies %}
+      <div class="activity-row">
+        <div class="activity-avatar">{{ s.adherent.nom_prenom|slice:":1"|upper }}</div>
+        <div class="activity-info">
+          <div class="activity-name">{{ s.adherent.nom_prenom|title|truncatechars:22 }}</div>
+          <div class="activity-sub">
+            <span class="badge {% if s.mode_versement == 'BANQUE' %}green{% elif s.mode_versement == 'ESPECES' %}accent{% else %}red{% endif %}">{{ s.get_mode_versement_display }}</span>
+            <span>{{ s.versement_banque|add:s.versement_especes|floatformat:0|intcomma }} F</span>
+          </div>
+        </div>
+      </div>
+      {% empty %}<div class="empty-act">Aucune saisie pour ce mois.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="activity-card-admin">
+    <div class="activity-card-head"><i class="fas fa-clock"></i><h4>Participations tontines</h4></div>
+    <div class="activity-list">
+      {% for niveau, nb_parts, nb_adherents in participations_tontines %}
+      <div class="activity-row">
+        <div class="activity-avatar"><i class="fas fa-layer-group"></i></div>
+        <div class="activity-info">
+          <div class="activity-name">Tontine {{ niveau }}</div>
+          <div class="activity-sub"><span>{{ nb_adherents }} adhérent(s)</span><span>{{ nb_parts }} part(s)</span></div>
+        </div>
+        <a href="{% url 'tontines:tableau' %}" class="activity-act"><i class="fas fa-arrow-right"></i></a>
+      </div>
+      {% empty %}<div class="empty-act">Aucune session ce mois.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="activity-card-admin">
+    <div class="activity-card-head"><i class="fas fa-exclamation-circle"></i><h4>Prêts en retard</h4></div>
+    <div class="activity-list">
+      {% for p in prets_retard %}
+      <div class="activity-row">
+        <div class="activity-avatar">{{ p.adherent.nom_prenom|slice:":1"|upper }}</div>
+        <div class="activity-info">
+          <div class="activity-name">{{ p.adherent.nom_prenom|title|truncatechars:20 }}</div>
+          <div class="activity-sub">
+            <span class="badge red">{{ p.solde_restant|floatformat:0|intcomma }} F</span>
+            <span>{{ p.nb_mois_retard }} mois retard</span>
+          </div>
+        </div>
+        <a href="{% url 'prets:detail' p.pk %}" class="activity-act"><i class="fas fa-eye"></i></a>
+      </div>
+      {% empty %}<div class="empty-act" style="color:var(--green)"><i class="fas fa-check-circle"></i> Aucun retard.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

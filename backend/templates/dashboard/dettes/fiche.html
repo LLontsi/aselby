@@ -1,0 +1,80 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Liste Rouge — {{ dette.adherent.nom_prenom|title }}{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'dettes:liste' %}"><i class="fas fa-arrow-left"></i> Liste rouge</a></div>
+    <h2>{{ dette.adherent.nom_prenom|title }}</h2>
+  </div>
+  <span class="badge {% if dette.est_solde %}green{% else %}red{% endif %}" style="font-size:.9rem;padding:.5rem 1rem">
+    {% if dette.est_solde %}Soldé le {{ dette.date_solde|date:"d/m/Y" }}{% else %}En cours{% endif %}
+  </span>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+  <div class="info-card red-border">
+    <h3><i class="fas fa-exclamation-triangle" style="color:var(--red)"></i> Détails de la dette</h3>
+    <div class="info-row">
+      <div class="info-item"><span class="lbl">Date d'entrée</span><span class="val">{{ dette.date_entree|date:"d/m/Y" }}</span></div>
+      <div class="info-item"><span class="lbl">Montant initial</span><span class="val red">{{ dette.montant_dette|floatformat:0|intcomma }} FCFA</span></div>
+      <div class="info-item"><span class="lbl">Garantie</span><span class="val">{{ dette.montant_garantie|floatformat:0|intcomma }} FCFA</span></div>
+      <div class="info-item"><span class="lbl">Solde restant</span>
+        <span class="val {% if dette.est_solde %}green{% else %}red{% endif %}">
+          {{ dette.montant_dette|floatformat:0|intcomma }} FCFA
+        </span>
+      </div>
+    </div>
+    <div style="margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--gray-200);font-size:.875rem;color:var(--gray-600)">
+      <span style="font-weight:600;color:var(--gray-500);font-size:.7rem;letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:.3rem">Motif</span>
+      {{ dette.motif }}
+    </div>
+  </div>
+
+  <div class="info-card">
+    <h3><i class="fas fa-info-circle"></i> Remboursement</h3>
+    <div style="font-size:.875rem;color:var(--gray-600);line-height:1.7;margin-bottom:1rem">
+      Le remboursement d'une dette est enregistré via la <strong>saisie mensuelle</strong>.
+      Le bureau valide manuellement les paiements reçus et met à jour le statut ci-dessous.
+    </div>
+    {% if not dette.est_solde %}
+    <form method="post" style="display:flex;flex-direction:column;gap:.75rem">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="solder">
+      <div class="f-group">
+        <label class="f-label">Observations</label>
+        <textarea class="f-textarea" name="observations" style="min-height:70px" placeholder="Notes sur le remboursement..."></textarea>
+      </div>
+      <button type="submit" class="btn-admin green">
+        <i class="fas fa-check-circle"></i> Marquer comme soldé
+      </button>
+    </form>
+    {% else %}
+    <div style="text-align:center;padding:1.5rem">
+      <i class="fas fa-check-circle" style="font-size:2.5rem;color:var(--green);margin-bottom:.75rem;display:block"></i>
+      <div style="font-weight:600;color:var(--green)">Dette soldée</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if remboursements %}
+<div class="table-card">
+  <div class="table-card-head"><h3>Historique des remboursements</h3></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Date</th><th>Montant</th><th>Observations</th></tr></thead>
+      <tbody>
+        {% for r in remboursements %}
+        <tr>
+          <td>{{ r.date|date:"d/m/Y" }}</td>
+          <td style="color:var(--green);font-weight:600">{{ r.montant|floatformat:0|intcomma }} FCFA</td>
+          <td>{{ r.observations|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "membre/base_membre.html" %}
+{% load humanize %}
+{% block titre %}Saisir mon versement{% endblock %}
+{% block page_titre %}Saisir mon versement{% endblock %}
+
+{% block contenu %}
+
+{% if saisie_existante %}
+<div class="membre-info-card {% if saisie_existante.est_valide %}green-bg{% else %}accent-bg{% endif %}" style="margin-bottom:1.5rem">
+  <div style="font-size:.875rem">
+    {% if saisie_existante.est_valide %}
+    <i class="fas fa-check-circle" style="color:#10705A"></i>
+    <strong>Saisie validée par le bureau</strong> pour {{ mois }}/{{ annee }}.
+    Versement banque : {{ saisie_existante.versement_banque|floatformat:0|intcomma }} FCFA —
+    Espèces : {{ saisie_existante.versement_especes|floatformat:0|intcomma }} FCFA
+    {% else %}
+    <i class="fas fa-hourglass-half" style="color:#A8863A"></i>
+    <strong>Saisie en attente de validation</strong> pour {{ mois }}/{{ annee }}.
+    Vous pouvez la modifier avant validation.
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<div style="max-width:520px">
+  <div class="membre-info-card accent-bg" style="margin-bottom:1.25rem">
+    <div style="font-size:.8rem;color:#6C757D;line-height:1.7">
+      <i class="fas fa-info-circle" style="color:#A8863A"></i>
+      Saisissez ici votre versement mensuel. Le bureau le validera lors de la séance.<br>
+      <strong>Important :</strong> Si vous payez par chèque ou virement, indiquez le n° de chèque.
+    </div>
+  </div>
+
+  <div style="background:white;border-radius:14px;padding:2rem;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <h3 style="font-family:'Playfair Display',serif;color:#1B2B5E;font-size:1.1rem;margin:0 0 1.5rem;padding-bottom:.75rem;border-bottom:1px solid #E8E9EC">
+      <i class="fas fa-edit" style="color:#C9A84C;margin-right:.5rem"></i>
+      Versement — {{ mois }}/{{ annee }}
+    </h3>
+
+    {% if saisie_existante and saisie_existante.est_valide %}
+    <div style="text-align:center;padding:1.5rem;color:#ADB5BD">
+      <i class="fas fa-lock" style="font-size:2rem;display:block;margin-bottom:.75rem;color:#10705A"></i>
+      Cette saisie a été validée par le bureau. Elle ne peut plus être modifiée.
+    </div>
+    {% else %}
+    <form method="post">{% csrf_token %}
+      <input type="hidden" name="mois" value="{{ mois }}">
+      <input type="hidden" name="annee" value="{{ annee }}">
+
+      <div style="margin-bottom:1.2rem">
+        <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#6C757D;margin-bottom:.5rem">
+          Versement banque (FCFA)
+        </label>
+        <input type="number" name="versement_banque" min="0" step="1000"
+               value="{% if saisie_existante %}{{ saisie_existante.versement_banque }}{% else %}0{% endif %}"
+               style="width:100%;padding:.8rem 1rem;border:2px solid #E8E9EC;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.9rem;color:#212529 !important;-webkit-text-fill-color:#212529 !important;outline:none;box-sizing:border-box"
+               onfocus="this.style.borderColor='#1B2B5E'" onblur="this.style.borderColor='#E8E9EC'">
+        <div style="font-size:.72rem;color:#ADB5BD;margin-top:.25rem">Montant versé par virement ou chèque</div>
+      </div>
+
+      <div style="margin-bottom:1.2rem">
+        <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#6C757D;margin-bottom:.5rem">
+          N° de chèque (optionnel)
+        </label>
+        <input type="text" name="numero_cheque"
+               value="{% if saisie_existante %}{{ saisie_existante.numero_cheque_pret }}{% endif %}"
+               placeholder="Ex: CHQ-0042"
+               style="width:100%;padding:.8rem 1rem;border:2px solid #E8E9EC;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.9rem;color:#212529 !important;-webkit-text-fill-color:#212529 !important;outline:none;box-sizing:border-box"
+               onfocus="this.style.borderColor='#1B2B5E'" onblur="this.style.borderColor='#E8E9EC'">
+      </div>
+
+      <div style="margin-bottom:1.5rem">
+        <label style="display:block;font-size:.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#6C757D;margin-bottom:.5rem">
+          Versement espèces (FCFA)
+        </label>
+        <input type="number" name="versement_especes" min="0" step="1000"
+               value="{% if saisie_existante %}{{ saisie_existante.versement_especes }}{% else %}0{% endif %}"
+               style="width:100%;padding:.8rem 1rem;border:2px solid #E8E9EC;border-radius:8px;font-family:'Poppins',sans-serif;font-size:.9rem;color:#212529 !important;-webkit-text-fill-color:#212529 !important;outline:none;box-sizing:border-box"
+               onfocus="this.style.borderColor='#1B2B5E'" onblur="this.style.borderColor='#E8E9EC'">
+        <div style="font-size:.72rem;color:#ADB5BD;margin-top:.25rem">
+          Attention : pénalité de {{ config.penalite_especes|floatformat:0|intcomma }} FCFA applicable
+        </div>
+      </div>
+
+      <div style="display:flex;gap:1rem;padding-top:1rem;border-top:1px solid #E8E9EC">
+        <button type="submit" class="btn-membre primary" style="flex:1;justify-content:center">
+          <i class="fas fa-paper-plane"></i>
+          {% if saisie_existante %}Mettre à jour{% else %}Soumettre au bureau{% endif %}
+        </button>
+        <a href="{% url 'membre:mon_espace' %}" class="btn-membre ghost">Annuler</a>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

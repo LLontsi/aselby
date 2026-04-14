@@ -1,0 +1,36 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Fonds de Caisse{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <h2>Fonds de Caisse — {{ mois }}/{{ annee }}</h2>
+  <a href="{% url 'fonds:interets' %}" class="btn-admin primary"><i class="fas fa-percentage"></i> Répartir intérêts</a>
+</div>
+<div class="stats-grid-admin">
+  <div class="stat-card-admin"><div class="stat-icon-admin"><i class="fas fa-piggy-bank"></i></div><div><div class="stat-val">{{ total_fonds|floatformat:0|intcomma }}</div><div class="stat-lbl">Total fonds (FCFA)</div></div></div>
+  <div class="stat-card-admin green"><div class="stat-icon-admin"><i class="fas fa-check-circle"></i></div><div><div class="stat-val">{{ nb_eligibles }}</div><div class="stat-lbl">Éligibles aux intérêts</div></div></div>
+  <div class="stat-card-admin accent"><div class="stat-icon-admin"><i class="fas fa-percentage"></i></div><div><div class="stat-val">{{ total_interets|floatformat:2|intcomma }}</div><div class="stat-lbl">Intérêts répartis (FCFA)</div></div></div>
+</div>
+<div class="table-card">
+  <div class="table-card-head"><h3>État des fonds — {{ mois }}/{{ annee }}</h3></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>#</th><th>Adhérent</th><th>Épargne nette</th><th>Fonds définitif</th><th>Base calcul</th><th>Intérêts</th><th>Capital composé</th><th></th></tr></thead>
+      <tbody>
+        {% for m in mouvements %}
+        <tr>
+          <td style="color:var(--gray-400);font-size:.8rem">{{ m.adherent.numero_ordre }}</td>
+          <td style="font-weight:600;color:var(--primary)">{{ m.adherent.nom_prenom|title }}</td>
+          <td>{{ m.epargne_nette|floatformat:0|intcomma }}</td>
+          <td>{{ m.fonds_definitif|floatformat:0|intcomma }}</td>
+          <td>{% if m.base_calcul_interet > 0 %}<span style="color:var(--green)">{{ m.base_calcul_interet|floatformat:0|intcomma }} ✓</span>{% else %}<span class="badge gray">Sous seuil</span>{% endif %}</td>
+          <td>{{ m.interet_attribue|floatformat:2|intcomma }}</td>
+          <td><strong>{{ m.capital_compose|floatformat:2|intcomma }}</strong></td>
+          <td><a href="{% url 'fonds:detail' m.adherent.matricule %}" class="tbl-btn view"><i class="fas fa-eye"></i></a></td>
+        </tr>
+        {% empty %}<tr class="empty-row"><td colspan="8">Aucune donnée ce mois.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

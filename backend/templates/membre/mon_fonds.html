@@ -1,0 +1,160 @@
+{% extends "membre/base_membre.html" %}
+{% load humanize %}
+{% block titre %}Mon Fonds{% endblock %}
+{% block page_titre %}Mon Fonds de Caisse{% endblock %}
+
+{% block contenu %}
+
+<!-- KPIs -->
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-icon"><i class="fas fa-piggy-bank"></i></div>
+    <div>
+      <div class="kpi-val">{% if dernier_mouvement %}{{ dernier_mouvement.capital_compose|floatformat:0|intcomma }}{% else %}—{% endif %}</div>
+      <div class="kpi-lbl">Capital composé actuel (FCFA)</div>
+    </div>
+  </div>
+  <div class="kpi-card green">
+    <div class="kpi-icon"><i class="fas fa-percentage"></i></div>
+    <div>
+      <div class="kpi-val">{{ total_interets|floatformat:0|intcomma }}</div>
+      <div class="kpi-lbl">Total intérêts reçus (FCFA)</div>
+    </div>
+  </div>
+  <div class="kpi-card accent">
+    <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+    <div>
+      <div class="kpi-val">{% if dernier_mouvement %}{{ dernier_mouvement.fonds_definitif|floatformat:0|intcomma }}{% else %}—{% endif %}</div>
+      <div class="kpi-lbl">Fonds définitif (FCFA)</div>
+    </div>
+  </div>
+  <div class="kpi-card {% if dernier_mouvement and dernier_mouvement.est_eligible_interets %}green{% else %}{% endif %}">
+    <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
+    <div>
+      <div class="kpi-val">{{ nb_mois_saisis }}</div>
+      <div class="kpi-lbl">Mois saisis cette année</div>
+    </div>
+  </div>
+</div>
+
+<!-- Info éligibilité intérêts -->
+{% if dernier_mouvement %}
+<div class="membre-info-card {% if dernier_mouvement.est_eligible_interets %}green-bg{% else %}accent-bg{% endif %}" style="margin-bottom:1.5rem">
+  <div style="display:flex;align-items:center;gap:.75rem;font-size:.875rem">
+    <i class="fas {% if dernier_mouvement.est_eligible_interets %}fa-check-circle" style="color:#10705A{% else %}fa-info-circle" style="color:#A8863A{% endif %}"></i>
+    <div>
+      {% if dernier_mouvement.est_eligible_interets %}
+      <strong>Vous êtes éligible aux intérêts</strong> — Votre fonds dépasse le seuil de {{ config_exercice.seuil_eligibilite_interets|floatformat:0|intcomma }} FCFA.
+      Base de calcul : <strong>{{ dernier_mouvement.base_calcul_interet|floatformat:0|intcomma }} FCFA</strong>
+      {% else %}
+      <strong>Non éligible aux intérêts ce mois</strong> — Seuil requis : {{ config_exercice.seuil_eligibilite_interets|floatformat:0|intcomma }} FCFA.
+      Fonds actuel : {{ dernier_mouvement.fonds_definitif|floatformat:0|intcomma }} FCFA
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Tableau historique des mouvements -->
+<div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:1.5rem">
+  <div style="padding:1.25rem 1.5rem;border-bottom:1px solid #E8E9EC;display:flex;justify-content:space-between;align-items:center">
+    <h3 style="font-family:'Playfair Display',serif;color:#1B2B5E;font-size:1rem;margin:0">
+      <i class="fas fa-history" style="color:#C9A84C;margin-right:.5rem"></i>Historique des mouvements — Exercice {{ config_exercice.annee }}
+    </h3>
+  </div>
+  <div class="membre-table-wrap">
+    <table class="membre-table">
+      <thead>
+        <tr>
+          <th>Mois</th>
+          <th>Reste (saisie)</th>
+          <th>Épargne nette</th>
+          <th>Fonds définitif</th>
+          <th>Éligible</th>
+          <th>Intérêts</th>
+          <th>Capital composé</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in mouvements %}
+        <tr>
+          <td style="font-weight:600;color:#1B2B5E">{{ m.mois }}/{{ m.annee }}</td>
+          <td>{{ m.reste|floatformat:0|intcomma }} F</td>
+          <td style="font-weight:600">{{ m.epargne_nette|floatformat:0|intcomma }} F</td>
+          <td>{{ m.fonds_definitif|floatformat:0|intcomma }} F</td>
+          <td>
+            {% if m.est_eligible_interets %}
+            <span class="badge-membre green"><i class="fas fa-check"></i> Oui</span>
+            {% else %}
+            <span class="badge-membre gray">Non</span>
+            {% endif %}
+          </td>
+          <td style="color:#10705A;font-weight:600">
+            {% if m.interet_attribue %}+{{ m.interet_attribue|floatformat:2|intcomma }}{% else %}—{% endif %}
+          </td>
+          <td><strong style="color:#1B2B5E">{{ m.capital_compose|floatformat:0|intcomma }} F</strong></td>
+        </tr>
+        {% empty %}
+        <tr class="empty-row"><td colspan="7">Aucun mouvement enregistré.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Saisies mensuelles (TableauDeBord) -->
+{% if saisies %}
+<div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+  <div style="padding:1.25rem 1.5rem;border-bottom:1px solid #E8E9EC">
+    <h3 style="font-family:'Playfair Display',serif;color:#1B2B5E;font-size:1rem;margin:0">
+      <i class="fas fa-edit" style="color:#C9A84C;margin-right:.5rem"></i>Détail des saisies mensuelles
+    </h3>
+  </div>
+  <div class="membre-table-wrap">
+    <table class="membre-table">
+      <thead>
+        <tr>
+          <th>Mois</th>
+          <th>Mode</th>
+          <th>Banque</th>
+          <th>Espèces</th>
+          <th>Pénalité espèces</th>
+          <th>Pénalité échec</th>
+          <th>Mutuelle</th>
+          <th>Reste</th>
+          <th>Statut</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in saisies %}
+        <tr>
+          <td style="font-weight:600;color:#1B2B5E">{{ s.mois }}/{{ s.annee }}</td>
+          <td>
+            <span class="badge-membre {% if s.mode_versement == 'BANQUE' %}green{% elif s.mode_versement == 'ESPECES' %}accent{% else %}red{% endif %}">
+              {{ s.get_mode_versement_display }}
+            </span>
+          </td>
+          <td>{{ s.versement_banque|floatformat:0|intcomma }} F</td>
+          <td>{{ s.versement_especes|floatformat:0|intcomma }} F</td>
+          <td>{% if s.penalite_especes_appli %}<span style="color:#B84C4C">{{ s.penalite_especes_appli|floatformat:0|intcomma }} F</span>{% else %}—{% endif %}</td>
+          <td>{% if s.penalite_echec_appli %}<span style="color:#B84C4C">{{ s.penalite_echec_appli|floatformat:0|intcomma }} F</span>{% else %}—{% endif %}</td>
+          <td>{{ s.mutuelle|floatformat:0|intcomma }} F</td>
+          <td style="font-weight:600">{{ s.reste|floatformat:0|intcomma }} F</td>
+          <td>
+            {% if s.est_valide %}
+            <span class="badge-membre green"><i class="fas fa-check"></i> Validé</span>
+            {% else %}
+            <span class="badge-membre gray">En attente</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr class="empty-row"><td colspan="9">Aucune saisie enregistrée.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

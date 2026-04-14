@@ -1,0 +1,31 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Rapport Retards{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'prets:liste' %}"><i class="fas fa-arrow-left"></i> Prêts</a></div>
+    <h2>Rapport Non-Remboursements</h2>
+  </div>
+</div>
+<div class="table-card">
+  <div class="table-card-head"><h3 style="color:var(--red)"><i class="fas fa-exclamation-triangle"></i> {{ prets_retard|length }} prêt(s) en retard</h3></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Adhérent</th><th>Montant initial</th><th>Solde restant</th><th>Mois retard</th><th>Pénalité</th><th></th></tr></thead>
+      <tbody>
+        {% for p in prets_retard %}
+        <tr>
+          <td style="font-weight:600;color:var(--primary)">{{ p.adherent.nom_prenom|title }}</td>
+          <td>{{ p.montant_principal|floatformat:0|intcomma }} FCFA</td>
+          <td style="color:var(--red);font-weight:700">{{ p.solde_restant|floatformat:0|intcomma }} FCFA</td>
+          <td><span class="badge red">{{ p.nb_mois_retard }} mois</span></td>
+          <td>{% if p.nb_mois_retard == 1 %}+{{ config_exercice.majoration_retard_mois_1 }}%{% else %}+{{ config_exercice.majoration_retard_mois_2 }}%{% endif %}</td>
+          <td><a href="{% url 'prets:detail' p.pk %}" class="tbl-btn view"><i class="fas fa-eye"></i></a></td>
+        </tr>
+        {% empty %}<tr class="empty-row"><td colspan="6" style="color:var(--green)"><i class="fas fa-check-circle"></i> Aucun retard.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

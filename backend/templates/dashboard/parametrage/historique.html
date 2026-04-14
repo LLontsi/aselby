@@ -1,0 +1,29 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Historique Exercices{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'parametrage:config' %}"><i class="fas fa-arrow-left"></i> Paramétrage</a></div>
+    <h2>Historique des exercices</h2>
+  </div>
+</div>
+<div class="table-card">
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Année</th><th>Statut</th><th>Taux prêt</th><th>Pénalité échec</th><th>Seuil intérêts</th></tr></thead>
+      <tbody>
+        {% for c in historique %}
+        <tr>
+          <td style="font-weight:700;color:var(--primary);font-family:var(--font-display)">{{ c.annee }}</td>
+          <td><span class="badge {% if c.est_ouvert %}green{% else %}gray{% endif %}">{% if c.est_ouvert %}Ouvert{% else %}Clôturé{% endif %}</span></td>
+          <td>{{ c.taux_interet_pret_mensuel }}%/mois</td>
+          <td>{{ c.pourcentage_penalite_echec }}%</td>
+          <td>{{ c.seuil_eligibilite_interets|floatformat:0|intcomma }} FCFA</td>
+        </tr>
+        {% empty %}<tr class="empty-row"><td colspan="5">Aucun historique.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

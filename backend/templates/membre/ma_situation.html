@@ -1,0 +1,134 @@
+{% extends "membre/base_membre.html" %}
+{% load humanize %}
+{% block titre %}Ma Situation{% endblock %}
+{% block page_titre %}Ma Situation Complète{% endblock %}
+
+{% block contenu %}
+
+<!-- KPIs -->
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-icon"><i class="fas fa-piggy-bank"></i></div>
+    <div><div class="kpi-val">{{ capital_total|floatformat:0|intcomma }}</div><div class="kpi-lbl">Capital composé (FCFA)</div></div>
+  </div>
+  <div class="kpi-card accent">
+    <div class="kpi-icon"><i class="fas fa-clock"></i></div>
+    <div><div class="kpi-val">{{ nb_parts_total }}</div><div class="kpi-lbl">Parts tontine</div></div>
+  </div>
+  <div class="kpi-card {% if dette_pret > 0 %}red{% else %}green{% endif %}">
+    <div class="kpi-icon"><i class="fas fa-balance-scale"></i></div>
+    <div><div class="kpi-val">{{ dette_pret|floatformat:0|intcomma }}</div><div class="kpi-lbl">Dette prêt (FCFA)</div></div>
+  </div>
+  <div class="kpi-card {% if nb_echecs > 0 %}red{% else %}green{% endif %}">
+    <div class="kpi-icon"><i class="fas fa-times-circle"></i></div>
+    <div><div class="kpi-val">{{ nb_echecs }}</div><div class="kpi-lbl">Échecs cette année</div></div>
+  </div>
+</div>
+
+<!-- Fiche de cassation -->
+{% if fiche_cassation %}
+<div style="background:white;border-radius:14px;padding:1.75rem;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:1.5rem">
+  <h3 style="font-family:'Playfair Display',serif;color:#1B2B5E;font-size:1.1rem;margin:0 0 1.5rem;padding-bottom:.75rem;border-bottom:2px solid #E8E9EC">
+    <i class="fas fa-file-alt" style="color:#C9A84C;margin-right:.5rem"></i>Fiche de Cassation — Exercice {{ config_exercice.annee }}
+  </h3>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+    <!-- Ce qui vous est dû -->
+    <div>
+      <div style="font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#ADB5BD;margin-bottom:.75rem">CE QUI VOUS EST DÛ</div>
+      <div class="detail-group">
+        <div class="detail-row"><div class="detail-label">Fonds de caisse</div><div class="detail-value" style="font-weight:600">{{ fiche_cassation.fonds_caisse|floatformat:0|intcomma }} FCFA</div></div>
+        <div class="detail-row"><div class="detail-label">Reconduction</div><div class="detail-value">{{ fiche_cassation.reconduction|floatformat:0|intcomma }} FCFA</div></div>
+        <div class="detail-row"><div class="detail-label">Répart. intérêts</div><div class="detail-value" style="color:#10705A">+{{ fiche_cassation.repartition_interets|floatformat:0|intcomma }} FCFA</div></div>
+        <div class="detail-row"><div class="detail-label">Épargne cumulée</div><div class="detail-value">{{ fiche_cassation.epargne_cumulee|floatformat:0|intcomma }} FCFA</div></div>
+        <div class="detail-row"><div class="detail-label">Répart. pénalités</div><div class="detail-value">{{ fiche_cassation.repartition_penalites|floatformat:0|intcomma }} FCFA</div></div>
+        <div class="detail-row"><div class="detail-label">Répart. collation</div><div class="detail-value">{{ fiche_cassation.repartition_collation|floatformat:0|intcomma }} FCFA</div></div>
+        <div class="detail-row" style="background:rgba(27,43,94,.05)">
+          <div class="detail-label" style="font-weight:700;color:#1B2B5E">TOTAL À DISTRIBUER</div>
+          <div class="detail-value" style="font-weight:700;color:#1B2B5E;font-size:1rem">{{ fiche_cassation.total_a_distribuer|floatformat:0|intcomma }} FCFA</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Retenues et net -->
+    <div>
+      <div style="font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#ADB5BD;margin-bottom:.75rem">RETENUES & NET</div>
+      <div class="detail-group">
+        <div class="detail-row"><div class="detail-label">Sanctions</div><div class="detail-value" style="color:#B84C4C">-{{ fiche_cassation.sanctions|floatformat:0|intcomma }} FCFA</div></div>
+        <div class="detail-row"><div class="detail-label">Complément mutuelle</div><div class="detail-value" style="color:#B84C4C">-{{ fiche_cassation.complement_mutuelle|floatformat:0|intcomma }} FCFA</div></div>
+        <div class="detail-row"><div class="detail-label">Complément fonds</div><div class="detail-value" style="color:#B84C4C">-{{ fiche_cassation.complement_fonds|floatformat:0|intcomma }} FCFA</div></div>
+        <div class="detail-row"><div class="detail-label">Dette prêt fonds</div><div class="detail-value" style="color:#B84C4C">-{{ fiche_cassation.dette_pret|floatformat:0|intcomma }} FCFA</div></div>
+        <div class="detail-row"><div class="detail-label">Dons foyer</div><div class="detail-value">{{ fiche_cassation.dons_foyer|floatformat:0|intcomma }} FCFA</div></div>
+        <div class="detail-row" style="background:rgba(16,112,90,.06)">
+          <div class="detail-label" style="font-weight:700;color:#10705A">NET À PERCEVOIR</div>
+          <div class="detail-value" style="font-weight:700;color:#10705A;font-size:1rem">{{ fiche_cassation.net_a_percevoir|floatformat:0|intcomma }} FCFA</div>
+        </div>
+      </div>
+
+      <!-- Distribution -->
+      <div style="margin-top:1rem">
+        <div class="detail-group">
+          <div class="detail-row"><div class="detail-label">Montant perçu</div><div class="detail-value" style="font-weight:600">{{ fiche_cassation.montant_percu|floatformat:0|intcomma }} FCFA</div></div>
+          <div class="detail-row"><div class="detail-label">Perçu espèces</div><div class="detail-value">{{ fiche_cassation.montant_percu_especes|floatformat:0|intcomma }} FCFA</div></div>
+          <div class="detail-row"><div class="detail-label">Perçu chèque</div><div class="detail-value">{{ fiche_cassation.montant_percu_cheque|floatformat:0|intcomma }} FCFA</div></div>
+          <div class="detail-row" style="background:rgba(201,168,76,.08)">
+            <div class="detail-label" style="font-weight:700;color:#A8863A">RECONDUCTION {{ config_exercice.annee|add:1 }}</div>
+            <div class="detail-value" style="font-weight:700;color:#A8863A">{{ fiche_cassation.reconduction|floatformat:0|intcomma }} FCFA</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<div class="membre-info-card accent-bg">
+  <i class="fas fa-hourglass-half" style="color:#A8863A"></i>
+  La fiche de cassation sera générée par le bureau à la clôture de l'exercice {{ config_exercice.annee }}.
+</div>
+{% endif %}
+
+<!-- Résumé annuel -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+  <div style="background:white;border-radius:14px;padding:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <h3 style="font-family:'Playfair Display',serif;color:#1B2B5E;font-size:1rem;margin:0 0 1rem;padding-bottom:.75rem;border-bottom:1px solid #E8E9EC">
+      <i class="fas fa-calendar-check" style="color:#C9A84C;margin-right:.5rem"></i>Saisies mensuelles
+    </h3>
+    <div style="display:flex;flex-direction:column;gap:.4rem;font-size:.85rem">
+      <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid #F4F5F7">
+        <span style="color:#6C757D">Mois saisis</span><strong>{{ nb_mois_saisis }}/12</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid #F4F5F7">
+        <span style="color:#6C757D">Versements banque</span><strong style="color:#10705A">{{ nb_mois_banque }}</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid #F4F5F7">
+        <span style="color:#6C757D">Versements espèces</span><strong>{{ nb_mois_especes }}</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:.4rem 0">
+        <span style="color:#6C757D">Échecs</span><strong style="color:{% if nb_echecs > 0 %}#B84C4C{% else %}#10705A{% endif %}">{{ nb_echecs }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:white;border-radius:14px;padding:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <h3 style="font-family:'Playfair Display',serif;color:#1B2B5E;font-size:1rem;margin:0 0 1rem;padding-bottom:.75rem;border-bottom:1px solid #E8E9EC">
+      <i class="fas fa-info-circle" style="color:#C9A84C;margin-right:.5rem"></i>Paramètres exercice
+    </h3>
+    <div style="display:flex;flex-direction:column;gap:.4rem;font-size:.85rem">
+      <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid #F4F5F7">
+        <span style="color:#6C757D">Taux prêt</span><strong>{{ config_exercice.taux_interet_pret_mensuel }}%/mois</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid #F4F5F7">
+        <span style="color:#6C757D">Pénalité espèces</span><strong>{{ config_exercice.penalite_especes|floatformat:0|intcomma }} F</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid #F4F5F7">
+        <span style="color:#6C757D">Pénalité échec</span><strong>{{ config_exercice.pourcentage_penalite_echec }}%</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:.4rem 0">
+        <span style="color:#6C757D">Seuil intérêts</span><strong>{{ config_exercice.seuil_eligibilite_interets|floatformat:0|intcomma }} F</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

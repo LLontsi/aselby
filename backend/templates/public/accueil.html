@@ -1,0 +1,193 @@
+{% extends "public/base_public.html" %}
+{% load humanize %}
+{% block titre %}Accueil{% endblock %}
+
+{% block contenu %}
+
+<!-- HERO -->
+<section class="hero-pub">
+  <div class="container">
+    <div class="hero-pub-content">
+      <span class="hero-pub-label">Association · Yaoundé · depuis 2016</span>
+      <h1 class="hero-pub-title">
+        Association des <span>Élites Bangou</span><br>de Yaoundé
+      </h1>
+      <p class="hero-pub-desc">
+        Une communauté de professionnels camerounais unis par la solidarité,
+        la confiance et l'excellence collective. Gérez votre tontine en toute transparence.
+      </p>
+      <div class="hero-pub-btns">
+        <a href="{% url 'public:apropos' %}" class="btn btn-primary">
+          <i class="fas fa-info-circle"></i> Découvrir l'association
+        </a>
+        <a href="{% url 'users:connexion' %}" class="btn btn-secondary">
+          <i class="fas fa-sign-in-alt"></i> Espace membre
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats-banner">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item animate-on-scroll">
+        <div class="stat-number" data-count="36">0</div>
+        <div class="stat-label">Adhérents actifs</div>
+      </div>
+      <div class="stat-item animate-on-scroll delay-100">
+        <div class="stat-number" data-count="2016">2016</div>
+        <div class="stat-label">Année de fondation</div>
+      </div>
+      <div class="stat-item animate-on-scroll delay-200">
+        <div class="stat-number" data-count="3">0</div>
+        <div class="stat-label">Niveaux de tontine</div>
+      </div>
+      <div class="stat-item animate-on-scroll delay-300">
+        <div class="stat-number" data-count="{{ config_exercice.annee|default:2026 }}">0</div>
+        <div class="stat-label">Exercice en cours</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NOS VALEURS -->
+<section class="section section-bg-white">
+  <div class="container">
+    <div class="section-header animate-on-scroll">
+      <span class="section-eyebrow">Ce qui nous unit</span>
+      <h2 class="section-title">Nos Valeurs</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="valeurs-grid">
+      <div class="valeur-card-3d animate-on-scroll delay-100">
+        <div class="valeur-card-inner">
+          <div class="valeur-card-front">
+            <div class="valeur-icon"><i class="fas fa-handshake"></i></div>
+            <h3>Solidarité</h3>
+          </div>
+          <div class="valeur-card-back">
+            <p>Chaque membre est un pilier. Nous nous soutenons mutuellement dans les moments de joie comme dans les épreuves.</p>
+          </div>
+        </div>
+      </div>
+      <div class="valeur-card-3d animate-on-scroll delay-200">
+        <div class="valeur-card-inner">
+          <div class="valeur-card-front">
+            <div class="valeur-icon"><i class="fas fa-star"></i></div>
+            <h3>Excellence</h3>
+          </div>
+          <div class="valeur-card-back">
+            <p>Nous visons l'excellence dans chaque action. Rigueur dans la gestion des fonds, transparence dans les décisions.</p>
+          </div>
+        </div>
+      </div>
+      <div class="valeur-card-3d animate-on-scroll delay-300">
+        <div class="valeur-card-inner">
+          <div class="valeur-card-front">
+            <div class="valeur-icon"><i class="fas fa-shield-alt"></i></div>
+            <h3>Confiance</h3>
+          </div>
+          <div class="valeur-card-back">
+            <p>La confiance est le fondement de notre association. Chaque engagement est honoré, chaque franc comptabilisé avec rigueur.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TONTINES -->
+<section class="chiffres-section">
+  <div class="container">
+    <div class="section-header animate-on-scroll">
+      <span class="section-eyebrow" style="color:rgba(201,168,76,.8);background:rgba(201,168,76,.1)">Nos tontines</span>
+      <h2 class="section-title light">3 niveaux de participation</h2>
+      <div class="section-line"></div>
+      <p class="section-subtitle light">Choisissez le niveau adapté à votre capacité de contribution.</p>
+    </div>
+    <div class="chiffres-grid">
+      <div class="chiffre-item animate-on-scroll delay-100">
+        <div class="chiffre-circle">
+          <div class="chiffre-num">T35</div>
+        </div>
+        <div class="chiffre-label">35 000 FCFA / mois</div>
+      </div>
+      <div class="chiffre-item animate-on-scroll delay-200">
+        <div class="chiffre-circle">
+          <div class="chiffre-num">T75</div>
+        </div>
+        <div class="chiffre-label">75 000 FCFA / mois</div>
+      </div>
+      <div class="chiffre-item animate-on-scroll delay-300">
+        <div class="chiffre-circle">
+          <div class="chiffre-num">T100</div>
+        </div>
+        <div class="chiffre-label">100 000 FCFA / mois</div>
+      </div>
+      <div class="chiffre-item animate-on-scroll delay-400">
+        <div class="chiffre-circle">
+          <div class="chiffre-num">1%</div>
+        </div>
+        <div class="chiffre-label">Taux intérêt prêt/mois</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ANNONCES RÉCENTES -->
+{% if annonces_recentes %}
+<section class="section section-bg-gray">
+  <div class="container">
+    <div class="section-header animate-on-scroll">
+      <span class="section-eyebrow">Actualités</span>
+      <h2 class="section-title">Dernières annonces</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="annonces-grid">
+      {% for annonce in annonces_recentes %}
+      <div class="annonce-card animate-on-scroll delay-{{ forloop.counter }}00">
+        <div class="annonce-card-header">
+          <div class="annonce-date">{{ annonce.date_publication|date:"d F Y" }}</div>
+        </div>
+        <div class="annonce-card-body">
+          <h3 class="annonce-card-title">{{ annonce.titre }}</h3>
+          <p class="annonce-card-text">{{ annonce.contenu|truncatewords:25 }}</p>
+        </div>
+        <div class="annonce-card-footer">
+          <a href="{% url 'public:annonce_detail' annonce.pk %}" class="btn-lire">
+            Lire la suite <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="section-action animate-on-scroll">
+      <a href="{% url 'public:annonces' %}" class="btn btn-outline-primary">
+        <i class="fas fa-list"></i> Toutes les annonces
+      </a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- CTA -->
+<section class="section section-bg-white">
+  <div class="container">
+    <div style="text-align:center;max-width:600px;margin:0 auto" class="animate-on-scroll">
+      <span class="section-eyebrow">Rejoindre ASELBY</span>
+      <h2 class="section-title">Vous êtes déjà membre ?</h2>
+      <div class="section-line"></div>
+      <p style="margin:1.5rem 0;color:var(--gray-500);font-size:1rem;line-height:1.8">
+        Accédez à votre espace personnel pour consulter votre fonds de caisse,
+        vos participations aux tontines et la situation de vos prêts.
+      </p>
+      <a href="{% url 'users:connexion' %}" class="btn btn-primary" style="font-size:1rem;padding:1rem 2.5rem">
+        <i class="fas fa-sign-in-alt"></i> Se connecter
+      </a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

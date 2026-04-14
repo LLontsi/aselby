@@ -1,0 +1,31 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Fonds — {{ adherent.nom_prenom|title }}{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'fonds:etat' %}"><i class="fas fa-arrow-left"></i> Fonds de caisse</a></div>
+    <h2>Fonds — {{ adherent.nom_prenom|title }}</h2>
+  </div>
+</div>
+<div class="table-card">
+  <div class="table-card-head"><h3>Historique des mouvements</h3></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Mois/Année</th><th>Épargne nette</th><th>Fonds définitif</th><th>Base calcul</th><th>Intérêts</th><th>Capital composé</th></tr></thead>
+      <tbody>
+        {% for m in mouvements %}
+        <tr>
+          <td style="font-weight:600">{{ m.mois }}/{{ m.annee }}</td>
+          <td>{{ m.epargne_nette|floatformat:0|intcomma }}</td>
+          <td>{{ m.fonds_definitif|floatformat:0|intcomma }}</td>
+          <td>{% if m.base_calcul_interet > 0 %}<span style="color:var(--green)">{{ m.base_calcul_interet|floatformat:0|intcomma }} ✓</span>{% else %}<span class="badge gray">—</span>{% endif %}</td>
+          <td style="color:var(--green)">{{ m.interet_attribue|floatformat:2|intcomma }}</td>
+          <td><strong>{{ m.capital_compose|floatformat:2|intcomma }}</strong></td>
+        </tr>
+        {% empty %}<tr class="empty-row"><td colspan="6">Aucun mouvement.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Nouveau Prêt{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'prets:liste' %}"><i class="fas fa-arrow-left"></i> Prêts</a></div>
+    <h2>Nouveau prêt sur fonds</h2>
+  </div>
+</div>
+<div style="max-width:680px">
+  <div class="info-card accent-border" style="margin-bottom:1.5rem">
+    <div style="font-size:.875rem;color:var(--gray-600)">
+      <i class="fas fa-info-circle" style="color:var(--accent-dark)"></i>
+      Taux : <strong>{{ config_exercice.taux_interet_pret_mensuel }}%/mois</strong> — Formule : montant × taux × durée. Un seul prêt actif par adhérent.
+    </div>
+  </div>
+  <div class="form-card">
+    <div class="form-card-title"><i class="fas fa-dollar-sign"></i> Détails du prêt</div>
+    <form method="post" class="admin-form">{% csrf_token %}
+      <div class="f-group">
+        <label class="f-label">Adhérent *</label>
+        <select class="f-select" name="adherent_matricule" required>
+          <option value="">— Sélectionner —</option>
+          {% for a in adherents %}
+          <option value="{{ a.matricule }}">{{ a.matricule }} — {{ a.nom_prenom|title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="f-row">
+        <div class="f-group">
+          <label class="f-label">Montant (FCFA) *</label>
+          <input class="f-input" type="number" name="montant" min="0" step="1000" required placeholder="Ex: 500000">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Durée (mois) *</label>
+          <input class="f-input" type="number" name="nombre_mois" min="1" max="24" required placeholder="Ex: 3">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Date d'octroi *</label>
+          <input class="f-input" type="date" name="date_octroi" required>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Mode de versement</label>
+          <select class="f-select" name="mode_versement">
+            <option value="BANQUE">Banque</option>
+            <option value="ESPECES">Espèces</option>
+          </select>
+        </div>
+      </div>
+      <div class="f-group" id="grp-cheque">
+        <label class="f-label">N° chèque</label>
+        <input class="f-input" type="text" name="numero_cheque" placeholder="Optionnel">
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-admin primary"><i class="fas fa-save"></i> Créer le prêt</button>
+        <a href="{% url 'prets:liste' %}" class="btn-admin ghost">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

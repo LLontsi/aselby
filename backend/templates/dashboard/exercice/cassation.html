@@ -1,0 +1,41 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Fiches de Cassation{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <h2>Fiches de Cassation — Exercice {{ config_exercice.annee }}</h2>
+  <a href="{% url 'exercice:cloturer' %}" class="btn-admin red" onclick="return confirm('Êtes-vous sûr de vouloir clôturer l\'exercice ?')">
+    <i class="fas fa-lock"></i> Clôturer l'exercice
+  </a>
+</div>
+<div class="info-card accent-border" style="margin-bottom:1.5rem">
+  <div style="font-size:.875rem;color:var(--gray-600);line-height:1.7">
+    <i class="fas fa-info-circle" style="color:var(--accent-dark)"></i>
+    Les fiches de cassation récapitulent pour chaque adhérent le total à distribuer, les retenues et le net à percevoir en fin d'exercice.
+  </div>
+</div>
+<div class="table-card">
+  <div class="table-card-head"><h3>{{ fiches|length }} fiche(s) générée(s)</h3>
+    <a href="{% url 'exercice:synthese' %}" class="btn-admin ghost" style="font-size:.8rem">Synthèse →</a>
+  </div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Adhérent</th><th>Total à distribuer</th><th>Total retenu</th><th>Dons foyer</th><th>Net à percevoir</th><th>Montant perçu</th><th>Reconduction</th><th>Reçu</th></tr></thead>
+      <tbody>
+        {% for f in fiches %}
+        <tr>
+          <td style="font-weight:600;color:var(--primary)">{{ f.adherent.nom_prenom|title }}</td>
+          <td>{{ f.total_a_distribuer|floatformat:0|intcomma }}</td>
+          <td style="color:var(--red)">{{ f.total_retenu|floatformat:0|intcomma }}</td>
+          <td>{{ f.dons_foyer|floatformat:0|intcomma }}</td>
+          <td><strong style="color:var(--green)">{{ f.net_a_percevoir|floatformat:0|intcomma }}</strong></td>
+          <td>{{ f.montant_percu|floatformat:0|intcomma }}</td>
+          <td>{{ f.reconduction|floatformat:0|intcomma }}</td>
+          <td><a href="{% url 'exercice:recu' f.adherent.matricule %}" class="tbl-btn view" title="Voir reçu"><i class="fas fa-file-pdf"></i></a></td>
+        </tr>
+        {% empty %}<tr class="empty-row"><td colspan="8">Aucune fiche générée. Lancez la synthèse d'abord.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

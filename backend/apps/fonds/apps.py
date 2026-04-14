@@ -1,0 +1,5 @@
+from django.apps import AppConfig
+class FondsConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'apps.fonds'
+    verbose_name = 'Fonds de Caisse'

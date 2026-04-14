@@ -1,0 +1,103 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Prêt — {{ pret.adherent.nom_prenom|title }}{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'prets:liste' %}"><i class="fas fa-arrow-left"></i> Prêts</a></div>
+    <h2>Prêt — {{ pret.adherent.nom_prenom|title }}</h2>
+  </div>
+  <span class="badge {% if pret.statut == 'EN_COURS' %}primary{% elif pret.statut == 'EN_RETARD' %}red{% else %}green{% endif %}" style="font-size:.9rem;padding:.5rem 1rem">
+    {{ pret.get_statut_display }}
+  </span>
+</div>
+
+{% if pret.nb_mois_retard > 0 %}
+<div class="alerte-admin" style="margin-bottom:1.5rem">
+  <i class="fas fa-exclamation-circle"></i>
+  <strong>{{ pret.nb_mois_retard }} mois de retard</strong>
+  — pénalité applicable :
+  {% if pret.nb_mois_retard == 1 %}+{{ config_exercice.majoration_retard_mois_1 }}%
+  {% else %}+{{ config_exercice.majoration_retard_mois_2 }}%{% endif %}
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem">
+  <div class="info-card">
+    <h3><i class="fas fa-dollar-sign"></i> Détails du prêt</h3>
+    <div class="info-row">
+      <div class="info-item"><span class="lbl">Montant initial</span><span class="val">{{ pret.montant_principal|floatformat:0|intcomma }} FCFA</span></div>
+      <div class="info-item"><span class="lbl">Intérêts ({{ pret.taux_mensuel }}%/mois)</span><span class="val">{{ pret.interet_total|floatformat:0|intcomma }} FCFA</span></div>
+      <div class="info-item"><span class="lbl">Total dû</span><span class="val">{{ pret.montant_total_du|floatformat:0|intcomma }} FCFA</span></div>
+      <div class="info-item"><span class="lbl">Remboursé</span><span class="val green">{{ pret.montant_rembourse|floatformat:0|intcomma }} FCFA</span></div>
+      <div class="info-item"><span class="lbl">Solde restant</span>
+        <span class="val {% if pret.solde_restant > 0 %}red{% else %}green{% endif %}">
+          {{ pret.solde_restant|floatformat:0|intcomma }} FCFA
+        </span>
+      </div>
+      <div class="info-item"><span class="lbl">Durée</span><span class="val">{{ pret.nombre_mois }} mois</span></div>
+      <div class="info-item"><span class="lbl">Date octroi</span><span class="val">{{ pret.date_octroi|date:"d/m/Y" }}</span></div>
+      <div class="info-item"><span class="lbl">Date échéance</span><span class="val">{{ pret.date_echeance|date:"d/m/Y" }}</span></div>
+      <div class="info-item"><span class="lbl">Mode versement</span>
+        <span class="badge {% if pret.mode_versement == 'BANQUE' %}green{% else %}accent{% endif %}">
+          {{ pret.get_mode_versement_display }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  {% if pret.statut != 'SOLDE' %}
+  <div class="form-card">
+    <div class="form-card-title"><i class="fas fa-redo"></i> Enregistrer un remboursement</div>
+    <div class="info-card" style="background:rgba(var(--primary-rgb),.04);border:1px solid rgba(var(--primary-rgb),.1);border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem">
+      <div style="font-size:.8rem;color:var(--gray-500)">
+        <i class="fas fa-info-circle" style="color:var(--accent-dark)"></i>
+        Pour enregistrer un remboursement, utilisez la <strong>saisie mensuelle</strong> —
+        le remboursement est lié à la saisie du mois concerné.
+      </div>
+    </div>
+    <a href="{% url 'saisie:formulaire' %}" class="btn-admin primary" style="width:100%;justify-content:center">
+      <i class="fas fa-edit"></i> Aller à la saisie mensuelle
+    </a>
+    {% if pret.est_demande_membre and not pret.est_valide_bureau %}
+    <div style="margin-top:1rem;display:flex;gap:.5rem">
+      <form method="post" action="{% url 'prets:valider' pret.pk %}" style="flex:1">{% csrf_token %}
+        <button type="submit" class="btn-admin green" style="width:100%"><i class="fas fa-check"></i> Valider</button>
+      </form>
+      <form method="post" action="{% url 'prets:rejeter' pret.pk %}" style="flex:1">{% csrf_token %}
+        <button type="submit" class="btn-admin red" style="width:100%"><i class="fas fa-times"></i> Rejeter</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="info-card green-border" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.75rem">
+    <i class="fas fa-check-circle" style="font-size:3rem;color:var(--green)"></i>
+    <div style="font-size:1.1rem;font-weight:600;color:var(--green)">Prêt soldé</div>
+    <div style="font-size:.85rem;color:var(--gray-500)">Soldé le {{ pret.date_echeance|date:"d/m/Y" }}</div>
+  </div>
+  {% endif %}
+</div>
+
+{% if remboursements %}
+<div class="table-card">
+  <div class="table-card-head"><h3>Historique des remboursements</h3></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Date</th><th>Mois/Année</th><th>Montant</th><th>Mode</th><th>Pénalité retard</th></tr></thead>
+      <tbody>
+        {% for r in remboursements %}
+        <tr>
+          <td>{{ r.date_remboursement|date:"d/m/Y" }}</td>
+          <td>{{ r.mois }}/{{ r.annee }}</td>
+          <td style="color:var(--green);font-weight:600">{{ r.montant|floatformat:0|intcomma }} FCFA</td>
+          <td><span class="badge {% if r.mode_versement == 'BANQUE' %}green{% else %}accent{% endif %}">{{ r.mode_versement }}</span></td>
+          <td>{% if r.penalite_retard %}<span style="color:var(--red)">{{ r.penalite_retard|floatformat:0|intcomma }}</span>{% else %}—{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,144 @@
+{% extends "public/base_public.html" %}
+{% load humanize %}
+{% block titre %}À propos{% endblock %}
+
+{% block contenu %}
+
+
+<section style="background:linear-gradient(135deg,var(--primary-dark) 0%,var(--primary) 60%,var(--primary-light) 100%);padding:5rem 0 3.5rem;text-align:center;position:relative;overflow:hidden">
+  <div style="position:absolute;top:-60px;right:-60px;width:300px;height:300px;border-radius:50%;background:rgba(201,168,76,.08);pointer-events:none"></div>
+  <div style="position:absolute;bottom:-80px;left:-40px;width:250px;height:250px;border-radius:50%;background:rgba(255,255,255,.04);pointer-events:none"></div>
+  <div class="container" style="position:relative;z-index:1">
+    <div style="display:inline-flex;align-items:center;gap:.5rem;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);border-radius:2rem;padding:.35rem 1rem;margin-bottom:1.25rem">
+      <i class="fas fa-users" style="color:var(--accent);font-size:.85rem"></i>
+      <span style="color:var(--accent);font-size:.82rem;font-weight:600;letter-spacing:.05em">NOTRE ASSOCIATION</span>
+    </div>
+    <h1 style="color:white;font-size:clamp(2rem,4vw,2.8rem);font-weight:800;margin-bottom:.75rem;line-height:1.2">
+      L'Association <span style="color:var(--accent)">ASELBY</span>
+    </h1>
+    <p style="color:rgba(255,255,255,.7);font-size:1.05rem;max-width:520px;margin:0 auto">
+      Association des Élites Bangou de Yaoundé — unie par la solidarité depuis 2016
+    </p>
+  </div>
+</section>
+ 
+<!-- PRÉSENTATION -->
+<section class="section section-bg-white">
+  <div class="container">
+    <div class="about-grid">
+      <div class="about-content animate-left">
+        <h2 style="font-family:var(--font-display);font-size:1.8rem;color:var(--primary);margin-bottom:1.2rem">
+          Une tontine professionnelle<br>fondée sur la confiance
+        </h2>
+        <p>Fondée en 2016, l'ASELBY est une association de tontine réunissant des professionnels camerounais de Yaoundé, unis autour de valeurs fortes de solidarité, de confiance et d'excellence collective.</p>
+        <p>Chaque mois, lors du 3ème dimanche, les membres se réunissent pour gérer leurs cotisations, attribuer les lots par enchères et prendre les décisions communes du bureau.</p>
+        <p>L'association propose trois niveaux de participation — T35, T75 et T100 — pour s'adapter aux capacités financières de chaque membre tout en garantissant une gestion rigoureuse et transparente des fonds.</p>
+      </div>
+      <div class="animate-right">
+        <div class="about-img-placeholder">
+          <i class="fas fa-users"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VALEURS -->
+<section class="section section-bg-gray">
+  <div class="container">
+    <div class="section-header animate-on-scroll">
+      <span class="section-eyebrow">Nos fondamentaux</span>
+      <h2 class="section-title">Ce qui nous définit</h2>
+      <div class="section-line"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem">
+      <div class="card animate-on-scroll delay-100">
+        <div class="card-highlight"></div>
+        <div class="card-body">
+          <div class="card-icon accent"><i class="fas fa-handshake"></i></div>
+          <h3 class="card-title">Solidarité</h3>
+          <p class="card-text">Chaque membre est un pilier. Nous nous soutenons mutuellement dans les moments de joie comme dans les épreuves, car la force de l'association réside dans son unité.</p>
+        </div>
+      </div>
+      <div class="card animate-on-scroll delay-200">
+        <div class="card-highlight"></div>
+        <div class="card-body">
+          <div class="card-icon"><i class="fas fa-star"></i></div>
+          <h3 class="card-title">Excellence</h3>
+          <p class="card-text">Nous visons l'excellence dans chaque action. Rigueur dans la gestion des fonds, transparence dans les décisions, professionnalisme dans nos échanges.</p>
+        </div>
+      </div>
+      <div class="card animate-on-scroll delay-300">
+        <div class="card-highlight"></div>
+        <div class="card-body">
+          <div class="card-icon green"><i class="fas fa-shield-alt"></i></div>
+          <h3 class="card-title">Confiance</h3>
+          <p class="card-text">La confiance est le fondement de notre association. Chaque engagement est honoré, chaque franc est comptabilisé avec rigueur et transparence totale.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BUREAU -->
+{% if membres_bureau_gauche or membres_bureau_droite %}
+<section class="section section-bg-white">
+  <div class="container">
+    <div class="section-header animate-on-scroll">
+      <span class="section-eyebrow">Direction</span>
+      <h2 class="section-title">Notre Bureau</h2>
+      <div class="section-line"></div>
+      <p class="section-subtitle">Le bureau est composé de membres élus qui administrent l'association et veillent au respect du règlement intérieur.</p>
+    </div>
+    <div class="bureau-grid">
+      {% for m in membres_bureau_gauche %}
+      <div class="bureau-card animate-on-scroll delay-{{ forloop.counter }}00">
+        <div class="bureau-avatar">{{ m.nom_prenom|slice:":1"|upper }}</div>
+        <div class="bureau-nom">{{ m.nom_prenom|title }}</div>
+        <div class="bureau-poste">{{ m.poste_bureau }}</div>
+        {% if m.telephone1 %}<div class="bureau-tel"><i class="fas fa-phone"></i> {{ m.telephone1 }}</div>{% endif %}
+      </div>
+      {% endfor %}
+      {% for m in membres_bureau_droite %}
+      <div class="bureau-card animate-on-scroll delay-{{ forloop.counter }}00">
+        <div class="bureau-avatar">{{ m.nom_prenom|slice:":1"|upper }}</div>
+        <div class="bureau-nom">{{ m.nom_prenom|title }}</div>
+        <div class="bureau-poste">{{ m.poste_bureau }}</div>
+        {% if m.telephone1 %}<div class="bureau-tel"><i class="fas fa-phone"></i> {{ m.telephone1 }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- CHIFFRES -->
+<section class="chiffres-section">
+  <div class="container">
+    <div class="section-header animate-on-scroll">
+      <span class="section-eyebrow" style="color:rgba(201,168,76,.8);background:rgba(201,168,76,.1)">En chiffres</span>
+      <h2 class="section-title light">ASELBY en chiffres</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="chiffres-grid">
+      <div class="chiffre-item animate-on-scroll delay-100">
+        <div class="chiffre-circle"><div class="chiffre-num" data-count="36">0</div></div>
+        <div class="chiffre-label">Adhérents actifs</div>
+      </div>
+      <div class="chiffre-item animate-on-scroll delay-200">
+        <div class="chiffre-circle"><div class="chiffre-num" data-count="9">0</div></div>
+        <div class="chiffre-label">Années d'existence</div>
+      </div>
+      <div class="chiffre-item animate-on-scroll delay-300">
+        <div class="chiffre-circle"><div class="chiffre-num" data-count="3">0</div></div>
+        <div class="chiffre-label">Niveaux de tontine</div>
+      </div>
+      <div class="chiffre-item animate-on-scroll delay-400">
+        <div class="chiffre-circle"><div class="chiffre-num" data-count="12">0</div></div>
+        <div class="chiffre-label">Séances par an</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Intérêts Tontines{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'tontines:tableau' %}"><i class="fas fa-arrow-left"></i> Tontines</a></div>
+    <h2>Intérêts Tontines</h2>
+  </div>
+</div>
+<div class="table-card">
+  <div class="table-card-head"><h3>Répartition des intérêts par niveau</h3></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Adhérent</th><th>Niveau</th><th>Parts</th><th>Intérêt/part</th><th>Total intérêts</th></tr></thead>
+      <tbody>
+        {% for item in interets %}
+        <tr>
+          <td style="font-weight:600;color:var(--primary)">{{ item.adherent.nom_prenom|title }}</td>
+          <td><span class="badge primary">{{ item.niveau }}</span></td>
+          <td>{{ item.nb_parts }}</td>
+          <td>{{ item.interet_par_part|floatformat:0|intcomma }} FCFA</td>
+          <td style="color:var(--green);font-weight:600">{{ item.total_interets|floatformat:0|intcomma }} FCFA</td>
+        </tr>
+        {% empty %}<tr class="empty-row"><td colspan="5">Aucune donnée.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

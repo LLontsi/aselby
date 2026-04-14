@@ -1,0 +1,39 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Calendrier Prévisionnel{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <h2>Calendrier Prévisionnel — {{ config_exercice.annee }}</h2>
+  <a href="{% url 'tontines:tableau' %}" class="btn-admin ghost"><i class="fas fa-arrow-left"></i> Retour</a>
+</div>
+<div class="info-card" style="margin-bottom:1.5rem">
+  <div style="font-size:.875rem;color:var(--gray-600);line-height:1.7">
+    <i class="fas fa-info-circle" style="color:var(--accent-dark)"></i>
+    Ce calendrier est indicatif. Il peut être modifié lors des enchères du 3ème dimanche.
+  </div>
+</div>
+{% for niveau in niveaux %}
+<div class="table-card" style="margin-bottom:1.5rem">
+  <div class="table-card-head">
+    <h3>{{ niveau.code }} — {{ niveau.taux_mensuel|floatformat:0|intcomma }} FCFA/mois</h3>
+  </div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Mois</th><th>Adhérent pressenti</th><th>Montant lot estimé</th><th>Statut</th></tr></thead>
+      <tbody>
+        {% for i in "123456789012"|make_list %}
+        <tr>
+          <td style="font-weight:600">Mois {{ forloop.counter }}</td>
+          <td style="color:var(--gray-400)">—</td>
+          <td>{{ niveau.lot_annuel|default:0|floatformat:0|intcomma }} FCFA</td>
+          <td><span class="badge gray">À planifier</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% empty %}
+<div class="empty-state"><i class="fas fa-calendar"></i><p>Aucun niveau de tontine configuré.</p></div>
+{% endfor %}
+{% endblock %}

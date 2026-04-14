@@ -1,0 +1,62 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Chèques{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'banque:historique' %}"><i class="fas fa-arrow-left"></i> Trésorerie</a></div>
+    <h2>Gestion des chèques — {{ config_exercice.annee }}</h2>
+  </div>
+  <div style="color:var(--gold);font-weight:700;font-size:1.1rem">
+    Total : {{ total_cheques|floatformat:0|intcomma }} FCFA
+  </div>
+</div>
+
+<!-- FILTRE PAR MOIS -->
+{% if mois_disponibles %}
+<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center">
+  <span style="font-size:.85rem;color:var(--gray-400)">Filtrer :</span>
+  <a href="{% url 'banque:cheques' %}"
+     class="btn-admin {% if not mois_filter %}primary{% else %}ghost{% endif %}"
+     style="font-size:.8rem;padding:.35rem .9rem">Tous les mois</a>
+  {% for m in mois_disponibles %}
+  <a href="{% url 'banque:cheques' %}?mois={{ m.mois }}&annee={{ m.annee }}"
+     class="btn-admin {% if mois_filter == m.mois and annee_filter == m.annee %}primary{% else %}ghost{% endif %}"
+     style="font-size:.8rem;padding:.35rem .9rem">{{ m.mois }}/{{ m.annee }}</a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="table-card">
+  <div class="table-card-head">
+    <h3>Liste des chèques{% if mois_filter %} — {{ mois_filter }}/{{ annee_filter }}{% endif %}</h3>
+    <span class="badge green">{{ cheques.count }} chèque(s)</span>
+  </div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>N° Chèque</th>
+          <th>Adhérent</th>
+          <th>Mois/Année</th>
+          <th>Montant</th>
+          <th>Affectation</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in cheques %}
+        <tr>
+          <td style="font-weight:700;color:var(--primary);font-family:var(--font-display)">{{ c.numero }}</td>
+          <td style="font-weight:600">{{ c.adherent.nom_prenom|title }}</td>
+          <td><span class="badge primary">{{ c.mois }}/{{ c.annee }}</span></td>
+          <td style="font-weight:600;color:var(--green)">{{ c.montant|floatformat:0|intcomma }} FCFA</td>
+          <td style="color:var(--gray-500);font-size:.85rem">{{ c.affectation }}</td>
+        </tr>
+        {% empty %}
+        <tr class="empty-row"><td colspan="5">Aucun chèque enregistré.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

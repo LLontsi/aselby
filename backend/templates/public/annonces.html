@@ -1,0 +1,61 @@
+{% extends "public/base_public.html" %}
+{% load humanize %}
+{% block titre %}Annonces{% endblock %}
+
+{% block contenu %}
+
+<section style="background:linear-gradient(135deg,var(--primary-dark) 0%,var(--primary) 60%,var(--primary-light) 100%);padding:5rem 0 3.5rem;text-align:center;position:relative;overflow:hidden">
+  <div style="position:absolute;top:-60px;right:-60px;width:300px;height:300px;border-radius:50%;background:rgba(201,168,76,.08);pointer-events:none"></div>
+  <div style="position:absolute;bottom:-80px;left:-40px;width:250px;height:250px;border-radius:50%;background:rgba(255,255,255,.04);pointer-events:none"></div>
+  <div class="container" style="position:relative;z-index:1">
+    <div style="display:inline-flex;align-items:center;gap:.5rem;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);border-radius:2rem;padding:.35rem 1rem;margin-bottom:1.25rem">
+      <i class="fas fa-bullhorn" style="color:var(--accent);font-size:.85rem"></i>
+      <span style="color:var(--accent);font-size:.82rem;font-weight:600;letter-spacing:.05em">ACTUALITÉS</span>
+    </div>
+    <h1 style="color:white;font-size:clamp(2rem,4vw,2.8rem);font-weight:800;margin-bottom:.75rem;line-height:1.2">
+      Annonces <span style="color:var(--accent)">& Actualités</span>
+    </h1>
+    <p style="color:rgba(255,255,255,.7);font-size:1.05rem;max-width:520px;margin:0 auto">
+      Les dernières nouvelles et informations importantes de l'association
+    </p>
+  </div>
+</section>
+
+<section class="section section-bg-gray">
+  <div class="container">
+    {% if annonces %}
+    <div class="annonces-liste-grid">
+      {% for a in annonces %}
+      <div class="annonce-liste-card animate-on-scroll delay-{{ forloop.counter }}00">
+        <div class="annonce-liste-top">
+          <span class="annonce-liste-date">{{ a.date_publication|date:"d F Y" }}</span>
+          <i class="fas fa-bullhorn" style="color:var(--accent-light);opacity:.6"></i>
+        </div>
+        <div class="annonce-liste-body">
+          <h3 class="annonce-liste-title">{{ a.titre }}</h3>
+          <p class="annonce-liste-text">{{ a.contenu|truncatewords:35 }}</p>
+        </div>
+        <div class="annonce-liste-footer">
+          <a href="{% url 'public:annonce_detail' a.pk %}" class="btn-lire">
+            Lire la suite <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+      {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}"><i class="fas fa-chevron-left"></i></a>{% endif %}
+      <span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}"><i class="fas fa-chevron-right"></i></a>{% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="empty-state animate-on-scroll">
+      <i class="fas fa-bullhorn"></i>
+      <p>Aucune annonce pour le moment.</p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

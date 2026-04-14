@@ -1,0 +1,33 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Trésorerie{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <h2>Trésorerie — {{ config_exercice.annee }}</h2>
+  <div style="display:flex;gap:.5rem">
+    <a href="{% url 'banque:cheques' %}" class="btn-admin ghost"><i class="fas fa-file-alt"></i> Chèques</a>
+    <a href="{% url 'banque:tresorerie' %}" class="btn-admin primary"><i class="fas fa-chart-bar"></i> Synthèse</a>
+  </div>
+</div>
+<div class="table-card">
+  <div class="table-card-head"><h3>Historique bancaire</h3></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Adhérent</th><th>Mois</th><th>Banque</th><th>Espèces</th><th>En compte</th><th>Engagement</th><th>À justifier</th></tr></thead>
+      <tbody>
+        {% for h in historiques %}
+        <tr>
+          <td style="font-weight:600;color:var(--primary)">{{ h.adherent.nom_prenom|title }}</td>
+          <td>{{ h.mois }}/{{ h.annee }}</td>
+          <td>{{ h.versement_banque|floatformat:0|intcomma }}</td>
+          <td>{{ h.versement_especes|floatformat:0|intcomma }}</td>
+          <td style="color:var(--green);font-weight:600">{{ h.en_compte|floatformat:0|intcomma }}</td>
+          <td>{{ h.montant_engagement|floatformat:0|intcomma }}</td>
+          <td>{% if h.montant_a_justifier %}<span style="color:var(--red)">{{ h.montant_a_justifier|floatformat:0|intcomma }}</span>{% else %}—{% endif %}</td>
+        </tr>
+        {% empty %}<tr class="empty-row"><td colspan="7">Aucun historique.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

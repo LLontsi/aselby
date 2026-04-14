@@ -1,0 +1,86 @@
+{% extends "membre/base_membre.html" %}
+{% load humanize %}
+{% block titre %}Mon état après lot{% endblock %}
+{% block page_titre %}État après enchère — Lot {{ mois }}/{{ annee }}{% endblock %}
+
+{% block contenu %}
+<div style="max-width:600px">
+
+  <div class="membre-info-card accent-bg" style="margin-bottom:1.25rem">
+    <i class="fas fa-gavel" style="color:#C9A84C"></i>
+    <strong>Vous avez obtenu le lot ce mois.</strong>
+    Voici le calcul de ce que vous devez rembourser et ce qui vous est remis.
+  </div>
+
+  <!-- TOTAL À DISTRIBUER -->
+  <div style="background:white;border-radius:14px;padding:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:1.25rem">
+    <h3 style="font-family:'Playfair Display',serif;color:#1B2B5E;font-size:1rem;margin:0 0 1rem;padding-bottom:.75rem;border-bottom:1px solid #E8E9EC">
+      <i class="fas fa-plus-circle" style="color:#10705A"></i> Ce que vous recevez (lot + capital)
+    </h3>
+    <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid #F0F0F0">
+      <span style="font-size:.875rem;color:#6C757D">Montant du lot de tontine</span>
+      <span style="font-weight:600;color:#10705A">+{{ etat.montant_lot|floatformat:0|intcomma }} F</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:.4rem 0">
+      <span style="font-size:.875rem;color:#6C757D">Capital composé (fonds)</span>
+      <span style="font-weight:600;color:#10705A">+{{ etat.capital_compose|floatformat:0|intcomma }} F</span>
+    </div>
+  </div>
+
+  <!-- TOTAL RETENU -->
+  <div style="background:white;border-radius:14px;padding:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:1.25rem">
+    <h3 style="font-family:'Playfair Display',serif;color:#1B2B5E;font-size:1rem;margin:0 0 1rem;padding-bottom:.75rem;border-bottom:1px solid #E8E9EC">
+      <i class="fas fa-minus-circle" style="color:#B84C4C"></i> Ce qui est retenu
+    </h3>
+    {% if etat.total_tontines_dues > 0 %}
+    <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid #F0F0F0">
+      <div>
+        <span style="font-size:.875rem;color:#1B2B5E;font-weight:600">Tontines dues</span>
+        <div style="font-size:.72rem;color:#ADB5BD">{{ etat.nb_mois_non_verses }} mois non versés</div>
+      </div>
+      <span style="font-weight:600;color:#B84C4C">-{{ etat.total_tontines_dues|floatformat:0|intcomma }} F</span>
+    </div>
+    {% endif %}
+    {% if etat.charges_dues > 0 %}
+    <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid #F0F0F0">
+      <div>
+        <span style="font-size:.875rem;color:#1B2B5E;font-weight:600">Charges fixes dues</span>
+        <div style="font-size:.72rem;color:#ADB5BD">Fonds roulement + Frais excep + Collation × {{ etat.nb_mois_non_verses }} mois</div>
+      </div>
+      <span style="font-weight:600;color:#B84C4C">-{{ etat.charges_dues|floatformat:0|intcomma }} F</span>
+    </div>
+    {% endif %}
+    {% if etat.solde_pret > 0 %}
+    <div style="display:flex;justify-content:space-between;padding:.4rem 0">
+      <div>
+        <span style="font-size:.875rem;color:#1B2B5E;font-weight:600">Solde prêt restant</span>
+        <div style="font-size:.72rem;color:#ADB5BD">Déduit du lot</div>
+      </div>
+      <span style="font-weight:600;color:#B84C4C">-{{ etat.solde_pret|floatformat:0|intcomma }} F</span>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- RESTE NET -->
+  <div style="background:{% if etat.reste_pour_membre >= 0 %}#E8F5E9{% else %}#FFEBEE{% endif %};border-radius:14px;padding:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span style="font-weight:700;color:#1B2B5E;font-size:1rem">
+        {% if etat.reste_pour_membre >= 0 %}
+        <i class="fas fa-hand-holding-usd" style="color:#10705A"></i> Montant à vous remettre
+        {% else %}
+        <i class="fas fa-exclamation-circle" style="color:#B84C4C"></i> Solde insuffisant
+        {% endif %}
+      </span>
+      <span style="font-size:1.5rem;font-weight:700;color:{% if etat.reste_pour_membre >= 0 %}#10705A{% else %}#B84C4C{% endif %}">
+        {{ etat.reste_pour_membre|floatformat:0|intcomma }} FCFA
+      </span>
+    </div>
+    {% if etat.reste_pour_membre < 0 %}
+    <div style="font-size:.8rem;color:#B84C4C;margin-top:.5rem">
+      Votre lot ne couvre pas tout ce que vous devez. La différence est reportée en dette.
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

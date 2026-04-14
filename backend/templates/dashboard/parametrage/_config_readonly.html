@@ -1,0 +1,141 @@
+{% load humanize %}
+<!-- VUE LECTURE SEULE — exercice ouvert, paramètres figés -->
+<div class="info-card accent-border" style="margin-bottom:1rem;font-size:.82rem;color:var(--gray-500)">
+  <i class="fas fa-lock" style="color:#B84C4C"></i>
+  Les paramètres sont figés car l'exercice <strong>{{ config_exercice.annee }}</strong> est ouvert.
+  Pour modifier, clôturez d'abord l'exercice.
+</div>
+
+<div class="form-card" style="margin-bottom:1.5rem">
+  <div class="form-card-title"><i class="fas fa-clock" style="color:#C9A84C"></i> Tontines</div>
+  <div class="f-row">
+    <div class="f-group">
+      <label class="f-label">Taux T60 (FCFA)</label>
+      <div class="f-readonly">{{ config_exercice.taux_t35|intcomma }}</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Versement mensuel T60 (FCFA)</label>
+      <div class="f-readonly">{{ config_exercice.versement_t35|intcomma }}</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Taux T75 (FCFA)</label>
+      <div class="f-readonly">{{ config_exercice.taux_t75|intcomma }}</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Taux T100 (FCFA)</label>
+      <div class="f-readonly">{{ config_exercice.taux_t100|intcomma }}</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Diviseur intérêts</label>
+      <div class="f-readonly">{{ config_exercice.diviseur_interet_t35 }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="form-card" style="margin-bottom:1.5rem">
+  <div class="form-card-title"><i class="fas fa-piggy-bank" style="color:#C9A84C"></i> Cotisations mensuelles</div>
+  <div class="f-row">
+    <div class="f-group">
+      <label class="f-label">Fonds de roulement / mois</label>
+      <div class="f-readonly">{{ config_exercice.fonds_roulement_mensuel|intcomma }} FCFA</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Frais exceptionnels / mois</label>
+      <div class="f-readonly">{{ config_exercice.frais_exceptionnels_mensuel|intcomma }} FCFA</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Collation / mois</label>
+      <div class="f-readonly">{{ config_exercice.collation_mensuelle|intcomma }} FCFA</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Cotisation mutuelle / mois</label>
+      <div class="f-readonly">{{ config_exercice.mutuelle_mensuelle|intcomma }} FCFA</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Inscription nouvel adhérent</label>
+      <div class="f-readonly">{{ config_exercice.montant_inscription|intcomma }} FCFA</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Seuil éligibilité intérêts</label>
+      <div class="f-readonly">{{ config_exercice.seuil_eligibilite_interets|intcomma }} FCFA</div>
+    </div>
+  </div>
+  <div class="f-row">
+    <div class="f-group">
+      <label class="f-label">Complément fonds fin exercice</label>
+      <div class="f-readonly">{{ config_exercice.complement_fonds_fin_exercice|intcomma }} FCFA</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Complément mutuelle fin exercice</label>
+      <div class="f-readonly">{{ config_exercice.complement_mutuelle_fin_exercice|intcomma }} FCFA</div>
+    </div>
+  </div>
+</div>
+
+<div class="form-card" style="margin-bottom:1.5rem">
+  <div class="form-card-title"><i class="fas fa-exclamation-triangle" style="color:#C9A84C"></i> Pénalités</div>
+  <div class="f-row">
+    <div class="f-group">
+      <label class="f-label">Pénalité espèces</label>
+      <div class="f-readonly">{{ config_exercice.penalite_especes|intcomma }} FCFA
+        {% if config_exercice.penalite_especes_active %}<span class="badge green">Active</span>{% else %}<span class="badge red">Inactive</span>{% endif %}
+      </div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">% pénalité échec tontine</label>
+      <div class="f-readonly">{{ config_exercice.pourcentage_penalite_echec }} %</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Nb max échecs → liste rouge</label>
+      <div class="f-readonly">{{ config_exercice.nb_echecs_max_avant_liste_rouge }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="form-card" style="margin-bottom:1.5rem">
+  <div class="form-card-title"><i class="fas fa-dollar-sign" style="color:#C9A84C"></i> Prêts</div>
+  <div class="f-row">
+    <div class="f-group">
+      <label class="f-label">Taux intérêt (%/mois)</label>
+      <div class="f-readonly">{{ config_exercice.taux_interet_pret_mensuel }} %</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Majoration retard mois 1</label>
+      <div class="f-readonly">{{ config_exercice.majoration_retard_mois_1 }} %</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Majoration retard mois 2+</label>
+      <div class="f-readonly">{{ config_exercice.majoration_retard_mois_2 }} %</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Montant min prêt</label>
+      <div class="f-readonly">{{ config_exercice.montant_min_pret|intcomma }} FCFA</div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Montant max prêt</label>
+      <div class="f-readonly">{{ config_exercice.montant_max_pret|intcomma }} FCFA</div>
+    </div>
+  </div>
+</div>
+
+<div class="form-card" style="margin-bottom:1.5rem">
+  <div class="form-card-title"><i class="fas fa-home" style="color:#C9A84C"></i> Foyer</div>
+  <div class="f-row">
+    <div class="f-group">
+      <label class="f-label">Contribution foyer sur lot principal</label>
+      <div class="f-readonly">{{ config_exercice.contribution_foyer_lot_principal|intcomma }} FCFA</div>
+    </div>
+  </div>
+</div>
+
+<style>
+.f-readonly {
+  padding: .5rem .75rem;
+  background: var(--gray-50, #f9fafb);
+  border: 1px solid var(--gray-200, #e5e7eb);
+  border-radius: .375rem;
+  font-size: .875rem;
+  color: var(--gray-700, #374151);
+  font-weight: 500;
+}
+</style>

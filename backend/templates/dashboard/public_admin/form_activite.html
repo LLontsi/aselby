@@ -1,0 +1,43 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% block _titre %}{% if activite %}Modifier{% else %}Nouvelle{% endif %} activité{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'public:gestion_activites' %}"><i class="fas fa-arrow-left"></i> Activités</a></div>
+    <h2>{% if activite %}Modifier l'activité{% else %}Nouvelle activité{% endif %}</h2>
+  </div>
+</div>
+<form method="post" class="admin-form">{% csrf_token %}
+  <div class="form-card">
+    <div class="form-card-title"><i class="fas fa-calendar-alt"></i> Informations</div>
+    <div class="f-group">
+      <label class="f-label">Titre *</label>
+      <input class="f-input" type="text" name="titre" value="{{ activite.titre|default:'' }}" placeholder="Titre de l'activité" required>
+    </div>
+    <div class="f-row">
+      <div class="f-group">
+        <label class="f-label">Date *</label>
+        <input class="f-input" type="date" name="date" value="{{ activite.date|date:'Y-m-d'|default:'' }}" required>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Lieu</label>
+        <input class="f-input" type="text" name="lieu" value="{{ activite.lieu|default:'' }}" placeholder="Lieu de l'activité">
+      </div>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Description</label>
+      <textarea class="f-textarea" name="description" placeholder="Description...">{{ activite.description|default:'' }}</textarea>
+    </div>
+    <div class="f-group">
+      <label class="f-check">
+        <input type="checkbox" name="est_publiee" {% if not activite or activite.est_publiee %}checked{% endif %}>
+        <span>Publier sur le site</span>
+      </label>
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn-admin primary"><i class="fas fa-save"></i> Enregistrer</button>
+    <a href="{% url 'public:gestion_activites' %}" class="btn-admin ghost">Annuler</a>
+  </div>
+</form>
+{% endblock %}

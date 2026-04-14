@@ -1,0 +1,104 @@
+{% extends "membre/base_membre.html" %}
+{% load humanize %}
+{% block titre %}Mes Prêts{% endblock %}
+{% block page_titre %}Mes Prêts{% endblock %}
+
+{% block contenu %}
+
+<div style="display:flex;justify-content:flex-end;margin-bottom:1.5rem">
+  <a href="{% url 'membre:demander_pret' %}" class="btn-membre accent">
+    <i class="fas fa-plus"></i> Demander un prêt
+  </a>
+</div>
+
+{% for pret in prets %}
+<div style="background:white;border-radius:14px;padding:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:1.5rem;border-top:4px solid {% if pret.statut == 'EN_RETARD' %}#B84C4C{% elif pret.statut == 'SOLDE' %}#10705A{% else %}#1B2B5E{% endif %}">
+  <!-- En-tête prêt -->
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid #E8E9EC">
+    <div>
+      <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:#1B2B5E;font-weight:700">
+        Prêt de {{ pret.montant_principal|floatformat:0|intcomma }} FCFA
+      </div>
+      <div style="font-size:.78rem;color:#6C757D;margin-top:.2rem">
+        Octroyé le {{ pret.date_octroi|date:"d/m/Y" }} — Échéance : {{ pret.date_echeance|date:"d/m/Y" }}
+        — {{ pret.nombre_mois }} mois à {{ pret.taux_mensuel }}%/mois
+      </div>
+    </div>
+    <span class="badge-membre {% if pret.statut == 'EN_COURS' %}primary{% elif pret.statut == 'EN_RETARD' %}red{% else %}green{% endif %}" style="font-size:.85rem;padding:.4rem .9rem">
+      {{ pret.get_statut_display }}
+    </span>
+  </div>
+
+  {% if pret.nb_mois_retard > 0 %}
+  <div class="alerte-membre" style="margin-bottom:1rem">
+    <i class="fas fa-exclamation-circle"></i>
+    <strong>{{ pret.nb_mois_retard }} mois de retard</strong> — Pénalité applicable : +{{ config_exercice.majoration_retard_mois_1 }}%
+  </div>
+  {% endif %}
+
+  <!-- Barre progression remboursement -->
+  {% if pret.montant_total_du %}
+  {% widthratio pret.montant_rembourse pret.montant_total_du 100 as pct %}
+  <div style="margin-bottom:1.25rem">
+    <div style="display:flex;justify-content:space-between;font-size:.75rem;color:#6C757D;margin-bottom:.4rem">
+      <span>Progression remboursement</span>
+      <span>{{ pct }}%</span>
+    </div>
+    <div style="background:#E8E9EC;border-radius:20px;height:10px;overflow:hidden">
+      <div style="background:linear-gradient(90deg,{% if pret.statut == 'EN_RETARD' %}#B84C4C,#D4736A{% else %}#10705A,#C9A84C{% endif %});height:100%;border-radius:20px;width:{{ pct }}%;transition:width .5s"></div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Montants -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1.25rem">
+    {% for label, val, color in pret_details %}{% endfor %}
+    <div style="background:#F4F5F7;border-radius:8px;padding:.85rem;text-align:center">
+      <div style="font-size:.65rem;color:#6C757D;text-transform:uppercase;letter-spacing:1px;margin-bottom:.25rem">Montant initial</div>
+      <div style="font-weight:700;color:#1B2B5E;font-size:.95rem">{{ pret.montant_principal|floatformat:0|intcomma }} F</div>
+    </div>
+    <div style="background:#F4F5F7;border-radius:8px;padding:.85rem;text-align:center">
+      <div style="font-size:.65rem;color:#6C757D;text-transform:uppercase;letter-spacing:1px;margin-bottom:.25rem">Intérêts</div>
+      <div style="font-weight:700;color:#A8863A;font-size:.95rem">{{ pret.interet_total|floatformat:0|intcomma }} F</div>
+    </div>
+    <div style="background:rgba(16,112,90,.06);border-radius:8px;padding:.85rem;text-align:center">
+      <div style="font-size:.65rem;color:#6C757D;text-transform:uppercase;letter-spacing:1px;margin-bottom:.25rem">Remboursé</div>
+      <div style="font-weight:700;color:#10705A;font-size:.95rem">{{ pret.montant_rembourse|floatformat:0|intcomma }} F</div>
+    </div>
+    <div style="background:rgba(184,76,76,.06);border-radius:8px;padding:.85rem;text-align:center">
+      <div style="font-size:.65rem;color:#6C757D;text-transform:uppercase;letter-spacing:1px;margin-bottom:.25rem">Solde restant</div>
+      <div style="font-weight:700;color:#B84C4C;font-size:.95rem">{{ pret.solde_restant|floatformat:0|intcomma }} F</div>
+    </div>
+  </div>
+
+  <!-- Historique remboursements -->
+  {% if pret.remboursements.all %}
+  <div style="border-top:1px solid #E8E9EC;padding-top:1rem">
+    <div style="font-size:.72rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#ADB5BD;margin-bottom:.75rem">Remboursements enregistrés</div>
+    <table class="membre-table" style="font-size:.8rem">
+      <thead><tr><th>Date</th><th>Mois</th><th>Mode</th><th>Montant</th></tr></thead>
+      <tbody>
+        {% for r in pret.remboursements.all %}
+        <tr>
+          <td>{{ r.date_remboursement|date:"d/m/Y" }}</td>
+          <td>{{ r.mois }}/{{ r.annee }}</td>
+          <td><span class="badge-membre {% if r.mode_versement == 'BANQUE' %}green{% else %}accent{% endif %}">{{ r.mode_versement }}</span></td>
+          <td style="color:#10705A;font-weight:600">+{{ r.montant|floatformat:0|intcomma }} F</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% empty %}
+<div class="empty-membre">
+  <i class="fas fa-dollar-sign"></i>
+  <p>Aucun prêt enregistré pour l'exercice {{ config_exercice.annee }}.</p>
+  <a href="{% url 'membre:demander_pret' %}" class="btn-membre accent" style="margin-top:1rem">
+    <i class="fas fa-hand-holding-usd"></i> Faire une demande de prêt
+  </a>
+</div>
+{% endfor %}
+
+{% endblock %}

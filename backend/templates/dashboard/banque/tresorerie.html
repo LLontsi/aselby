@@ -1,0 +1,36 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Synthèse Trésorerie{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'banque:historique' %}"><i class="fas fa-arrow-left"></i> Historique</a></div>
+    <h2>Synthèse Trésorerie — {{ config_exercice.annee }}</h2>
+  </div>
+</div>
+<div class="stats-grid-admin">
+  <div class="stat-card-admin green"><div class="stat-icon-admin"><i class="fas fa-university"></i></div><div><div class="stat-val">{{ total_banque|floatformat:0|intcomma }}</div><div class="stat-lbl">Total versements banque (FCFA)</div></div></div>
+  <div class="stat-card-admin accent"><div class="stat-icon-admin"><i class="fas fa-money-bill-wave"></i></div><div><div class="stat-val">{{ total_especes|floatformat:0|intcomma }}</div><div class="stat-lbl">Total versements espèces (FCFA)</div></div></div>
+  <div class="stat-card-admin"><div class="stat-icon-admin"><i class="fas fa-balance-scale"></i></div><div><div class="stat-val">{{ total_en_compte|floatformat:0|intcomma }}</div><div class="stat-lbl">Total en compte (FCFA)</div></div></div>
+</div>
+<div class="table-card">
+  <div class="table-card-head"><h3>Synthèse mensuelle</h3></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Mois</th><th>Total banque</th><th>Total espèces</th><th>En compte</th><th>Engagement</th><th>À justifier</th></tr></thead>
+      <tbody>
+        {% for ligne in synthese_mensuelle %}
+        <tr>
+          <td style="font-weight:600">{{ ligne.mois }}/{{ ligne.annee }}</td>
+          <td>{{ ligne.banque|floatformat:0|intcomma }}</td>
+          <td>{{ ligne.especes|floatformat:0|intcomma }}</td>
+          <td style="color:var(--green);font-weight:600">{{ ligne.en_compte|floatformat:0|intcomma }}</td>
+          <td>{{ ligne.engagement|floatformat:0|intcomma }}</td>
+          <td>{% if ligne.a_justifier %}<span style="color:var(--red)">{{ ligne.a_justifier|floatformat:0|intcomma }}</span>{% else %}—{% endif %}</td>
+        </tr>
+        {% empty %}<tr class="empty-row"><td colspan="6">Aucune donnée.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

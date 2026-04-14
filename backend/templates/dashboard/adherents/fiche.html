@@ -1,0 +1,78 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Fiche — {{ adherent.nom_prenom|title }}{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <div>
+    <div class="breadcrumb"><a href="{% url 'adherents:liste' %}"><i class="fas fa-arrow-left"></i> Adhérents</a></div>
+    <h2>{{ adherent.nom_prenom|title }}</h2>
+  </div>
+  <a href="{% url 'adherents:modifier' adherent.matricule %}" class="btn-admin primary"><i class="fas fa-edit"></i> Modifier</a>
+</div>
+
+{% if liste_rouge and not liste_rouge.est_solde %}
+<div class="alerte-admin" style="margin-bottom:1.5rem;font-size:.9rem">
+  <i class="fas fa-exclamation-circle"></i>
+  <strong>En liste rouge</strong> — dette de {{ liste_rouge.montant_dette|floatformat:0|intcomma }} FCFA depuis le {{ liste_rouge.date_entree|date:"d/m/Y" }}
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem">
+  <div class="info-card">
+    <h3><i class="fas fa-user"></i> Informations personnelles</h3>
+    <div style="display:flex;flex-direction:column;gap:.75rem;font-size:.9rem">
+      <div><span style="color:var(--gray-400);font-size:.75rem;display:block">Matricule</span><strong>{{ adherent.matricule }}</strong></div>
+      <div><span style="color:var(--gray-400);font-size:.75rem;display:block">Résidence</span>{{ adherent.residence|default:"—" }}</div>
+      <div><span style="color:var(--gray-400);font-size:.75rem;display:block">Téléphone 1</span>{{ adherent.telephone1|default:"—" }}</div>
+      <div><span style="color:var(--gray-400);font-size:.75rem;display:block">Téléphone 2</span>{{ adherent.telephone2|default:"—" }}</div>
+      <div><span style="color:var(--gray-400);font-size:.75rem;display:block">Fonction</span>{{ adherent.fonction|default:"—" }}</div>
+      <div><span style="color:var(--gray-400);font-size:.75rem;display:block">Poste bureau</span>{{ adherent.poste_bureau|default:"Membre" }}</div>
+      <div><span style="color:var(--gray-400);font-size:.75rem;display:block">Statut</span>
+        <span class="badge {% if adherent.statut == 'ACTIF' %}green{% else %}gray{% endif %}">{{ adherent.get_statut_display }}</span>
+      </div>
+    </div>
+  </div>
+  <div class="info-card">
+    <h3><i class="fas fa-chart-bar"></i> Situation financière</h3>
+    <div class="info-row">
+      <div class="info-item"><span class="lbl">Prêts en cours</span><span class="val">{{ prets|length }}</span></div>
+      <div class="info-item"><span class="lbl">Mouvements fonds</span><span class="val">{{ mouvements|length }} mois</span></div>
+      <div class="info-item"><span class="lbl">Participations tontines</span><span class="val">{{ participations|length }}</span></div>
+    </div>
+    {% if prets %}
+    <div style="margin-top:1rem">
+      {% for p in prets %}
+      <div style="background:var(--gray-100);border-radius:8px;padding:.75rem;margin-bottom:.5rem;font-size:.85rem">
+        <div style="display:flex;justify-content:space-between">
+          <span>Prêt du {{ p.date_octroi|date:"d/m/Y" }}</span>
+          <span class="badge {% if p.statut == 'EN_COURS' %}primary{% elif p.statut == 'EN_RETARD' %}red{% else %}green{% endif %}">{{ p.get_statut_display }}</span>
+        </div>
+        <div style="color:var(--gray-500);margin-top:.25rem">Restant : <strong>{{ p.solde_restant|floatformat:0|intcomma }} FCFA</strong></div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if mouvements %}
+<div class="table-card">
+  <div class="table-card-head"><h3>Historique fonds de caisse</h3></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Mois/Année</th><th>Épargne nette</th><th>Intérêts</th><th>Capital composé</th></tr></thead>
+      <tbody>
+        {% for m in mouvements %}
+        <tr>
+          <td>{{ m.mois }}/{{ m.annee }}</td>
+          <td>{{ m.epargne_nette|floatformat:0|intcomma }}</td>
+          <td style="color:var(--green)">{{ m.interet_attribue|floatformat:2|intcomma }}</td>
+          <td><strong>{{ m.capital_compose|floatformat:2|intcomma }}</strong></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

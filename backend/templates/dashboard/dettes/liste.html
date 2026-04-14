@@ -1,0 +1,33 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Liste Rouge{% endblock %}
+{% block contenu %}
+<div class="page-header-admin">
+  <h2>Liste Rouge — Dettes historiques</h2>
+</div>
+{% if dettes %}
+<div class="table-card">
+  <div class="table-card-head"><h3>{{ dettes|length }} membre(s) en liste rouge</h3></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Adhérent</th><th>Date entrée</th><th>Motif</th><th>Dette initiale</th><th>Garantie</th><th>Statut</th><th></th></tr></thead>
+      <tbody>
+        {% for d in dettes %}
+        <tr>
+          <td style="font-weight:600;color:var(--primary)">{{ d.adherent.nom_prenom|title }}</td>
+          <td>{{ d.date_entree|date:"d/m/Y" }}</td>
+          <td>{{ d.motif|truncatechars:40 }}</td>
+          <td style="color:var(--red);font-weight:600">{{ d.montant_dette|floatformat:0|intcomma }} FCFA</td>
+          <td>{{ d.montant_garantie|floatformat:0|intcomma }}</td>
+          <td>{% if d.est_solde %}<span class="badge green">Soldé</span>{% else %}<span class="badge red">En cours</span>{% endif %}</td>
+          <td><a href="{% url 'dettes:fiche' d.pk %}" class="tbl-btn view"><i class="fas fa-eye"></i></a></td>
+        </tr>
+        {% empty %}<tr class="empty-row"><td colspan="7">Aucune dette.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="empty-state"><i class="fas fa-check-circle" style="color:var(--green)"></i><p style="color:var(--green)">Aucun membre en liste rouge.</p></div>
+{% endif %}
+{% endblock %}
