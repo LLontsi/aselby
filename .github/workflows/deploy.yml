@@ -33,7 +33,7 @@ jobs:
           ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}
           CSRF_TRUSTED_ORIGINS=${{ secrets.CSRF_TRUSTED_ORIGINS }}
           DB_NAME=aselby_db
-          DB_USER=aselby_user
+          DB_USER=postgres
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           DB_HOST=aselby_db
           DB_PORT=5432
