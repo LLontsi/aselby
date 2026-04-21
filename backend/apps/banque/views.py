@@ -353,3 +353,161 @@ def tresorerie(request):
         'total_en_compte': sum(l['en_compte'] for l in synthese_mensuelle),
     }
     return render(request, 'dashboard/banque/tresorerie.html', ctx)
+
+
+# ══════════════════════════════════════════════════════════════
+# AJOUTER à la fin de apps/banque/views.py
+# ══════════════════════════════════════════════════════════════
+
+@bureau_required
+def telecharger_tabbordaidedepenses(request):
+    """
+    Génère TABBORDAIDEDEPENSES.xlsx — vue calculée :
+    Montant chèque, N° chèque, Espèces, Agios, Extrait de compte.
+    Une feuille par mois + résumé annuel.
+    """
+    import io
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.utils import get_column_letter
+    from django.http import HttpResponse
+    from django.db.models import Sum
+    from decimal import Decimal as D
+    from apps.saisie.models import TableauDeBord
+    from apps.adherents.models import Adherent
+    from apps.parametrage.models import AgioBancaire
+
+    MOIS_CODE_L = ['','JANV','FEV','MARS','AVRIL','MAI','JUIN',
+                   'JUIL','AOUT','SEPT','OCT','NOV','DEC']
+
+    config    = ConfigExercice.get_exercice_courant()
+    annee     = config.annee
+    adherents = Adherent.objects.filter(statut='ACTIF').order_by('numero_ordre')
+
+    # Charger ComplementHistorique pour les N° chèques
+    try:
+        from apps.rapports.models import ComplementHistorique
+        has_ch = True
+    except ImportError:
+        has_ch = False
+
+    wb   = Workbook(); wb.remove(wb.active)
+    BLEU = '1B2B5E'; OR = 'C9A84C'; BLANC = 'FFFFFF'
+
+    COLS = ['MATRICULE', 'NOM ET PRENOM', 'TOTAUX',
+            'MONTANT CHEQUE', 'NUM CHEQUE', 'ESPECES', 'AGIOS', 'Extrait de compte']
+
+    def _hdr(ws, mois_label):
+        ws.cell(1, 1, 'ASSOCIATION'); ws.cell(1, 2, 'ASELBY')
+        ws.cell(2, 1, 'ANNEE');       ws.cell(2, 2, annee)
+        f  = PatternFill('solid', fgColor=BLEU)
+        fn = Font(bold=True, color=BLANC, size=8, name='Arial')
+        for j, c in enumerate(COLS, 1):
+            cl = ws.cell(5, j, c)
+            cl.fill = f; cl.font = fn
+            cl.alignment = Alignment(wrap_text=True, horizontal='center')
+            ws.column_dimensions[get_column_letter(j)].width = 16
+        ws.row_dimensions[5].height = 28
+
+    def _write_month(ws, mois, a):
+        _hdr(ws, MOIS_CODE_L[mois] if mois else '')
+
+        # Agio du mois
+        agio_obj = AgioBancaire.objects.filter(
+            config_exercice=config, mois=mois, annee=a).first()
+        agio_global = float(agio_obj.montant_agio) if agio_obj else 0
+
+        # Résumé totaux ligne 4
+        tb_all = TableauDeBord.objects.filter(mois=mois, annee=a, config_exercice=config)
+        total_cheque  = float(tb_all.aggregate(t=Sum('versement_banque'))['t']  or 0)
+        total_especes = float(tb_all.aggregate(t=Sum('versement_especes'))['t'] or 0)
+        ws.cell(4, 1, 'CHEQUE ETABLI')
+        ws.cell(4, 3, total_cheque)
+        ws.cell(4, 4, total_especes)
+
+        # N° chèques depuis ComplementHistorique
+        ch_map = {}
+        if has_ch:
+            for ch in ComplementHistorique.objects.filter(
+                tableau_bord__mois=mois, tableau_bord__annee=a,
+                config_exercice=config
+            ).select_related('tableau_bord'):
+                ch_map[ch.adherent_id] = ch
+
+        tb_map = {tb.adherent_id: tb for tb in tb_all}
+        ht_map = {}
+        try:
+            for ht in HistoriqueBancaire.objects.filter(mois=mois, annee=a, config_exercice=config):
+                ht_map[ht.adherent_id] = ht
+        except Exception:
+            pass
+
+        for i, adh in enumerate(adherents, 6):
+            tb = tb_map.get(adh.matricule)
+            ch = ch_map.get(adh.matricule)
+            ht = ht_map.get(adh.matricule)
+
+            montant_cheque = float(tb.versement_banque)  if tb else 0
+            num_cheque     = ch.numero_cheque_effectif   if ch else ''
+            especes        = float(tb.versement_especes) if tb else 0
+            totaux         = montant_cheque + especes
+            extrait        = float(ht.en_compte_reel)    if ht else 0
+
+            ws.cell(i, 1, adh.matricule)
+            ws.cell(i, 2, adh.nom_prenom)
+            ws.cell(i, 3, totaux)
+            ws.cell(i, 4, montant_cheque)
+            ws.cell(i, 5, num_cheque or ('OK' if montant_cheque > 0 else ''))
+            ws.cell(i, 6, especes)
+            ws.cell(i, 7, agio_global)
+            ws.cell(i, 8, extrait)
+
+            # Mettre en gras les lignes avec des données
+            if totaux > 0:
+                for j in [1, 2, 3, 4]:
+                    ws.cell(i, j).font = Font(bold=True, name='Arial', size=9)
+
+    # Feuilles mensuelles
+    for m in range(1, 13):
+        label = f'HISTO{MOIS_CODE_L[m]}{str(annee)[-2:]}'
+        ws = wb.create_sheet(label)
+        _write_month(ws, m, annee)
+
+    # Feuille résumé annuel
+    ws_r = wb.create_sheet(f'HISTORESUME{str(annee)[-2:]}')
+    _hdr(ws_r, 'RESUME')
+    ws_r.cell(4, 1, 'TOTAL ANNUEL')
+
+    for i, adh in enumerate(adherents, 6):
+        # Cumuler sur l'année
+        tbs = TableauDeBord.objects.filter(
+            adherent=adh, annee=annee, config_exercice=config)
+        tot_cheque  = float(tbs.aggregate(t=Sum('versement_banque'))['t']  or 0)
+        tot_especes = float(tbs.aggregate(t=Sum('versement_especes'))['t'] or 0)
+        totaux      = tot_cheque + tot_especes
+
+        # Dernier N° chèque de l'année
+        last_num = ''
+        if has_ch:
+            last_ch = ComplementHistorique.objects.filter(
+                adherent=adh, config_exercice=config,
+                tableau_bord__annee=annee
+            ).exclude(numero_cheque_effectif='').order_by('-tableau_bord__mois').first()
+            if last_ch:
+                last_num = last_ch.numero_cheque_effectif
+
+        ws_r.cell(i, 1, adh.matricule)
+        ws_r.cell(i, 2, adh.nom_prenom)
+        ws_r.cell(i, 3, totaux)
+        ws_r.cell(i, 4, tot_cheque)
+        ws_r.cell(i, 5, last_num)
+        ws_r.cell(i, 6, tot_especes)
+
+    buf = io.BytesIO()
+    wb.save(buf); buf.seek(0)
+    resp = HttpResponse(
+        buf.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    resp['Content-Disposition'] = f'attachment; filename="ASELBY{annee}TABBORDAIDEDEPENSES.xlsx"'
+    return resp

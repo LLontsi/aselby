@@ -5,6 +5,13 @@
 <div class="page-header-admin">
   <h2>Adhérents — {{ adherents|length }} actif(s)</h2>
   <a href="{% url 'adherents:nouveau' %}" class="btn-admin primary"><i class="fas fa-user-plus"></i> Nouvel adhérent</a>
+  <a href="{% url 'adherents:telecharger' %}"
+       style="display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.2rem;
+              background:#10705A;color:white;border-radius:8px;text-decoration:none;
+              font-size:.82rem;font-weight:700"
+       onmouseover="this.style.background='#0A5A46'" onmouseout="this.style.background='#10705A'">
+      <i class="fas fa-file-excel"></i> Télécharger Excel
+    </a>
 </div>
 <div class="filter-bar">
   <form method="get" style="display:flex;gap:1rem;width:100%;align-items:flex-end">

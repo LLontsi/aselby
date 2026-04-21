@@ -5,6 +5,20 @@
 <div class="page-header-admin">
   <h2>Fonds de Caisse — {{ mois }}/{{ annee }}</h2>
   <a href="{% url 'fonds:interets' %}" class="btn-admin primary"><i class="fas fa-percentage"></i> Répartir intérêts</a>
+  <a href="{% url 'fonds:telecharger_fondscaisse' %}"
+       style="display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.2rem;
+              background:#10705A;color:white;border-radius:8px;text-decoration:none;
+              font-size:.82rem;font-weight:700"
+       onmouseover="this.style.background='#0A5A46'" onmouseout="this.style.background='#10705A'">
+      <i class="fas fa-file-excel"></i>  Excel Fonds caisse
+    </a>
+    <a href="{% url 'fonds:telecharger_basecalcul' %}"
+       style="display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.2rem;
+              background:#10705A;color:white;border-radius:8px;text-decoration:none;
+              font-size:.82rem;font-weight:700"
+       onmouseover="this.style.background='#0A5A46'" onmouseout="this.style.background='#10705A'">
+      <i class="fas fa-file-excel"></i>  Excel Base calcul
+    </a>
 </div>
 <div class="stats-grid-admin">
   <div class="stat-card-admin"><div class="stat-icon-admin"><i class="fas fa-piggy-bank"></i></div><div><div class="stat-val">{{ total_fonds|floatformat:0|intcomma }}</div><div class="stat-lbl">Total fonds (FCFA)</div></div></div>
