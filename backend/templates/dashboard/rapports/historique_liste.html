@@ -1,0 +1,126 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize rapports_extras %}
+{% block _titre %}Mouvements — Liste{% endblock %}
+{% block contenu %}
+
+{% if messages %}{% for msg in messages %}
+<div style="padding:.85rem 1.2rem;border-radius:8px;margin-bottom:1rem;
+  {% if msg.tags == 'success' %}background:rgba(16,112,90,.08);color:#10705A;border:1px solid rgba(16,112,90,.2)
+  {% else %}background:rgba(184,76,76,.08);color:#B84C4C;border:1px solid rgba(184,76,76,.2){% endif %}">
+  {{ msg }}</div>
+{% endfor %}{% endif %}
+
+<!-- EN-TÊTE -->
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+            gap:1rem;margin-bottom:1.75rem">
+  <div>
+    <h2 style="font-family:'Playfair Display',serif;color:#1B2B5E;font-size:1.5rem;margin:0">
+      <i class="fas fa-exchange-alt" style="color:#C9A84C;margin-right:.5rem"></i>
+      Tableau de bord historique
+    </h2>
+    <div style="font-size:.8rem;color:#6C757D;margin-top:.25rem">
+      Exercice {{ config_exercice.annee }} — {{ rows|length }} adhérents
+    </div>
+  </div>
+  <!-- Bouton Synthèse : accès direct au tableau complet -->
+  <a href="{% url 'rapports:historique_synthese' %}"
+     style="display:inline-flex;align-items:center;gap:.6rem;padding:.7rem 1.5rem;
+            background:#1B2B5E;color:white;border-radius:10px;text-decoration:none;
+            font-size:.85rem;font-weight:700;box-shadow:0 3px 10px rgba(27,43,94,.3)"
+     onmouseover="this.style.background='#111C3F'" onmouseout="this.style.background='#1B2B5E'">
+    <i class="fas fa-table"></i> Voir Synthèse HISTO
+  </a>
+</div>
+
+<!-- TABLEAU LISTE -->
+<div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.875rem">
+      <thead>
+        <tr style="background:#1B2B5E">
+          <th style="padding:.9rem 1rem;text-align:left;color:rgba(255,255,255,.7);
+                     font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;white-space:nowrap">
+            Matricule
+          </th>
+          <th style="padding:.9rem 1rem;text-align:left;color:rgba(255,255,255,.7);
+                     font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase">
+            Nom et prénom
+          </th>
+          <th style="padding:.9rem 1rem;text-align:center;color:rgba(255,255,255,.7);
+                     font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;white-space:nowrap">
+            Dernière saisie MVT
+          </th>
+          <th style="padding:.9rem 1rem;text-align:center;color:rgba(255,255,255,.7);
+                     font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;white-space:nowrap">
+            Prochain mois
+          </th>
+          <th style="padding:.9rem 1rem;text-align:center;color:rgba(255,255,255,.7);
+                     font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase">
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr style="border-bottom:1px solid #F4F5F7;transition:background .15s"
+            onmouseover="this.style.background='#F8F9FC'" onmouseout="this.style.background=''">
+          <td style="padding:.85rem 1rem;font-weight:700;color:#1B2B5E;font-size:.82rem;white-space:nowrap">
+            {{ row.adherent.matricule }}
+          </td>
+          <td style="padding:.85rem 1rem;font-weight:600;color:#343A40">
+            {{ row.adherent.nom_prenom|title }}
+          </td>
+          <td style="padding:.85rem 1rem;text-align:center">
+            {% if row.derniere %}
+            <span style="background:rgba(16,112,90,.1);color:#10705A;padding:.3rem .8rem;
+                         border-radius:20px;font-size:.72rem;font-weight:700;white-space:nowrap">
+              <i class="fas fa-check-circle"></i>
+              {{ mois_fr|get_mois:row.derniere.mois }} {{ row.derniere.annee }}
+            </span>
+            {% else %}
+            <span style="color:#ADB5BD;font-style:italic;font-size:.8rem">Aucune</span>
+            {% endif %}
+          </td>
+          <td style="padding:.85rem 1rem;text-align:center">
+            <span style="background:rgba(201,168,76,.12);color:#A8863A;padding:.3rem .8rem;
+                         border-radius:20px;font-size:.72rem;font-weight:700;white-space:nowrap">
+              {{ mois_fr|get_mois:row.prochain_m }} {{ row.prochain_a }}
+            </span>
+          </td>
+          <td style="padding:.85rem 1rem;text-align:center">
+            <div style="display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap">
+              <!-- Saisir = mois suivant automatique -->
+              <a href="{% url 'rapports:historique_saisie' row.adherent.matricule %}?mois={{ row.prochain_m }}&annee={{ row.prochain_a }}"
+                 style="display:inline-flex;align-items:center;gap:.35rem;padding:.4rem .85rem;
+                        background:#1B2B5E;color:white;border-radius:7px;text-decoration:none;
+                        font-size:.75rem;font-weight:700;white-space:nowrap"
+                 onmouseover="this.style.background='#111C3F'" onmouseout="this.style.background='#1B2B5E'">
+                <i class="fas fa-plus"></i> Saisir
+              </a>
+              {% if row.derniere %}
+              <!-- Modifier = dernier mois saisi -->
+              <a href="{% url 'rapports:historique_saisie' row.adherent.matricule %}?mois={{ row.derniere.mois }}&annee={{ row.derniere.annee }}"
+                 style="display:inline-flex;align-items:center;gap:.35rem;padding:.4rem .85rem;
+                        background:#E8E9EC;color:#343A40;border-radius:7px;text-decoration:none;
+                        font-size:.75rem;font-weight:700;white-space:nowrap"
+                 onmouseover="this.style.background='#CED4DA'" onmouseout="this.style.background='#E8E9EC'">
+                <i class="fas fa-edit"></i> Modifier
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" style="padding:3rem;text-align:center;color:#ADB5BD;font-style:italic">
+            <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:.75rem"></i>
+            Aucun adhérent actif.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

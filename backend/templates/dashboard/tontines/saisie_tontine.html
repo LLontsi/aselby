@@ -1,0 +1,187 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize rapports_extras %}
+{% block _titre %}Saisie Tontine {{ niveau.code }} — {{ mois_label }} {{ annee }}{% endblock %}
+{% block contenu %}
+
+{% if messages %}{% for msg in messages %}
+<div style="padding:.85rem 1.2rem;border-radius:8px;margin-bottom:1rem;
+  {% if msg.tags == 'success' %}background:rgba(16,112,90,.08);color:#10705A;border:1px solid rgba(16,112,90,.2)
+  {% else %}background:rgba(184,76,76,.08);color:#B84C4C;border:1px solid rgba(184,76,76,.2){% endif %}">
+  {{ msg }}</div>
+{% endfor %}{% endif %}
+
+<!-- NAV -->
+<div style="background:white;border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.5rem;
+            box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;align-items:center;
+            justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+  <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+    <a href="{% url 'tontines:tableau' %}?mois={{ mois }}&annee={{ annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;
+              color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-arrow-left"></i> Tableau
+    </a>
+    <a href="?mois={{ prec_mois }}&annee={{ prec_annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-chevron-left"></i> {{ mois_fr|get_mois:prec_mois }}
+    </a>
+    <div>
+      <span style="background:#1B2B5E;color:white;padding:.45rem 1.25rem;border-radius:20px;
+                   font-size:.85rem;font-weight:700">
+        TONTINE {{ niveau.code }} — {{ mois_label }} {{ annee }}
+      </span>
+      <span style="margin-left:.5rem;font-size:.78rem;color:#6C757D">
+        {{ niveau.taux_mensuel|floatformat:0|intcomma }} FCFA / part
+      </span>
+    </div>
+    <a href="?mois={{ suiv_mois }}&annee={{ suiv_annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      {{ mois_fr|get_mois:suiv_mois }} <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+  <a href="{% url 'tontines:telecharger' niveau.code %}"
+     style="display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.2rem;
+            background:#10705A;color:white;border-radius:8px;text-decoration:none;font-size:.82rem;font-weight:700"
+     onmouseover="this.style.background='#0A5A46'" onmouseout="this.style.background='#10705A'">
+    <i class="fas fa-file-excel"></i> Télécharger Excel
+  </a>
+</div>
+
+<form method="post">{% csrf_token %}
+<input type="hidden" name="mois" value="{{ mois }}">
+<input type="hidden" name="annee" value="{{ annee }}">
+
+<div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+  <div style="padding:.9rem 1.5rem;border-bottom:2px solid #F4F5F7;background:#1B2B5E">
+    <h3 style="color:white;margin:0;font-size:.95rem">
+      <i class="fas fa-clock" style="color:#C9A84C;margin-right:.5rem"></i>
+      Saisie mensuelle — {{ niveau.code }} — {{ mois_label }} {{ annee }}
+    </h3>
+  </div>
+
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+      <thead>
+        <tr style="background:#F4F5F7">
+          <th style="padding:.7rem 1rem;text-align:left;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase;letter-spacing:1px;white-space:nowrap">Matricule</th>
+          <th style="padding:.7rem .6rem;text-align:left;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase;white-space:nowrap">Nom</th>
+          <th style="padding:.7rem .6rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase;white-space:nowrap">Nbre parts</th>
+          <th style="padding:.7rem .6rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase;white-space:nowrap">Montant versé</th>
+          <th style="padding:.7rem .6rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase;white-space:nowrap">Mode</th>
+          <th style="padding:.7rem .6rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase;white-space:nowrap">N° Chèque</th>
+          <th style="padding:.7rem .6rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase;white-space:nowrap">Vente p. lot</th>
+          <th style="padding:.7rem .6rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase;white-space:nowrap">Intérêt p. lot</th>
+          <th style="padding:.7rem .6rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase;white-space:nowrap">Remb. p. lot</th>
+          <th style="padding:.7rem .6rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase;white-space:nowrap">Mode remb.</th>
+          <th style="padding:.7rem .6rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase;white-space:nowrap">Montant lot principal</th>
+          <th style="padding:.7rem .6rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase;white-space:nowrap">Intérêt lot</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for adh in adherents %}
+        {% with p=participations|default_if_none:None %}
+        {% with pfx="adh_"|add:adh.matricule|add:"_" %}
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#F8F9FC'" onmouseout="this.style.background=''">
+          <td style="padding:.6rem 1rem;font-weight:700;color:#1B2B5E;white-space:nowrap;font-size:.78rem">{{ adh.matricule }}</td>
+          <td style="padding:.6rem .6rem;font-weight:600;color:#343A40;white-space:nowrap">{{ adh.nom_prenom|title }}</td>
+          <td style="padding:.4rem .4rem">
+            <input type="number" name="{{ pfx }}nombre_parts" min="0" max="10"
+                   value="{{ participations|get_attr:adh.matricule|default:'' }}"
+                   style="width:60px;padding:.35rem .4rem;border:1px solid #CED4DA;border-radius:6px;font-size:.8rem;text-align:center"
+                   placeholder="0">
+          </td>
+          <td style="padding:.4rem .4rem">
+            <input type="number" step="1000" name="{{ pfx }}montant_verse"
+                   value="{% with part=participations|get_attr:adh.matricule %}{% if part %}{{ part.montant_verse|floatformat:0 }}{% endif %}{% endwith %}"
+                   style="width:100px;padding:.35rem .4rem;border:1px solid #CED4DA;border-radius:6px;font-size:.8rem;text-align:right"
+                   placeholder="Auto">
+          </td>
+          <td style="padding:.4rem .4rem">
+            <select name="{{ pfx }}mode_versement"
+                    style="padding:.35rem .4rem;border:1px solid #CED4DA;border-radius:6px;font-size:.78rem">
+              {% with part=participations|get_attr:adh.matricule %}
+              <option value="BANQUE" {% if part and part.mode_versement == 'BANQUE' %}selected{% endif %}>Banque</option>
+              <option value="ESPECES" {% if part and part.mode_versement == 'ESPECES' %}selected{% endif %}>Espèces</option>
+              <option value="ECHEC" {% if not part or part.mode_versement == 'ECHEC' %}selected{% endif %}>Échec</option>
+              {% endwith %}
+            </select>
+          </td>
+          <td style="padding:.4rem .4rem">
+            <input type="text" name="{{ pfx }}numero_cheque"
+                   value="{% with part=participations|get_attr:adh.matricule %}{% if part %}{{ part.numero_cheque }}{% endif %}{% endwith %}"
+                   style="width:100px;padding:.35rem .4rem;border:1px solid #CED4DA;border-radius:6px;font-size:.78rem"
+                   placeholder="N°">
+          </td>
+          <td style="padding:.4rem .4rem">
+            <input type="number" step="1000" name="{{ pfx }}vente_petit_lot"
+                   value="{% with part=participations|get_attr:adh.matricule %}{% if part %}{{ part.vente_petit_lot|floatformat:0 }}{% endif %}{% endwith %}"
+                   style="width:90px;padding:.35rem .4rem;border:1px solid #CED4DA;border-radius:6px;font-size:.8rem;text-align:right"
+                   placeholder="0">
+          </td>
+          <td style="padding:.4rem .4rem">
+            <input type="number" step="100" name="{{ pfx }}interet_petit_lot"
+                   value="{% with part=participations|get_attr:adh.matricule %}{% if part %}{{ part.interet_petit_lot|floatformat:0 }}{% endif %}{% endwith %}"
+                   style="width:90px;padding:.35rem .4rem;border:1px solid #CED4DA;border-radius:6px;font-size:.8rem;text-align:right"
+                   placeholder="0">
+          </td>
+          <td style="padding:.4rem .4rem">
+            <input type="number" step="1000" name="{{ pfx }}remboursement_petit_lot"
+                   value="{% with part=participations|get_attr:adh.matricule %}{% if part %}{{ part.remboursement_petit_lot|floatformat:0 }}{% endif %}{% endwith %}"
+                   style="width:90px;padding:.35rem .4rem;border:1px solid #CED4DA;border-radius:6px;font-size:.8rem;text-align:right"
+                   placeholder="0">
+          </td>
+          <td style="padding:.4rem .4rem">
+            <select name="{{ pfx }}mode_remb_petit_lot"
+                    style="padding:.35rem .4rem;border:1px solid #CED4DA;border-radius:6px;font-size:.78rem">
+              {% with part=participations|get_attr:adh.matricule %}
+              <option value="">—</option>
+              <option value="BANQUE"  {% if part and part.mode_remboursement_petit_lot == 'BANQUE' %}selected{% endif %}>Banque</option>
+              <option value="ESPECES" {% if part and part.mode_remboursement_petit_lot == 'ESPECES' %}selected{% endif %}>Espèces</option>
+              <option value="ECHEC"   {% if part and part.mode_remboursement_petit_lot == 'ECHEC' %}selected{% endif %}>Échec</option>
+              {% endwith %}
+            </select>
+          </td>
+          <td style="padding:.4rem .4rem">
+            <input type="number" step="1000" name="{{ pfx }}montant_lot_principal"
+                   value="{% with part=participations|get_attr:adh.matricule %}{% if part %}{{ part.montant_lot_principal|floatformat:0 }}{% endif %}{% endwith %}"
+                   style="width:110px;padding:.35rem .4rem;border:1px solid #CED4DA;border-radius:6px;font-size:.8rem;text-align:right"
+                   placeholder="0">
+          </td>
+          <td style="padding:.4rem .4rem">
+            <input type="number" step="1000" name="{{ pfx }}interet_lot_principal"
+                   value="{% with part=participations|get_attr:adh.matricule %}{% if part %}{{ part.interet_lot_principal|floatformat:0 }}{% endif %}{% endwith %}"
+                   style="width:90px;padding:.35rem .4rem;border:1px solid #CED4DA;border-radius:6px;font-size:.8rem;text-align:right"
+                   placeholder="0">
+          </td>
+        </tr>
+        {% endwith %}{% endwith %}
+        {% empty %}
+        <tr><td colspan="12" style="padding:2rem;text-align:center;color:#ADB5BD">Aucun adhérent actif.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div style="padding:1.25rem 1.5rem;border-top:2px solid #F4F5F7;display:flex;gap:1rem">
+    <button type="submit" name="save"
+            style="display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 2rem;
+                   background:#1B2B5E;color:white;border:none;border-radius:8px;
+                   font-size:.875rem;font-weight:700;cursor:pointer;font-family:inherit"
+            onmouseover="this.style.background='#111C3F'" onmouseout="this.style.background='#1B2B5E'">
+      <i class="fas fa-save"></i> Enregistrer
+    </button>
+    <a href="{% url 'tontines:tableau' %}?mois={{ mois }}&annee={{ annee }}"
+       style="display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.5rem;
+              background:#E8E9EC;color:#495057;border-radius:8px;
+              font-size:.875rem;font-weight:600;text-decoration:none">
+      Annuler
+    </a>
+  </div>
+</div>
+</form>
+{% endblock %}

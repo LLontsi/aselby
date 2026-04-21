@@ -31,70 +31,133 @@
 
     <!-- Nav -->
     <nav style="flex:1;padding:.75rem 0">
+
+      <!-- PRINCIPAL -->
       <div class="sidebar-section">PRINCIPAL</div>
-      <a href="{% url 'rapports:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+      <a href="{% url 'rapports:dashboard' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
         <i class="fas fa-th-large"></i> Tableau de bord
       </a>
-      <a href="{% url 'saisie:formulaire' %}" class="sidebar-link {% if 'saisie' in request.resolver_match.app_name %}active{% endif %}">
+      <a href="{% url 'saisie:formulaire' %}"
+         class="sidebar-link {% if 'saisie' in request.resolver_match.app_name %}active{% endif %}">
         <i class="fas fa-edit"></i> Saisie mensuelle
       </a>
-
-      <div class="sidebar-section">FINANCES</div>
-      <a href="{% url 'tontines:tableau' %}" class="sidebar-link {% if 'tontines' in request.resolver_match.app_name %}active{% endif %}">
-        <i class="fas fa-clock"></i> Tontines
+      <a href="{% url 'saisie:membres_en_attente' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'membres_en_attente' %}active{% endif %}">
+        <i class="fas fa-clock"></i> Saisies en attente
       </a>
-      <a href="{% url 'fonds:etat' %}" class="sidebar-link {% if 'fonds' in request.resolver_match.app_name %}active{% endif %}">
+
+      <!-- FINANCES -->
+      <div class="sidebar-section">FINANCES</div>
+      <a href="{% url 'tontines:tableau' %}"
+         class="sidebar-link {% if 'tontines' in request.resolver_match.app_name %}active{% endif %}">
+        <i class="fas fa-layer-group"></i> Tontines
+      </a>
+      <a href="{% url 'fonds:etat' %}"
+         class="sidebar-link {% if 'fonds' in request.resolver_match.app_name %}active{% endif %}">
         <i class="fas fa-wallet"></i> Fonds de caisse
       </a>
-      <a href="{% url 'prets:liste' %}" class="sidebar-link {% if 'prets' in request.resolver_match.app_name %}active{% endif %}">
+      <a href="{% url 'prets:liste' %}"
+         class="sidebar-link {% if 'prets' in request.resolver_match.app_name %}active{% endif %}">
         <i class="fas fa-dollar-sign"></i> Prêts
       </a>
-      <a href="{% url 'mutuelle:etat' %}" class="sidebar-link {% if 'mutuelle' in request.resolver_match.app_name %}active{% endif %}">
+      <a href="{% url 'mutuelle:etat' %}"
+         class="sidebar-link {% if 'mutuelle' in request.resolver_match.app_name %}active{% endif %}">
         <i class="fas fa-heart"></i> Mutuelle
       </a>
-      <a href="{% url 'foyer:etat' %}" class="sidebar-link {% if 'foyer' in request.resolver_match.app_name %}active{% endif %}">
+      <a href="{% url 'foyer:etat' %}"
+         class="sidebar-link {% if 'foyer' in request.resolver_match.app_name %}active{% endif %}">
         <i class="fas fa-home"></i> Fonds foyer
       </a>
-      <a href="{% url 'banque:historique' %}" class="sidebar-link {% if 'banque' in request.resolver_match.app_name %}active{% endif %}">
-        <i class="fas fa-chart-line"></i> Trésorerie
+
+      <!-- TRÉSORERIE -->
+      <div class="sidebar-section">TRÉSORERIE</div>
+      <a href="{% url 'banque:historique' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'historique' and 'banque' in request.resolver_match.app_name %}active{% endif %}">
+        <i class="fas fa-chart-line"></i> Historique bancaire
+      </a>
+      <a href="{% url 'banque:tabbhistobque' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'tabbhistobque' %}active{% endif %}">
+        <i class="fas fa-table"></i> TABBHISTOBQUE
+      </a>
+      <a href="{% url 'banque:tabbordaidedepenses' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'tabbordaidedepenses' %}active{% endif %}">
+        <i class="fas fa-receipt"></i> Aide dépenses
+      </a>
+      <a href="{% url 'banque:tresorerie' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'tresorerie' %}active{% endif %}">
+        <i class="fas fa-coins"></i> Trésorerie
+      </a>
+      <a href="{% url 'banque:cheques' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'cheques' %}active{% endif %}">
+        <i class="fas fa-money-check-alt"></i> Chèques
       </a>
 
+      <!-- RAPPORTS -->
+      <div class="sidebar-section">RAPPORTS EXCEL</div>
+      <a href="{% url 'rapports:mouvements_liste' %}"
+         class="sidebar-link {% if 'mouvements' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fas fa-exchange-alt"></i> Mouvements (MVT)
+      </a>
+      <a href="{% url 'rapports:historique_liste' %}"
+         class="sidebar-link {% if 'historique' in request.resolver_match.url_name and request.resolver_match.app_name == 'rapports' %}active{% endif %}">
+        <i class="fas fa-history"></i> Historique (TABBORD)
+      </a>
+
+      <!-- GESTION -->
       <div class="sidebar-section">GESTION</div>
-      <a href="{% url 'adherents:liste' %}" class="sidebar-link {% if 'adherents' in request.resolver_match.app_name %}active{% endif %}">
+      <a href="{% url 'adherents:liste' %}"
+         class="sidebar-link {% if 'adherents' in request.resolver_match.app_name %}active{% endif %}">
         <i class="fas fa-users"></i> Adhérents
       </a>
-      <a href="{% url 'dettes:liste' %}" class="sidebar-link {% if 'dettes' in request.resolver_match.app_name %}active{% endif %}">
+      <a href="{% url 'dettes:liste' %}"
+         class="sidebar-link {% if 'dettes' in request.resolver_match.app_name %}active{% endif %}">
         <i class="fas fa-exclamation-triangle"></i> Liste rouge
       </a>
-      <a href="{% url 'exercice:cassation' %}" class="sidebar-link {% if 'exercice' in request.resolver_match.app_name %}active{% endif %}">
+      <a href="{% url 'exercice:cassation' %}"
+         class="sidebar-link {% if 'exercice' in request.resolver_match.app_name %}active{% endif %}">
         <i class="fas fa-file-alt"></i> Fin d'exercice
       </a>
-      <a href="{% url 'parametrage:config' %}" class="sidebar-link {% if 'parametrage' in request.resolver_match.app_name %}active{% endif %}">
+      <a href="{% url 'parametrage:config' %}"
+         class="sidebar-link {% if 'parametrage' in request.resolver_match.app_name %}active{% endif %}">
         <i class="fas fa-cog"></i> Paramétrage
       </a>
-       <li><a href="{% url 'saisie:membres_en_attente' %}">Saisies membres en attente</a></li>
+
+      <!-- SITE PUBLIC -->
       <div class="sidebar-section">SITE PUBLIC</div>
-      <a href="{% url 'public:gestion_annonces' %}" class="sidebar-link {% if request.resolver_match.url_name == 'gestion_annonces' %}active{% endif %}">
+      <a href="{% url 'public:gestion_annonces' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'gestion_annonces' %}active{% endif %}">
         <i class="fas fa-bullhorn"></i> Annonces
       </a>
-      <a href="{% url 'public:gestion_activites' %}" class="sidebar-link {% if request.resolver_match.url_name == 'gestion_activites' %}active{% endif %}">
+      <a href="{% url 'public:gestion_activites' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'gestion_activites' %}active{% endif %}">
         <i class="fas fa-calendar-alt"></i> Activités
       </a>
-      <a href="{% url 'public:gestion_faq' %}" class="sidebar-link {% if request.resolver_match.url_name == 'gestion_faq' %}active{% endif %}">
+      <a href="{% url 'public:gestion_faq' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'gestion_faq' %}active{% endif %}">
         <i class="fas fa-question-circle"></i> FAQ
       </a>
+
     </nav>
 
     <!-- User -->
     <div style="padding:1rem;border-top:1px solid rgba(255,255,255,.08)">
       <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
-        <div style="width:36px;height:36px;border-radius:50%;background:rgba(201,168,76,.2);border:2px solid #C9A84C;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:#C9A84C">B</div>
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(201,168,76,.2);
+                    border:2px solid #C9A84C;display:flex;align-items:center;justify-content:center;
+                    font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:#C9A84C">
+          {{ request.user.nom_complet|slice:":1"|upper }}
+        </div>
         <div>
-          <div style="font-size:.8rem;font-weight:600;color:white">Bureau ASELBY</div>
+          <div style="font-size:.8rem;font-weight:600;color:white">{{ request.user.nom_complet }}</div>
           <div style="font-size:.65rem;color:rgba(255,255,255,.4);letter-spacing:1px">ADMINISTRATEUR</div>
         </div>
       </div>
-      <a href="{% url 'users:deconnexion' %}" style="display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:rgba(255,255,255,.4);text-decoration:none;padding:.4rem .5rem;border-radius:6px;transition:all .2s" onmouseover="this.style.color='white';this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.color='rgba(255,255,255,.4)';this.style.background='transparent'">
+      <a href="{% url 'users:deconnexion' %}"
+         style="display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:rgba(255,255,255,.4);
+                text-decoration:none;padding:.4rem .5rem;border-radius:6px;transition:all .2s"
+         onmouseover="this.style.color='white';this.style.background='rgba(255,255,255,.06)'"
+         onmouseout="this.style.color='rgba(255,255,255,.4)';this.style.background='transparent'">
         <i class="fas fa-sign-out-alt"></i> Déconnexion
       </a>
     </div>
@@ -105,9 +168,14 @@
   <main style="display:flex;flex-direction:column;min-height:100vh">
 
     <!-- Topbar -->
-    <div style="background:white;border-bottom:1px solid #E8E9EC;padding:.9rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+    <div style="background:white;border-bottom:1px solid #E8E9EC;padding:.9rem 2rem;
+                display:flex;align-items:center;justify-content:space-between;
+                position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.05)">
       <div>
-        <h1 style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:#1B2B5E;margin:0">{% block page_titre_topbar %}{% block _titre %}Tableau de bord{% endblock %}{% endblock %}</h1>
+        <h1 style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;
+                   color:#1B2B5E;margin:0">
+          {% block page_titre_topbar %}{% block _titre %}Tableau de bord{% endblock %}{% endblock %}
+        </h1>
       </div>
       <div style="font-size:.8rem;font-weight:600;color:#C9A84C;letter-spacing:2px;text-transform:uppercase">
         Exercice {{ config_exercice.annee }}

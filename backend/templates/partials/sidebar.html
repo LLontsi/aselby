@@ -11,7 +11,7 @@
   </div>
   <nav class="sidebar-nav">
     <span class="nav-section-label">Principal</span>
-    <a class="nav-item {% if request.resolver_match.app_name == 'rapports' %}actif{% endif %}" href="{% url 'rapports:dashboard' %}">
+    <a class="nav-item {% if request.resolver_match.app_name == 'rapports' and request.resolver_match.url_name == 'dashboard' %}actif{% endif %}" href="{% url 'rapports:dashboard' %}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
       <span>Tableau de bord</span>
     </a>
@@ -19,6 +19,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       <span>Saisie mensuelle</span>
     </a>
+
     <span class="nav-section-label">Finances</span>
     <a class="nav-item {% if request.resolver_match.app_name == 'tontines' %}actif{% endif %}" href="{% url 'tontines:tableau' %}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
@@ -40,21 +41,46 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
       <span>Fonds foyer</span>
     </a>
-    <a class="nav-item {% if request.resolver_match.app_name == 'banque' %}actif{% endif %}" href="{% url 'banque:historique' %}">
+
+    <span class="nav-section-label">Trésorerie</span>
+    <a class="nav-item {% if request.resolver_match.app_name == 'banque' and request.resolver_match.url_name == 'historique' %}actif{% endif %}" href="{% url 'banque:historique' %}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>Historique bancaire</span>
+    </a>
+    <a class="nav-item {% if request.resolver_match.url_name == 'tabbhistobque' %}actif{% endif %}" href="{% url 'banque:tabbhistobque' %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      <span>TABBHISTOBQUE</span>
+    </a>
+    <a class="nav-item {% if request.resolver_match.url_name == 'tabbordaidedepenses' %}actif{% endif %}" href="{% url 'banque:tabbordaidedepenses' %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span>Aide dépenses</span>
+    </a>
+    <a class="nav-item {% if request.resolver_match.app_name == 'banque' and request.resolver_match.url_name == 'tresorerie' %}actif{% endif %}" href="{% url 'banque:tresorerie' %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
       <span>Trésorerie</span>
     </a>
+
+    <span class="nav-section-label">Rapports</span>
+    <a class="nav-item {% if request.resolver_match.url_name == 'mouvements_liste' %}actif{% endif %}" href="{% url 'rapports:mouvements_liste' %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3h18v18H3z"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+      <span>Mouvements</span>
+    </a>
+    <a class="nav-item {% if request.resolver_match.url_name == 'historique_liste' %}actif{% endif %}" href="{% url 'rapports:historique_liste' %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3h18v18H3z"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+      <span>Historique TABBORD</span>
+    </a>
+
     <span class="nav-section-label">Gestion</span>
     <a class="nav-item {% if request.resolver_match.app_name == 'adherents' %}actif{% endif %}" href="{% url 'adherents:liste' %}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       <span>Adhérents</span>
     </a>
     <a class="nav-item {% if request.resolver_match.app_name == 'dettes' %}actif{% endif %}" href="{% url 'dettes:liste' %}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
       <span>Liste rouge</span>
     </a>
     <a class="nav-item {% if request.resolver_match.app_name == 'exercice' %}actif{% endif %}" href="{% url 'exercice:cassation' %}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <span>Fin d'exercice</span>
     </a>
     <a class="nav-item {% if request.resolver_match.app_name == 'parametrage' %}actif{% endif %}" href="{% url 'parametrage:config' %}">

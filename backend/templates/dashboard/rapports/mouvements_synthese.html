@@ -1,0 +1,175 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Synthèse MVT — {{ mois_label }} {{ annee }}{% endblock %}
+{% block contenu %}
+
+<!-- BARRE DE NAVIGATION -->
+<div style="background:white;border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.5rem;
+            box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;align-items:center;
+            justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+
+  <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+    <a href="{% url 'rapports:mouvements_liste' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;
+              color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-arrow-left"></i> Liste
+    </a>
+
+    <!-- PRÉCÉDENT -->
+    <a href="?mois={{ prec_mois }}&annee={{ prec_annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;
+              color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-chevron-left"></i> {{ prec_label }}
+    </a>
+
+    <!-- MOIS COURANT -->
+    <span style="background:#1B2B5E;color:white;padding:.45rem 1.25rem;border-radius:20px;
+                 font-size:.85rem;font-weight:700;letter-spacing:.5px">
+      {{ mois_label }} {{ annee }}
+    </span>
+
+    <!-- SUIVANT -->
+    <a href="?mois={{ suiv_mois }}&annee={{ suiv_annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;
+              color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      {{ suiv_label }} <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+
+  <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+    <!-- RÉSUMÉ -->
+    <a href="{% url 'rapports:mouvements_resume' %}"
+       style="display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.2rem;
+              background:#C9A84C;color:#1B2B5E;border-radius:8px;text-decoration:none;
+              font-size:.82rem;font-weight:700"
+       onmouseover="this.style.background='#D4B86A'" onmouseout="this.style.background='#C9A84C'">
+      <i class="fas fa-list-alt"></i> Résumé
+    </a>
+    <!-- TÉLÉCHARGER -->
+    <a href="{% url 'rapports:telecharger_mouvements' %}"
+       style="display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.2rem;
+              background:#10705A;color:white;border-radius:8px;text-decoration:none;
+              font-size:.82rem;font-weight:700"
+       onmouseover="this.style.background='#0A5A46'" onmouseout="this.style.background='#10705A'">
+      <i class="fas fa-file-excel"></i> Télécharger Excel
+    </a>
+  </div>
+</div>
+
+<!-- TABLEAU SYNTHÈSE — 38 colonnes -->
+<div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+  <div style="padding:.9rem 1.5rem;border-bottom:2px solid #F4F5F7;display:flex;align-items:center;gap:.75rem">
+    <h3 style="font-family:'Playfair Display',serif;color:#1B2B5E;font-size:1rem;margin:0">
+      AUTREMOUVEMENT — {{ mois_label }} {{ annee }}
+    </h3>
+    <span style="background:rgba(27,43,94,.08);color:#1B2B5E;padding:.25rem .75rem;
+                 border-radius:20px;font-size:.7rem;font-weight:700">
+      {{ nb_saisis }}/{{ nb_total }} saisis
+    </span>
+  </div>
+  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <table style="width:max-content;min-width:100%;border-collapse:collapse;font-size:.75rem">
+      <thead>
+        <tr style="background:#1B2B5E">
+          {% for col in colonnes %}
+          <th style="padding:.65rem .7rem;text-align:center;color:rgba(255,255,255,.85);
+                     font-size:.6rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+                     white-space:nowrap;border-right:1px solid rgba(255,255,255,.08);min-width:90px">
+            {{ col }}
+          </th>
+          {% endfor %}
+          <th style="padding:.65rem .7rem;color:rgba(255,255,255,.85);font-size:.6rem;
+                     font-weight:700;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;min-width:80px">
+            Action
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in saisies %}
+        <tr style="border-bottom:1px solid #F4F5F7;transition:background .15s"
+            onmouseover="this.style.background='#F8F9FC'" onmouseout="this.style.background=''">
+          <td style="padding:.6rem .7rem;font-weight:700;color:#1B2B5E;white-space:nowrap">{{ s.adherent.matricule }}</td>
+          <td style="padding:.6rem .7rem;font-weight:600;color:#343A40;white-space:nowrap">{{ s.adherent.nom_prenom|title }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#495057">{{ s.fonds_depart|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#495057">{{ s.reconduction|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#495057">{{ s.retrait_partiel|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;font-weight:700;color:#1B2B5E">{{ s.fonds_definitif|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#495057">{{ s.base_calcul_interet|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#10705A;font-weight:600">{{ s.repartition_interet|floatformat:2 }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;font-weight:700;color:#10705A">{{ s.capital_compose|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#B84C4C">{{ s.sanction|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#495057">{{ s.reste|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#495057">{{ s.epargne|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#495057">{{ s.fonds_roulement|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#495057">{{ s.frais_exceptionnel|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#495057">{{ s.collation|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#B84C4C">{{ s.penalite_vst_especes|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#495057">{{ s.inscription|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#495057">{{ s.mutuelle|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#1B2B5E;font-weight:600">{{ s.pret_fonds|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#10705A">{{ s.interet_pret_fonds|floatformat:2 }}</td>
+          <td style="padding:.6rem .7rem;color:#6C757D;white-space:nowrap">{{ s.numero_cheque|default:"—" }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#495057">{{ s.remboursement_pret_fonds|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;color:#6C757D;white-space:nowrap">{{ s.mode_versement_remboursement|default:"—" }}</td>
+          <td style="padding:.6rem .7rem;color:#6C757D;white-space:nowrap">{{ s.mode_versement_pret|default:"—" }}</td>
+          <td style="padding:.6rem .7rem;color:#6C757D;white-space:nowrap">{{ s.numero_cheque_pret|default:"—" }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#B84C4C">{{ s.penalite_pret_fonds|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#B84C4C">{{ s.penalite_fonds|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#B84C4C">{{ s.penalite_echec_tontine|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#B84C4C">{{ s.penalite_retard_tontine|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#495057">{{ s.remboursement_transport|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#495057">{{ s.contribution_foyer|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#B84C4C">{{ s.depense_fonds_roulement|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#B84C4C">{{ s.depense_frais_exceptionnel|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#B84C4C">{{ s.depense_fonds_mutuelle|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#B84C4C">{{ s.depense_collation|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#B84C4C">{{ s.penalite_pret_fonds|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#B84C4C">{{ s.depense_penalite_banque|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:right;color:#495057">{{ s.autres_depenses|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .7rem;text-align:center">
+            <a href="{% url 'rapports:mouvements_saisie' s.adherent.matricule %}?mois={{ mois }}&annee={{ annee }}"
+               style="display:inline-flex;align-items:center;padding:.3rem .65rem;
+                      background:#E8E9EC;color:#343A40;border-radius:6px;text-decoration:none;
+                      font-size:.7rem;font-weight:700"
+               onmouseover="this.style.background='#1B2B5E';this.style.color='white'"
+               onmouseout="this.style.background='#E8E9EC';this.style.color='#343A40'">
+              <i class="fas fa-edit"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="39" style="padding:3rem;text-align:center;color:#ADB5BD;font-style:italic">
+            <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:.75rem"></i>
+            Aucune saisie pour {{ mois_label }} {{ annee }}.
+            <a href="{% url 'rapports:mouvements_liste' %}" style="color:#1B2B5E;font-weight:700">
+              Aller saisir →
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="background:#1B2B5E;color:white;font-weight:700;font-size:.72rem;position:sticky;bottom:0">
+          <td style="padding:.7rem .7rem" colspan="2">TOTAUX — {{ nb_saisis }}/{{ nb_total }} saisis</td>
+          <td style="padding:.7rem .7rem;text-align:right">—</td>
+          <td style="padding:.7rem .7rem;text-align:right">—</td>
+          <td style="padding:.7rem .7rem;text-align:right">—</td>
+          <td style="padding:.7rem .7rem;text-align:right;color:#C9A84C">{{ totaux.fonds_definitif|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .7rem;text-align:right">—</td>
+          <td style="padding:.7rem .7rem;text-align:right;color:#C9A84C">{{ totaux.capital_compose|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .7rem;text-align:right;color:#B84C4C">{{ totaux.reste|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .7rem;text-align:right;color:#10705A">{{ totaux.epargne|floatformat:0|intcomma }}</td>
+          <td colspan="27"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+{% endblock %}

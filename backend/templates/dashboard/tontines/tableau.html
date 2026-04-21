@@ -1,53 +1,199 @@
 {% extends "dashboard/base_dashboard.html" %}
-{% load humanize %}
-{% block _titre %}Tontines{% endblock %}
+{% load humanize rapports_extras %}
+{% block _titre %}Tontines — {{ mois_label }} {{ annee }}{% endblock %}
 {% block contenu %}
-<div class="page-header-admin">
-  <h2>Tontines — {{ mois }}/{{ annee }}</h2>
-  <div style="display:flex;gap:.5rem">
-    <a href="{% url 'tontines:calendrier' %}" class="btn-admin ghost"><i class="fas fa-calendar"></i> Calendrier</a>
-    <a href="{% url 'tontines:enchere' %}" class="btn-admin primary"><i class="fas fa-gavel"></i> Enchères</a>
+
+<!-- NAV MOIS -->
+<div style="background:white;border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.5rem;
+            box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;align-items:center;
+            justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+  <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+    <a href="?mois={{ prec_mois }}&annee={{ prec_annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.82rem;
+              color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-chevron-left"></i> {{ mois_fr|get_mois:prec_mois }}
+    </a>
+    <span style="background:#1B2B5E;color:white;padding:.5rem 1.5rem;border-radius:20px;
+                 font-size:.9rem;font-weight:700;letter-spacing:.5px">
+      {{ mois_label }} {{ annee }}
+    </span>
+    <a href="?mois={{ suiv_mois }}&annee={{ suiv_annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.82rem;
+              color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      {{ mois_fr|get_mois:suiv_mois }} <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+    <a href="{% url 'tontines:calendrier' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.82rem;color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-calendar"></i> Calendrier
+    </a>
+    <a href="{% url 'tontines:enchere' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;
+              background:#C9A84C;color:#1B2B5E;border-radius:8px;font-size:.82rem;text-decoration:none;font-weight:700"
+       onmouseover="this.style.background='#B8973B'" onmouseout="this.style.background='#C9A84C'">
+      <i class="fas fa-gavel"></i> Enchères
+    </a>
   </div>
 </div>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem;margin-bottom:2rem">
+
+<!-- SESSIONS DU MOIS -->
+{% if sessions %}
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem;margin-bottom:1.5rem">
   {% for session in sessions %}
-  <div class="activity-card-admin">
-    <div class="activity-card-head">
-      <i class="fas fa-layer-group"></i>
-      <h4>Tontine {{ session.niveau.code }}</h4>
-      <span class="badge green" style="margin-left:auto">{{ session.participations.count }} parts</span>
-    </div>
-    <div style="padding:1.25rem">
-      <div class="info-row" style="gap:.75rem">
-        <div class="info-item"><span class="lbl">Taux mensuel</span><span class="val">{{ session.niveau.taux_mensuel|floatformat:0|intcomma }} FCFA</span></div>
-        <div class="info-item"><span class="lbl">Versement/part</span><span class="val">{{ session.niveau.versement_mensuel_par_part|floatformat:0|intcomma }} FCFA</span></div>
-        <div class="info-item"><span class="lbl">Intérêts bureau</span><span class="val accent">{{ session.montant_interet_bureau|floatformat:0|intcomma }} FCFA</span></div>
-        <div class="info-item"><span class="lbl">Intérêt/adhérent</span><span class="val green">{{ session.interet_par_adherent|intcomma }} FCFA</span></div>
+  <div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.07)">
+    <div style="background:#1B2B5E;padding:.9rem 1.25rem;display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:.6rem">
+        <i class="fas fa-layer-group" style="color:#C9A84C"></i>
+        <span style="color:white;font-weight:700;font-size:.95rem">Tontine {{ session.niveau.code }}</span>
       </div>
-      <div style="margin-top:1rem">
-        <a href="{% url 'tontines:detail_participants' session.niveau.code %}" class="btn-admin outline" style="font-size:.8rem;padding:.45rem 1rem">Détail participants →</a>
+      <span style="background:rgba(201,168,76,.2);color:#C9A84C;padding:.25rem .75rem;border-radius:20px;font-size:.72rem;font-weight:700">
+        {{ session.participations.count }} parts
+      </span>
+    </div>
+    <div style="padding:1.1rem 1.25rem">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;font-size:.8rem;margin-bottom:1rem">
+        <div>
+          <div style="color:#6C757D;font-size:.65rem;text-transform:uppercase;letter-spacing:.5px">Taux</div>
+          <div style="font-weight:700;color:#1B2B5E">{{ session.niveau.taux_mensuel|floatformat:0|intcomma }} F</div>
+        </div>
+        <div>
+          <div style="color:#6C757D;font-size:.65rem;text-transform:uppercase;letter-spacing:.5px">Versement/part</div>
+          <div style="font-weight:700;color:#1B2B5E">{{ session.niveau.versement_mensuel_par_part|floatformat:0|intcomma }} F</div>
+        </div>
+        <div>
+          <div style="color:#6C757D;font-size:.65rem;text-transform:uppercase;letter-spacing:.5px">Intérêts bureau</div>
+          <div style="font-weight:700;color:#C9A84C">{{ session.montant_interet_bureau|floatformat:0|intcomma }} F</div>
+        </div>
+        <div>
+          <div style="color:#6C757D;font-size:.65rem;text-transform:uppercase;letter-spacing:.5px">Intérêt/adhérent</div>
+          <div style="font-weight:700;color:#10705A">{{ session.interet_par_adherent|floatformat:0|intcomma }} F</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:.5rem">
+        <a href="{% url 'tontines:saisie' session.niveau.code %}?mois={{ mois }}&annee={{ annee }}"
+           style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;
+                  padding:.5rem;background:#1B2B5E;color:white;border-radius:8px;
+                  text-decoration:none;font-size:.78rem;font-weight:600"
+           onmouseover="this.style.background='#111C3F'" onmouseout="this.style.background='#1B2B5E'">
+          <i class="fas fa-edit"></i> Saisir
+        </a>
+        <a href="{% url 'tontines:detail_participants' session.niveau.code %}"
+           style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;
+                  padding:.5rem;border:1px solid #1B2B5E;color:#1B2B5E;border-radius:8px;
+                  text-decoration:none;font-size:.78rem;font-weight:600"
+           onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+          <i class="fas fa-users"></i> Détail
+        </a>
       </div>
     </div>
   </div>
-  {% empty %}
-  <div class="empty-state"><i class="fas fa-clock"></i><p>Aucune session créée pour ce mois.</p></div>
   {% endfor %}
 </div>
-<div class="table-card">
-  <div class="table-card-head"><h3>Participations du mois</h3></div>
-  <div class="table-wrap">
-    <table class="admin-table">
-      <thead><tr><th>Adhérent</th><th>Tontine</th><th>Parts</th><th>Mode</th><th>Montant versé</th></tr></thead>
+{% else %}
+<div style="background:white;border-radius:12px;padding:2.5rem;text-align:center;
+            box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:1.5rem">
+  <i class="fas fa-clock" style="font-size:2.5rem;color:#CED4DA;margin-bottom:1rem;display:block"></i>
+  <p style="color:#6C757D;font-size:.9rem;margin-bottom:1rem">Aucune session créée pour {{ mois_label }} {{ annee }}.</p>
+  {% for niveau in niveaux %}
+  <a href="{% url 'tontines:saisie' niveau.code %}?mois={{ mois }}&annee={{ annee }}"
+     style="display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.25rem;
+            background:#1B2B5E;color:white;border-radius:8px;text-decoration:none;
+            font-size:.82rem;font-weight:600;margin:.25rem"
+     onmouseover="this.style.background='#111C3F'" onmouseout="this.style.background='#1B2B5E'">
+    <i class="fas fa-plus"></i> Créer {{ niveau.code }}
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- TABLEAU PARTICIPATIONS -->
+<div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+  <div style="padding:.9rem 1.5rem;border-bottom:2px solid #F4F5F7;display:flex;align-items:center;justify-content:space-between">
+    <h3 style="color:#1B2B5E;margin:0;font-size:.95rem">
+      <i class="fas fa-list" style="color:#C9A84C;margin-right:.5rem"></i>
+      Participations — {{ mois_label }} {{ annee }}
+    </h3>
+    <span style="background:rgba(27,43,94,.07);color:#1B2B5E;padding:.3rem .75rem;border-radius:20px;font-size:.72rem;font-weight:700">
+      {{ participations|length }} lignes
+    </span>
+  </div>
+  {% if niveau_code %}
+  <div style="padding:.6rem 1.5rem;background:#F8F9FC;border-bottom:1px solid #E8E9EC;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+    <span style="font-size:.75rem;color:#6C757D">Filtrer :</span>
+    <a href="?mois={{ mois }}&annee={{ annee }}"
+       style="padding:.3rem .75rem;border-radius:20px;font-size:.72rem;font-weight:600;
+              background:#E8E9EC;color:#495057;text-decoration:none">Tous</a>
+    {% for niveau in niveaux %}
+    <a href="?mois={{ mois }}&annee={{ annee }}&niveau={{ niveau.code }}"
+       style="padding:.3rem .75rem;border-radius:20px;font-size:.72rem;font-weight:600;text-decoration:none;
+              {% if niveau.code == niveau_code %}background:#1B2B5E;color:white{% else %}background:#E8E9EC;color:#495057{% endif %}">
+      {{ niveau.code }}
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+      <thead>
+        <tr style="background:#F4F5F7">
+          <th style="padding:.7rem 1rem;text-align:left;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase;letter-spacing:.5px">Adhérent</th>
+          <th style="padding:.7rem .8rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Tontine</th>
+          <th style="padding:.7rem .8rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Parts</th>
+          <th style="padding:.7rem .8rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Mode</th>
+          <th style="padding:.7rem .8rem;text-align:right;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Montant versé</th>
+          <th style="padding:.7rem .8rem;text-align:right;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Pénalité</th>
+          <th style="padding:.7rem .8rem;text-align:right;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Lot principal</th>
+          <th style="padding:.7rem .8rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Actions</th>
+        </tr>
+      </thead>
       <tbody>
         {% for p in participations %}
-        <tr>
-          <td style="font-weight:600;color:var(--primary)">{{ p.adherent.nom_prenom|title }}</td>
-          <td><span class="badge primary">{{ p.session.niveau.code }}</span></td>
-          <td>{{ p.nombre_parts }}</td>
-          <td><span class="badge {% if p.mode_versement == 'BANQUE' %}green{% else %}accent{% endif %}">{{ p.get_mode_versement_display }}</span></td>
-          <td>{{ p.montant_verse|floatformat:0|intcomma }} FCFA</td>
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#F8F9FC'" onmouseout="this.style.background=''">
+          <td style="padding:.6rem 1rem">
+            <div style="font-weight:700;color:#1B2B5E;font-size:.82rem">{{ p.adherent.nom_prenom|title }}</div>
+            <div style="font-size:.68rem;color:#6C757D">{{ p.adherent.matricule }}</div>
+          </td>
+          <td style="padding:.6rem .8rem;text-align:center">
+            <span style="background:rgba(27,43,94,.1);color:#1B2B5E;padding:.2rem .6rem;border-radius:20px;font-size:.72rem;font-weight:700">
+              {{ p.session.niveau.code }}
+            </span>
+          </td>
+          <td style="padding:.6rem .8rem;text-align:center;font-weight:700;color:#1B2B5E">{{ p.nombre_parts }}</td>
+          <td style="padding:.6rem .8rem;text-align:center">
+            <span style="padding:.2rem .6rem;border-radius:20px;font-size:.7rem;font-weight:600;
+              {% if p.mode_versement == 'BANQUE' %}background:rgba(16,112,90,.1);color:#10705A
+              {% elif p.mode_versement == 'ESPECES' %}background:rgba(201,168,76,.15);color:#A8863A
+              {% else %}background:rgba(184,76,76,.1);color:#B84C4C{% endif %}">
+              {{ p.mode_versement }}
+            </span>
+          </td>
+          <td style="padding:.6rem .8rem;text-align:right;font-weight:600;color:#1B2B5E">{{ p.montant_verse|floatformat:0|intcomma }} F</td>
+          <td style="padding:.6rem .8rem;text-align:right;color:{% if p.penalite_especes > 0 or p.penalite_echec > 0 %}#B84C4C{% else %}#ADB5BD{% endif %}">
+            {% if p.penalite_especes > 0 %}{{ p.penalite_especes|floatformat:0|intcomma }}{% elif p.penalite_echec > 0 %}{{ p.penalite_echec|floatformat:0|intcomma }}{% else %}—{% endif %}
+          </td>
+          <td style="padding:.6rem .8rem;text-align:right;color:#10705A;font-weight:600">
+            {% if p.montant_lot_principal > 0 %}{{ p.montant_lot_principal|floatformat:0|intcomma }} F{% else %}—{% endif %}
+          </td>
+          <td style="padding:.6rem .8rem;text-align:center">
+            <a href="{% url 'tontines:saisie' p.session.niveau.code %}?mois={{ mois }}&annee={{ annee }}"
+               style="font-size:.72rem;color:#1B2B5E;font-weight:600;text-decoration:none"
+               onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+              <i class="fas fa-edit"></i>
+            </a>
+          </td>
         </tr>
-        {% empty %}<tr class="empty-row"><td colspan="5">Aucune participation ce mois.</td></tr>{% endfor %}
+        {% empty %}
+        <tr><td colspan="8" style="padding:2rem;text-align:center;color:#ADB5BD">
+          Aucune participation pour {{ mois_label }} {{ annee }}.
+        </td></tr>
+        {% endfor %}
       </tbody>
     </table>
   </div>

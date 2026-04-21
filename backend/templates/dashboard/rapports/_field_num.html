@@ -1,0 +1,17 @@
+<div>
+  <label style="font-size:.65rem;font-weight:700;color:#6C757D;display:block;
+                margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.5px">
+    {{ label }}
+  </label>
+  <input type="number" step="0.01" name="{{ name }}"
+         value="{{ val|default:'0'|floatformat:2 }}"
+         {% if ro %}
+         style="width:100%;padding:.45rem .7rem;border:1px solid #E8E9EC;border-radius:6px;
+                font-size:.82rem;font-family:inherit;background:#F4F5F7;color:#495057"
+         {% else %}
+         style="width:100%;padding:.45rem .7rem;border:1px solid #CED4DA;border-radius:6px;
+                font-size:.82rem;font-family:inherit;background:white;color:#1B2B5E;font-weight:600"
+         onfocus="this.style.borderColor='#1B2B5E';this.style.boxShadow='0 0 0 3px rgba(27,43,94,.1)'"
+         onblur="this.style.borderColor='#CED4DA';this.style.boxShadow=''"
+         {% endif %}>
+</div>

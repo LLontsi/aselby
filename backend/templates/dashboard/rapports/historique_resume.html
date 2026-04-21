@@ -1,0 +1,245 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Résumé HISTO {{ annee }}{% endblock %}
+{% block contenu %}
+
+<!-- BARRE DE NAVIGATION -->
+<div style="background:white;border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.5rem;
+            box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;align-items:center;
+            justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+  <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+    <a href="{% url 'rapports:historique_liste' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;
+              color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-arrow-left"></i> Liste
+    </a>
+    <a href="{% url 'rapports:historique_synthese' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;
+              color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-table"></i> Synthèse
+    </a>
+    <span style="background:#C9A84C;color:#1B2B5E;padding:.45rem 1.25rem;border-radius:20px;
+                 font-size:.85rem;font-weight:700;letter-spacing:.5px">
+      HISTORESUME{{ annee|slice:"2:" }}
+    </span>
+  </div>
+  <a href="{% url 'rapports:telecharger_historique' %}"
+     style="display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.2rem;
+            background:#10705A;color:white;border-radius:8px;text-decoration:none;
+            font-size:.82rem;font-weight:700"
+     onmouseover="this.style.background='#0A5A46'" onmouseout="this.style.background='#10705A'">
+    <i class="fas fa-file-excel"></i> Télécharger Excel
+  </a>
+</div>
+
+<!-- TABLEAU RÉSUMÉ — 75 colonnes (71 + MONTANT PRÊT DEFINITIF / NOMBRE DE MOIS / DATE REMBOURSEMENT / STATUT PRÊT) -->
+<div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+  <div style="padding:.9rem 1.5rem;border-bottom:2px solid #F4F5F7;display:flex;align-items:center;gap:.75rem">
+    <h3 style="font-family:'Playfair Display',serif;color:#1B2B5E;font-size:1rem;margin:0">
+      HISTORESUME{{ annee|slice:"2:" }} — Cumul annuel {{ annee }}
+    </h3>
+    <span style="background:rgba(201,168,76,.12);color:#A8863A;padding:.25rem .75rem;
+                 border-radius:20px;font-size:.7rem;font-weight:700">
+      {{ saisies|length }} adhérents
+    </span>
+  </div>
+  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <table style="width:max-content;min-width:100%;border-collapse:collapse;font-size:.72rem">
+      <thead>
+        <tr style="background:#C9A84C">
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">MATRICULE</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">NOM ET PRENOM</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">BONUS MALUS</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">VERSEMENT BANQUE</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">VERSEMENT ESPECES</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">AUTRE VERSEMENTS</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">COMPLEMENT EPARGNE</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">PENALITE VST ESPECES</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">MODE PAIEMENT TONTINE</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">NBRE LOT T35</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">TONTINE 35 000</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">NBRE LOT T75</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">TONTINE 75 000</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">NBRE LOT T100</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">TONTINE 100 000</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">REMB PETIT LOT T35</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">REMB PETIT LOT T75</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">REMB PETIT LOT T100</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">REMBOURSEMENT PRET FONDS</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">MODE PAIEMENT REMB PRET</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">MONTANT ENGAGEMENT</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">SANCTION</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">INSCRIPTION</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">EPARGNE ASSURANCE</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">TONTINE MOIS</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">PRET FONDS</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">MODE PAIEMENT PRET</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">NUM CHEQUE VST</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">ACHAT LOT T35</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">ACHAT LOT T75</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">ACHAT LOT T100</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">MODE PAIEMENT LOT</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">NUM CHEQUE LOT</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">PENALITE VST ESPECES</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">VENTE PETIT LOT T35</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">VENTE PETIT LOT T75</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">VENTE PETIT LOT T100</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">INTERET PETIT LOT T35</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">INTERET PETIT LOT T75</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">INTERET PETIT LOT T100</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">NUM CHEQUE PETIT LOT</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">MODE REMB PETIT LOT</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">PENALITE RETARD TONTINE</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">PENALITE ECHEC TONTINE</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">RESTE</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">MUTUELLE</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">REMBOURSEMENT TRANSPORT</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">RETRAIT PARTIEL FONDS</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">MONTANT T25</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">MONTANT T75</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">MONTANT T100</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">MONTANT CHEQUE</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">MONTANT ESPECES</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">CONTRIBUTION FOYER</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">AUTRES MODE VERST</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">MONTANT CHEQUE EFFECTIF</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">NUMERO CHEQUE</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">INTERET PRET</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">NBRE MOIS</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">DEPENSE FONDS ROULEMENT</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">DEPENSE FRAIS EXCEPTIONNEL</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">DEPENSE FONDS MUTUEL</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">DEPENSE COLLATION</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">PENALITE PRET FONDS</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">DEPENSE PENALITE BANQUE</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">AUTRES DEPENSES</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">LIBELLE</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">COMPTE</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">MONTANT</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">DON VOLONTAIRE</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px">PRET DEFINITIF</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px;background:rgba(27,43,94,.15)">MONTANT PRET DEFINITIF</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px;background:rgba(27,43,94,.15)">NOMBRE DE MOIS</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px;background:rgba(27,43,94,.15)">DATE REMBOURSEMENT</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:#1B2B5E;font-size:.55rem;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:78px;background:rgba(27,43,94,.15)">STATUT PRET</th>
+        
+          <th style="padding:.6rem .55rem;color:#1B2B5E;font-size:.55rem;
+                     font-weight:700;white-space:nowrap;min-width:60px">ACTION</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in saisies %}
+        <tr style="border-bottom:1px solid #F4F5F7;transition:background .15s"
+            onmouseover="this.style.background='#FFFDF5'" onmouseout="this.style.background=''">
+          <td style="padding:.5rem .55rem;font-weight:700;color:#1B2B5E;white-space:nowrap">{{ s.adherent.matricule }}</td>
+          <td style="padding:.5rem .55rem;font-weight:600;color:#343A40;white-space:nowrap">{{ s.adherent.nom_prenom|title }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.bonus_malus|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;font-weight:600;color:#1B2B5E">{{ s.versement_banque|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.versement_especes|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.autre_versement|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.complement_epargne|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#B84C4C">{{ s.penalite_vst_especes|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;color:#6C757D;white-space:nowrap">{{ s.mode_paiement_tontine|default:"—" }}</td>
+          <td style="padding:.5rem .55rem;text-align:center">{{ s.nbre_lot_t35 }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#1B2B5E;font-weight:600">{{ s.tontine_35|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:center">{{ s.nbre_lot_t75 }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#1B2B5E;font-weight:600">{{ s.tontine_75|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:center">{{ s.nbre_lot_t100 }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#1B2B5E;font-weight:600">{{ s.tontine_100|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.remb_petit_lot_t35|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.remb_petit_lot_t75|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.remb_petit_lot_t100|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.remboursement_pret|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;color:#6C757D;white-space:nowrap">{{ s.mode_paiement_remb_pret|default:"—" }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;font-weight:700;color:#1B2B5E">{{ s.montant_engagement|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#B84C4C">{{ s.sanction|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.inscription|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.epargne_assurance|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;font-weight:700;color:#10705A">{{ s.tontine_mois|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;font-weight:600;color:#1B2B5E">{{ s.pret_fonds|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;color:#6C757D;white-space:nowrap">{{ s.mode_paiement_remb_pret|default:"—" }}</td>
+          <td style="padding:.5rem .55rem;color:#6C757D;white-space:nowrap">{{ s.num_cheque_versement|default:"—" }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.achat_lot_t35|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.achat_lot_t75|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.achat_lot_t100|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;color:#6C757D;white-space:nowrap">{{ s.mode_paiement_lot|default:"—" }}</td>
+          <td style="padding:.5rem .55rem;color:#6C757D;white-space:nowrap">{{ s.num_cheque_lot|default:"—" }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#B84C4C">{{ s.penalite_vst_especes|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.vente_petit_lot_t35|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.vente_petit_lot_t75|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.vente_petit_lot_t100|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#10705A">{{ s.interet_petit_lot_t35|floatformat:2 }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#10705A">{{ s.interet_petit_lot_t75|floatformat:2 }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#10705A">{{ s.interet_petit_lot_t100|floatformat:2 }}</td>
+          <td style="padding:.5rem .55rem;color:#6C757D;white-space:nowrap">{{ s.num_cheque_petit_lot|default:"—" }}</td>
+          <td style="padding:.5rem .55rem;color:#6C757D;white-space:nowrap">{{ s.mode_remb_petit_lot|default:"—" }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#B84C4C">{{ s.penalite_retard_tontine|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#B84C4C">{{ s.penalite_echec_tontine|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.reste|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.mutuelle|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.remboursement_transport|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.retrait_partiel|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.montant_t25|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.montant_t75|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.montant_t100|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.montant_cheque|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.montant_especes|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.contribution_foyer|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;color:#6C757D;white-space:nowrap">{{ s.autres_mode_verst|default:"—" }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.montant_cheque_effectif|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;color:#6C757D;white-space:nowrap">{{ s.numero_cheque|default:"—" }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#10705A">{{ s.interet_pret|floatformat:2 }}</td>
+          <td style="padding:.5rem .55rem;text-align:center">{{ s.nbre_mois_pret }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#B84C4C">{{ s.depense_fonds_roulement|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#B84C4C">{{ s.depense_frais_excep|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#B84C4C">{{ s.depense_fonds_mutuel|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#B84C4C">{{ s.depense_collation|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#B84C4C">{{ s.penalite_pret_fonds|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#B84C4C">{{ s.depense_penalite_banque|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.autres_depenses|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;color:#6C757D;white-space:nowrap">{{ s.libelle_depense|default:"—" }}</td>
+          <td style="padding:.5rem .55rem;color:#6C757D;white-space:nowrap">{{ s.compte_depense|default:"—" }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ s.montant_depense|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#10705A;font-weight:600">{{ s.don_foyer_volontaire|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;font-weight:700;color:#1B2B5E">{{ s.pret_definitif|floatformat:0|intcomma }}</td>
+          <!-- Colonnes spécifiques RESUME -->
+          <td style="padding:.5rem .55rem;text-align:right;font-weight:700;color:#1B2B5E;background:rgba(201,168,76,.06)">{{ s.pret_definitif|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:center;background:rgba(201,168,76,.06)">{{ s.nombre_mois_pret }}</td>
+          <td style="padding:.5rem .55rem;color:#6C757D;white-space:nowrap;background:rgba(201,168,76,.06)">{{ s.date_remboursement|default:"—" }}</td>
+          <td style="padding:.5rem .55rem;text-align:center;background:rgba(201,168,76,.06)">
+            {% if s.statut_pret %}
+            <span style="background:{% if s.statut_pret == 'ECHU' %}rgba(184,76,76,.1){% else %}rgba(16,112,90,.1){% endif %};
+                         color:{% if s.statut_pret == 'ECHU' %}#B84C4C{% else %}#10705A{% endif %};
+                         padding:.2rem .5rem;border-radius:20px;font-size:.65rem;font-weight:700;white-space:nowrap">
+              {{ s.statut_pret }}
+            </span>
+            {% else %}—{% endif %}
+          </td>
+          <td style="padding:.5rem .55rem;text-align:center">
+            <a href="{% url 'rapports:historique_saisie' s.adherent.matricule %}"
+               style="display:inline-flex;align-items:center;padding:.3rem .65rem;
+                      background:#E8E9EC;color:#343A40;border-radius:6px;text-decoration:none;
+                      font-size:.7rem;font-weight:700"
+               onmouseover="this.style.background='#1B2B5E';this.style.color='white'"
+               onmouseout="this.style.background='#E8E9EC';this.style.color='#343A40'">
+              <i class="fas fa-edit"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="76" style="padding:3rem;text-align:center;color:#ADB5BD;font-style:italic">
+            <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:.75rem"></i>
+            Aucune saisie pour l'exercice {{ annee }}.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

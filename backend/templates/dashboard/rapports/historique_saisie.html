@@ -1,0 +1,214 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}HISTO — {{ adh.nom_prenom|title }}{% endblock %}
+{% block contenu %}
+
+{% if messages %}{% for msg in messages %}
+<div style="padding:.85rem 1.2rem;border-radius:8px;margin-bottom:1rem;
+  {% if msg.tags == 'success' %}background:rgba(16,112,90,.08);color:#10705A;border:1px solid rgba(16,112,90,.2)
+  {% else %}background:rgba(184,76,76,.08);color:#B84C4C;border:1px solid rgba(184,76,76,.2){% endif %}">
+  <i class="fas {% if msg.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+  {{ msg }}</div>
+{% endfor %}{% endif %}
+
+<!-- BARRE DE NAVIGATION -->
+<div style="background:white;border-radius:12px;padding:1rem 1.5rem;
+            box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:1.5rem;
+            display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+
+  <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+    <a href="{% url 'rapports:historique_liste' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;
+              color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-arrow-left"></i> Liste
+    </a>
+    {% if adh_prec %}
+    <a href="{% url 'rapports:historique_saisie' adh_prec %}?mois={{ mois }}&annee={{ annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;
+              color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-chevron-left"></i> Préc.
+    </a>
+    {% endif %}
+    <div style="display:flex;flex-direction:column">
+      <span style="font-weight:700;color:#1B2B5E;font-size:.95rem">{{ adh.nom_prenom|title }}</span>
+      <span style="font-size:.7rem;color:#C9A84C;font-weight:600;letter-spacing:1px">{{ adh.matricule }}</span>
+    </div>
+    {% if adh_suiv %}
+    <a href="{% url 'rapports:historique_saisie' adh_suiv %}?mois={{ mois }}&annee={{ annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;
+              color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      Suiv. <i class="fas fa-chevron-right"></i>
+    </a>
+    {% endif %}
+  </div>
+
+  <div style="display:flex;align-items:center;gap:.5rem">
+    <span style="background:#1B2B5E;color:white;padding:.45rem 1.25rem;border-radius:20px;
+                 font-size:.82rem;font-weight:700;letter-spacing:.5px">
+      {{ mois_label }} {{ annee }}
+    </span>
+    {% if obj.pk %}
+    <span style="background:rgba(16,112,90,.1);color:#10705A;padding:.35rem .75rem;
+                 border-radius:20px;font-size:.72rem;font-weight:700">
+      <i class="fas fa-check-circle"></i> Déjà saisi
+    </span>
+    {% else %}
+    <span style="background:rgba(201,168,76,.12);color:#A8863A;padding:.35rem .75rem;
+                 border-radius:20px;font-size:.72rem;font-weight:700">
+      <i class="fas fa-plus-circle"></i> Nouveau
+    </span>
+    {% endif %}
+  </div>
+</div>
+
+<!-- FORMULAIRE -->
+<form method="post">
+{% csrf_token %}
+<input type="hidden" name="mois" value="{{ mois }}">
+<input type="hidden" name="annee" value="{{ annee }}">
+
+<div style="display:grid;gap:1.25rem">
+
+  <!-- ── 1. VERSEMENTS ── -->
+  <div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <div style="background:#1B2B5E;padding:.9rem 1.5rem;display:flex;align-items:center;gap:.6rem">
+      <i class="fas fa-money-bill-wave" style="color:#C9A84C"></i>
+      <span style="color:white;font-weight:700;font-size:.9rem;letter-spacing:.5px">VERSEMENTS</span>
+    </div>
+    <div style="padding:1.25rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.9rem">
+      {% include "dashboard/rapports/_field_num.html" with name="bonus_malus"           label="Bonus / Malus"          val=obj.bonus_malus           ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="versement_banque"      label="Versement banque"       val=obj.versement_banque      ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="versement_especes"     label="Versement espèces"      val=obj.versement_especes     ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="autre_versement"       label="Autre versement"        val=obj.autre_versement       ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="complement_epargne"    label="Complément épargne"     val=obj.complement_epargne    ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="penalite_vst_especes"  label="Pénalité vst espèces"   val=obj.penalite_vst_especes  ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="montant_engagement"    label="Montant engagement"     val=obj.montant_engagement    ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="montant_cheque"        label="Montant chèque"         val=obj.montant_cheque        ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="montant_especes"       label="Montant espèces"        val=obj.montant_especes       ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="montant_cheque_effectif" label="Montant chèque effectif" val=obj.montant_cheque_effectif ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="epargne_assurance"     label="Épargne assurance"      val=obj.epargne_assurance     ro=0 %}
+      {% include "dashboard/rapports/_field_txt.html" with name="mode_paiement_tontine" label="Mode paiement tontine"  val=obj.mode_paiement_tontine %}
+      {% include "dashboard/rapports/_field_txt.html" with name="num_cheque_versement"  label="N° chèque versement"    val=obj.num_cheque_versement %}
+      {% include "dashboard/rapports/_field_txt.html" with name="numero_cheque"         label="N° chèque effectif"     val=obj.numero_cheque %}
+      {% include "dashboard/rapports/_field_txt.html" with name="autres_mode_verst"     label="Autres mode versement"  val=obj.autres_mode_verst %}
+    </div>
+  </div>
+
+  <!-- ── 2. TONTINES ── -->
+  <div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <div style="background:#243870;padding:.9rem 1.5rem;display:flex;align-items:center;gap:.6rem">
+      <i class="fas fa-clock" style="color:#C9A84C"></i>
+      <span style="color:white;font-weight:700;font-size:.9rem;letter-spacing:.5px">TONTINES</span>
+    </div>
+    <div style="padding:1.25rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.9rem">
+      {% include "dashboard/rapports/_field_num.html" with name="nbre_lot_t35"          label="Nbre lot T35"           val=obj.nbre_lot_t35          ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="tontine_35"            label="Tontine 35 000"         val=obj.tontine_35            ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="nbre_lot_t75"          label="Nbre lot T75"           val=obj.nbre_lot_t75          ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="tontine_75"            label="Tontine 75 000"         val=obj.tontine_75            ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="nbre_lot_t100"         label="Nbre lot T100"          val=obj.nbre_lot_t100         ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="tontine_100"           label="Tontine 100 000"        val=obj.tontine_100           ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="tontine_mois"          label="Tontine mois"           val=obj.tontine_mois          ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="montant_t25"           label="Montant T25"            val=obj.montant_t25           ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="montant_t75"           label="Montant T75"            val=obj.montant_t75           ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="montant_t100"          label="Montant T100"           val=obj.montant_t100          ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="remb_petit_lot_t35"    label="Remb. petit lot T35"    val=obj.remb_petit_lot_t35    ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="remb_petit_lot_t75"    label="Remb. petit lot T75"    val=obj.remb_petit_lot_t75    ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="remb_petit_lot_t100"   label="Remb. petit lot T100"   val=obj.remb_petit_lot_t100   ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="achat_lot_t35"         label="Achat lot T35"          val=obj.achat_lot_t35         ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="achat_lot_t75"         label="Achat lot T75"          val=obj.achat_lot_t75         ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="achat_lot_t100"        label="Achat lot T100"         val=obj.achat_lot_t100        ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="vente_petit_lot_t35"   label="Vente petit lot T35"    val=obj.vente_petit_lot_t35   ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="vente_petit_lot_t75"   label="Vente petit lot T75"    val=obj.vente_petit_lot_t75   ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="vente_petit_lot_t100"  label="Vente petit lot T100"   val=obj.vente_petit_lot_t100  ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="interet_petit_lot_t35" label="Intérêt petit lot T35"  val=obj.interet_petit_lot_t35 ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="interet_petit_lot_t75" label="Intérêt petit lot T75"  val=obj.interet_petit_lot_t75 ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="interet_petit_lot_t100" label="Intérêt petit lot T100" val=obj.interet_petit_lot_t100 ro=0 %}
+      {% include "dashboard/rapports/_field_txt.html" with name="mode_paiement_lot"     label="Mode paiement lot"      val=obj.mode_paiement_lot %}
+      {% include "dashboard/rapports/_field_txt.html" with name="num_cheque_lot"        label="N° chèque lot"          val=obj.num_cheque_lot %}
+      {% include "dashboard/rapports/_field_txt.html" with name="num_cheque_petit_lot"  label="N° chèque petit lot"    val=obj.num_cheque_petit_lot %}
+      {% include "dashboard/rapports/_field_txt.html" with name="mode_remb_petit_lot"   label="Mode remb. petit lot"   val=obj.mode_remb_petit_lot %}
+    </div>
+  </div>
+
+  <!-- ── 3. PRÊTS & REMBOURSEMENTS ── -->
+  <div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <div style="background:#10705A;padding:.9rem 1.5rem;display:flex;align-items:center;gap:.6rem">
+      <i class="fas fa-dollar-sign" style="color:#7ECFC0"></i>
+      <span style="color:white;font-weight:700;font-size:.9rem;letter-spacing:.5px">PRÊTS &amp; REMBOURSEMENTS</span>
+    </div>
+    <div style="padding:1.25rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.9rem">
+      {% include "dashboard/rapports/_field_num.html" with name="pret_fonds"             label="Prêt fonds"              val=obj.pret_fonds             ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="remboursement_pret"     label="Remboursement prêt"      val=obj.remboursement_pret     ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="interet_pret"           label="Intérêt prêt"            val=obj.interet_pret           ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="penalite_pret_fonds"    label="Pénalité prêt fonds"     val=obj.penalite_pret_fonds    ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="pret_definitif"         label="Prêt définitif"          val=obj.pret_definitif         ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="nombre_mois_pret"       label="Nombre mois prêt"        val=obj.nombre_mois_pret       ro=0 %}
+      {% include "dashboard/rapports/_field_txt.html" with name="mode_paiement_pret"     label="Mode paiement prêt"      val=obj.mode_paiement_pret %}
+      {% include "dashboard/rapports/_field_txt.html" with name="mode_paiement_remb_pret" label="Mode remb. prêt"        val=obj.mode_paiement_remb_pret %}
+      {% include "dashboard/rapports/_field_txt.html" with name="date_remboursement"     label="Date remboursement"      val=obj.date_remboursement %}
+      {% include "dashboard/rapports/_field_txt.html" with name="statut_pret"            label="Statut prêt"             val=obj.statut_pret %}
+    </div>
+  </div>
+
+  <!-- ── 4. DIVERS & DÉPENSES ── -->
+  <div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <div style="background:#7B5EA7;padding:.9rem 1.5rem;display:flex;align-items:center;gap:.6rem">
+      <i class="fas fa-receipt" style="color:#D4B8F0"></i>
+      <span style="color:white;font-weight:700;font-size:.9rem;letter-spacing:.5px">DIVERS &amp; DÉPENSES</span>
+    </div>
+    <div style="padding:1.25rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.9rem">
+      {% include "dashboard/rapports/_field_num.html" with name="sanction"               label="Sanction"                val=obj.sanction               ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="inscription"            label="Inscription"             val=obj.inscription            ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="mutuelle"               label="Mutuelle"                val=obj.mutuelle               ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="reste"                  label="Reste"                   val=obj.reste                  ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="retrait_partiel"        label="Retrait partiel"         val=obj.retrait_partiel        ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="contribution_foyer"     label="Contribution foyer"      val=obj.contribution_foyer     ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="don_foyer_volontaire"   label="Don foyer volontaire"    val=obj.don_foyer_volontaire   ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="remboursement_transport" label="Remb. transport"        val=obj.remboursement_transport ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="penalite_retard_tontine" label="Pénalité retard tontine" val=obj.penalite_retard_tontine ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="penalite_echec_tontine" label="Pénalité échec tontine"  val=obj.penalite_echec_tontine ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="autres_depenses"        label="Autres dépenses"         val=obj.autres_depenses        ro=1 %}
+      {% include "dashboard/rapports/_field_num.html" with name="montant_depense"        label="Montant dépense"         val=obj.montant_depense        ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="depense_fonds_roulement" label="Dépense fonds roulement" val=obj.depense_fonds_roulement ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="depense_frais_excep"    label="Dépense frais except."   val=obj.depense_frais_excep    ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="depense_fonds_mutuel"   label="Dépense fonds mutuel"    val=obj.depense_fonds_mutuel   ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="depense_collation"      label="Dépense collation"       val=obj.depense_collation      ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="depense_penalite_banque" label="Dépense pén. banque"    val=obj.depense_penalite_banque ro=0 %}
+      {% include "dashboard/rapports/_field_txt.html" with name="libelle_depense"        label="Libellé dépense"         val=obj.libelle_depense %}
+      {% include "dashboard/rapports/_field_txt.html" with name="compte_depense"         label="Compte dépense"          val=obj.compte_depense %}
+    </div>
+  </div>
+
+</div><!-- /grid -->
+
+<!-- BOUTONS SAVE -->
+<div style="display:flex;gap:1rem;margin-top:1.5rem;padding-top:1.25rem;border-top:2px solid #E8E9EC">
+  <button type="submit" name="save"
+          style="display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 2rem;
+                 background:#1B2B5E;color:white;border:none;border-radius:8px;
+                 font-size:.875rem;font-weight:700;cursor:pointer;font-family:inherit"
+          onmouseover="this.style.background='#111C3F'" onmouseout="this.style.background='#1B2B5E'">
+    <i class="fas fa-save"></i> Enregistrer
+  </button>
+  <a href="{% url 'rapports:historique_liste' %}"
+     style="display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.5rem;
+            background:#E8E9EC;color:#495057;border-radius:8px;
+            font-size:.875rem;font-weight:600;text-decoration:none"
+     onmouseover="this.style.background='#CED4DA'" onmouseout="this.style.background='#E8E9EC'">
+    Annuler
+  </a>
+</div>
+
+</form>
+
+<div style="margin-top:1rem;font-size:.72rem;color:#ADB5BD;display:flex;align-items:center;gap:.5rem">
+  <span style="display:inline-block;width:12px;height:12px;background:#F4F5F7;border:1px solid #CED4DA;border-radius:3px"></span>
+  Champs grisés = valeurs récupérées automatiquement depuis la saisie normale (modifiables si nécessaire)
+</div>
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Historique Bancaire — {{ mois_label }} {{ annee }}{% endblock %}
+{% block contenu %}
+
+{% if messages %}{% for msg in messages %}
+<div style="padding:.85rem 1.2rem;border-radius:8px;margin-bottom:1rem;
+  {% if msg.tags == 'success' %}background:rgba(16,112,90,.08);color:#10705A;border:1px solid rgba(16,112,90,.2)
+  {% else %}background:rgba(184,76,76,.08);color:#B84C4C;border:1px solid rgba(184,76,76,.2){% endif %}">
+  {{ msg }}</div>
+{% endfor %}{% endif %}
+
+<!-- NAV -->
+<div style="background:white;border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.5rem;
+            box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;align-items:center;
+            justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+  <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+    <a href="{% url 'banque:historique' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-arrow-left"></i> Historique
+    </a>
+    <a href="?mois={{ prec_mois }}&annee={{ prec_annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-chevron-left"></i>
+    </a>
+    <span style="background:#1B2B5E;color:white;padding:.45rem 1.25rem;border-radius:20px;font-size:.85rem;font-weight:700">
+      {{ mois_label }} {{ annee }}
+    </span>
+    <a href="?mois={{ suiv_mois }}&annee={{ suiv_annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+  <a href="{% url 'banque:telecharger' %}"
+     style="display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.2rem;
+            background:#10705A;color:white;border-radius:8px;text-decoration:none;font-size:.82rem;font-weight:700"
+     onmouseover="this.style.background='#0A5A46'" onmouseout="this.style.background='#10705A'">
+    <i class="fas fa-file-excel"></i> Télécharger Excel
+  </a>
+</div>
+
+<form method="post">{% csrf_token %}
+<input type="hidden" name="mois" value="{{ mois }}">
+<input type="hidden" name="annee" value="{{ annee }}">
+
+<div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+  <div style="padding:.9rem 1.5rem;border-bottom:2px solid #F4F5F7;background:#1B2B5E">
+    <h3 style="color:white;margin:0;font-size:.95rem">
+      <i class="fas fa-university" style="color:#C9A84C;margin-right:.5rem"></i>
+      TABBHISTOBQUE — {{ mois_label }} {{ annee }}
+    </h3>
+  </div>
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+      <thead>
+        <tr style="background:#F4F5F7">
+          <th style="padding:.7rem .7rem;text-align:left;font-size:.62rem;font-weight:700;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;border-right:1px solid #E8E9EC">Matricule</th>
+          <th style="padding:.7rem .7rem;text-align:left;font-size:.62rem;font-weight:700;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;border-right:1px solid #E8E9EC">Nom et prénom</th>
+          <th style="padding:.7rem .7rem;text-align:center;font-size:.62rem;font-weight:700;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;border-right:1px solid #E8E9EC">Hist. Tontine</th>
+          <th style="padding:.7rem .7rem;text-align:center;font-size:.62rem;font-weight:700;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;border-right:1px solid #E8E9EC">Hist. Espèces</th>
+          <th style="padding:.7rem .7rem;text-align:center;font-size:.62rem;font-weight:700;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;border-right:1px solid #E8E9EC">Hist. Banque</th>
+          <th style="padding:.7rem .7rem;text-align:center;font-size:.62rem;font-weight:700;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;border-right:1px solid #E8E9EC">Autre vst</th>
+          <th style="padding:.7rem .7rem;text-align:center;font-size:.62rem;font-weight:700;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;border-right:1px solid #E8E9EC">En compte</th>
+          <th style="padding:.7rem .7rem;text-align:center;font-size:.62rem;font-weight:700;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;border-right:1px solid #E8E9EC">Mnt engagement</th>
+          <th style="padding:.7rem .7rem;text-align:center;font-size:.62rem;font-weight:700;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;border-right:1px solid #E8E9EC">Mnt à justifier</th>
+          <th style="padding:.7rem .7rem;text-align:center;font-size:.62rem;font-weight:700;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;border-right:1px solid #E8E9EC">Agio</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        {% with adh=row.adherent h=row.hist pfx="adh_"|add:row.adherent.matricule|add:"_" %}
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#F8F9FC'" onmouseout="this.style.background=''">
+          <td style="padding:.5rem .7rem;font-weight:700;color:#1B2B5E;white-space:nowrap;font-size:.78rem">{{ adh.matricule }}</td>
+          <td style="padding:.5rem .7rem;font-weight:600;white-space:nowrap">{{ adh.nom_prenom|title }}</td>
+
+          <td style="padding:.35rem .4rem">
+            <input type="number" step="1000" name="{{ pfx }}versement_tontine"
+                   value="{% if h %}{{ h.versement_tontine|floatformat:2 }}{% else %}0{% endif %}"
+                   style="width:100px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right;">
+          </td>
+          <td style="padding:.35rem .4rem">
+            <input type="number" step="1000" name="{{ pfx }}versement_especes"
+                   value="{% if h %}{{ h.versement_especes|floatformat:2 }}{% else %}0{% endif %}"
+                   style="width:100px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right;">
+          </td>
+          <td style="padding:.35rem .4rem">
+            <input type="number" step="1000" name="{{ pfx }}versement_banque"
+                   value="{% if h %}{{ h.versement_banque|floatformat:2 }}{% else %}0{% endif %}"
+                   style="width:100px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right;">
+          </td>
+          <td style="padding:.35rem .4rem">
+            <input type="number" step="1000" name="{{ pfx }}autre_versement"
+                   value="{% if h %}{{ h.autre_versement|floatformat:2 }}{% else %}0{% endif %}"
+                   style="width:100px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right;">
+          </td>
+          <td style="padding:.35rem .4rem">
+            <input type="number" step="1000" name="{{ pfx }}en_compte_reel"
+                   value="{% if h %}{{ h.en_compte_reel|floatformat:2 }}{% else %}0{% endif %}"
+                   style="width:100px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right;background:rgba(16,112,90,.04)">
+          </td>
+          <td style="padding:.35rem .4rem">
+            <input type="number" step="1000" name="{{ pfx }}montant_engagement"
+                   value="{% if h %}{{ h.montant_engagement|floatformat:2 }}{% else %}0{% endif %}"
+                   style="width:100px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right;">
+          </td>
+          <td style="padding:.35rem .4rem">
+            <input type="number" step="1000" name="{{ pfx }}montant_a_justifier_saisi"
+                   value="{% if h %}{{ h.montant_a_justifier_saisi|floatformat:2 }}{% else %}0{% endif %}"
+                   style="width:100px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right;">
+          </td>
+          <td style="padding:.35rem .4rem">
+            <input type="number" step="0.01" name="{{ pfx }}agio"
+                   value="{% if h %}{{ h.agio|floatformat:2 }}{% else %}0{% endif %}"
+                   style="width:100px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right;">
+          </td>
+        </tr>
+        {% endwith %}
+        {% empty %}
+        <tr><td colspan="10" style="padding:2rem;text-align:center;color:#ADB5BD">Aucun adhérent.</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="background:#F4F5F7;font-weight:700;color:#1B2B5E">
+          <td colspan="2" style="padding:.7rem 1rem">TOTAUX</td>
+          <td style="padding:.7rem .7rem;text-align:right">{{ total_tontine|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .7rem;text-align:right">{{ total_especes|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .7rem;text-align:right">{{ total_banque|floatformat:0|intcomma }}</td>
+          <td colspan="5"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  <div style="padding:1.25rem 1.5rem;border-top:2px solid #F4F5F7;display:flex;gap:1rem">
+    <button type="submit" name="save"
+            style="display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 2rem;
+                   background:#1B2B5E;color:white;border:none;border-radius:8px;
+                   font-size:.875rem;font-weight:700;cursor:pointer;font-family:inherit"
+            onmouseover="this.style.background='#111C3F'" onmouseout="this.style.background='#1B2B5E'">
+      <i class="fas fa-save"></i> Enregistrer
+    </button>
+  </div>
+</div>
+</form>
+{% endblock %}

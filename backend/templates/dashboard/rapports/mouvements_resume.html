@@ -1,0 +1,201 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Résumé MVT {{ annee }}{% endblock %}
+{% block contenu %}
+
+<div style="background:white;border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.5rem;
+            box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;align-items:center;
+            justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+  <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+    <a href="{% url 'rapports:mouvements_liste' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;
+              color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-arrow-left"></i> Liste
+    </a>
+    <a href="{% url 'rapports:mouvements_synthese' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;
+              color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-table"></i> Synthèse
+    </a>
+    <span style="background:#C9A84C;color:#1B2B5E;padding:.45rem 1.25rem;border-radius:20px;font-size:.85rem;font-weight:700">
+      MVTRESUME{{ annee|slice:"2:" }}
+    </span>
+  </div>
+  <a href="{% url 'rapports:telecharger_mouvements' %}"
+     style="display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.2rem;
+            background:#10705A;color:white;border-radius:8px;text-decoration:none;font-size:.82rem;font-weight:700"
+     onmouseover="this.style.background='#0A5A46'" onmouseout="this.style.background='#10705A'">
+    <i class="fas fa-file-excel"></i> Télécharger Excel
+  </a>
+</div>
+
+<div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+  <div style="padding:.9rem 1.5rem;border-bottom:2px solid #F4F5F7;display:flex;align-items:center;gap:.75rem">
+    <h3 style="font-family:'Playfair Display',serif;color:#1B2B5E;font-size:1rem;margin:0">
+      MVTRESUME{{ annee|slice:"2:" }} — Cumul annuel {{ annee }}
+    </h3>
+    <span style="background:rgba(201,168,76,.12);color:#A8863A;padding:.25rem .75rem;border-radius:20px;font-size:.7rem;font-weight:700">
+      {{ saisies|length }} adhérents
+    </span>
+  </div>
+  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <table style="width:max-content;min-width:100%;border-collapse:collapse;font-size:.72rem">
+      <thead>
+        <tr style="background:#C9A84C">
+          <th style="padding:.55rem .5rem;text-align:left;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px;background:rgba(27,43,94,.15)">MATRICULE</th>
+          <th style="padding:.55rem .5rem;text-align:left;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px;background:rgba(27,43,94,.15)">NOM ET PRENOM</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">FONDES DE DEPART</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">RECONDUCTION</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">RETRAIT PARTIEL</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px;background:rgba(27,43,94,.15)">FONDS DEFINITIF</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">BASE CALCUL INT.</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">REPARTITION INT.</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px;background:rgba(27,43,94,.15)">CAPITAL COMPOSE</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">SANCTION</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">RESTE</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">EPARGNE</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">FONDS ROULEMENT</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">FRAIS EXCEPTIONNEL</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">COLLATION</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">PEN VST ESPECES</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">INSCRIPTION</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">MUTUELLE</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px;background:rgba(27,43,94,.15)">PRET FONDS</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">INT PRET FONDS</th>
+          <th style="padding:.55rem .5rem;text-align:center;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">NUM CHEQUE</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">REMB PRET FONDS</th>
+          <th style="padding:.55rem .5rem;text-align:center;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">MODE VST REMB</th>
+          <th style="padding:.55rem .5rem;text-align:center;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">MODE VST PRET</th>
+          <th style="padding:.55rem .5rem;text-align:center;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">N° CHEQUE PRET</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">PEN PRET FONDS</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">PENALITE FONDS</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">PEN ECHEC TONT</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">PEN RETARD TONT</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">REMB TRANSPORT</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">CONTRIB FOYER</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">DEP FONDS ROUL</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">DEP FRAIS EXCEP</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">DEP FONDS MUT</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">DEP COLLATION</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">DEP PEN BANQUE</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">AUTRES DEPENSES</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px;background:rgba(27,43,94,.15)">PRET DEFINITIF</th>
+          <th style="padding:.55rem .5rem;text-align:center;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">DATE REMB</th>
+          <th style="padding:.55rem .5rem;text-align:center;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">STATUT PRET</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.54rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;border-right:1px solid rgba(27,43,94,.1);min-width:80px">DON VOLONTAIRE</th>
+          <th style="padding:.55rem .5rem;color:#1B2B5E;font-size:.54rem;font-weight:700;white-space:nowrap;min-width:60px">ACTION</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in saisies %}
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#FFFDF5'" onmouseout="this.style.background=''">
+          <td style="padding:.5rem .5rem;text-align:left;color:#1B2B5E;font-weight:700;white-space:nowrap">{{ s.adherent.matricule }}</td>
+          <td style="padding:.5rem .5rem;text-align:left;color:#343A40;font-weight:700;white-space:nowrap">{{ s.adherent.nom_prenom|title }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#495057">{{ s.fonds_depart|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#495057">{{ s.reconduction|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#495057">{{ s.retrait_partiel|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#1B2B5E;font-weight:700">{{ s.fonds_definitif|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#495057">{{ s.base_calcul_interet|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#10705A;white-space:nowrap">{{ s.repartition_interet|default:"—" }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#10705A;font-weight:700">{{ s.capital_compose|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#B84C4C">{{ s.sanction|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#495057">{{ s.reste|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#495057">{{ s.epargne|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#495057">{{ s.fonds_roulement|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#495057">{{ s.frais_exceptionnel|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#495057">{{ s.collation|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#B84C4C">{{ s.penalite_vst_especes|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#495057">{{ s.inscription|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#495057">{{ s.mutuelle|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#1B2B5E;font-weight:700">{{ s.pret_fonds|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#10705A">{{ s.interet_pret_fonds|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:center;color:#6C757D;white-space:nowrap">{{ s.numero_cheque|default:"—" }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#495057">{{ s.remboursement_pret_fonds|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:center;color:#6C757D;white-space:nowrap">{{ s.mode_versement_remboursement|default:"—" }}</td>
+          <td style="padding:.5rem .5rem;text-align:center;color:#6C757D;white-space:nowrap">{{ s.mode_versement_pret|default:"—" }}</td>
+          <td style="padding:.5rem .5rem;text-align:center;color:#6C757D;white-space:nowrap">{{ s.numero_cheque_pret|default:"—" }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#B84C4C">{{ s.penalite_pret_fonds|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#B84C4C">{{ s.penalite_fonds|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#B84C4C">{{ s.penalite_echec_tontine|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#B84C4C">{{ s.penalite_retard_tontine|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#495057">{{ s.remboursement_transport|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#495057">{{ s.contribution_foyer|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#B84C4C">{{ s.depense_fonds_roulement|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#B84C4C">{{ s.depense_frais_exceptionnel|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#B84C4C">{{ s.depense_fonds_mutuelle|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#B84C4C">{{ s.depense_collation|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#B84C4C">{{ s.depense_penalite_banque|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#495057">{{ s.autres_depenses|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#7B5EA7;font-weight:700">{{ s.pret_definitif|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:center;color:#6C757D;white-space:nowrap">{{ s.date_remboursement|default:"—" }}</td>
+          <td style="padding:.5rem .5rem;text-align:center;color:#6C757D;white-space:nowrap">{{ s.statut_pret|default:"—" }}</td>
+          <td style="padding:.5rem .5rem;text-align:right;color:#10705A">{{ s.don_volontaire|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .5rem;text-align:center">
+            <a href="{% url 'rapports:mouvements_saisie' s.adherent.matricule %}"
+               style="display:inline-flex;align-items:center;padding:.3rem .55rem;
+                      background:#E8E9EC;color:#343A40;border-radius:6px;text-decoration:none;font-size:.7rem;font-weight:700"
+               onmouseover="this.style.background='#1B2B5E';this.style.color='white'"
+               onmouseout="this.style.background='#E8E9EC';this.style.color='#343A40'">
+              <i class="fas fa-edit"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="42" style="padding:3rem;text-align:center;color:#ADB5BD">
+          Aucune saisie MVT pour {{ annee }}.
+        </td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="background:#1B2B5E;color:white;font-weight:700;font-size:.7rem;position:sticky;bottom:0">
+          <td style="padding:.7rem .5rem;font-weight:700;color:white" colspan="2">TOTAUX ({{ saisies|length }} adhérents)</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.fonds_depart|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.reconduction|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.retrait_partiel|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.fonds_definitif|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.base_calcul_interet|floatformat:0|intcomma }}</td>
+          <td></td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.capital_compose|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.sanction|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.reste|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.epargne|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.fonds_roulement|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.frais_exceptionnel|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.collation|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.penalite_vst_especes|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.inscription|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.mutuelle|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.pret_fonds|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.interet_pret_fonds|floatformat:0|intcomma }}</td>
+          <td></td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.remboursement_pret_fonds|floatformat:0|intcomma }}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.penalite_pret_fonds|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.penalite_fonds|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.penalite_echec_tontine|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.penalite_retard_tontine|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.remboursement_transport|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.contribution_foyer|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.depense_fonds_roulement|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.depense_frais_exceptionnel|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.depense_fonds_mutuelle|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.depense_collation|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.depense_penalite_banque|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.autres_depenses|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.pret_definitif|floatformat:0|intcomma }}</td>
+          <td></td>
+          <td></td>
+          <td style="padding:.7rem .5rem;text-align:right;color:#C9A84C;font-weight:700">{{ totaux.don_volontaire|floatformat:0|intcomma }}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+{% endblock %}

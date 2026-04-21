@@ -1,0 +1,174 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize rapports_extras %}
+{% block _titre %}MVT Complément — {{ adh.nom_prenom|title }}{% endblock %}
+{% block contenu %}
+
+{% if messages %}{% for msg in messages %}
+<div style="padding:.85rem 1.2rem;border-radius:8px;margin-bottom:1rem;
+  {% if msg.tags == 'success' %}background:rgba(16,112,90,.08);color:#10705A;border:1px solid rgba(16,112,90,.2)
+  {% else %}background:rgba(184,76,76,.08);color:#B84C4C;border:1px solid rgba(184,76,76,.2){% endif %}">
+  <i class="fas {% if msg.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+  {{ msg }}</div>
+{% endfor %}{% endif %}
+
+<!-- BARRE DE NAVIGATION -->
+<div style="background:white;border-radius:12px;padding:1rem 1.5rem;
+            box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:1.5rem;
+            display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+  <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+    <a href="{% url 'rapports:mouvements_liste' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;
+              color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-arrow-left"></i> Liste
+    </a>
+    {% if adh_prec %}
+    <a href="{% url 'rapports:mouvements_saisie' adh_prec %}?mois={{ mois }}&annee={{ annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;
+              color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-chevron-left"></i>
+    </a>
+    {% endif %}
+    <div>
+      <span style="font-weight:700;color:#1B2B5E;font-size:.95rem">{{ adh.nom_prenom|title }}</span>
+      <span style="font-size:.7rem;color:#C9A84C;font-weight:600;margin-left:.5rem;letter-spacing:1px">{{ adh.matricule }}</span>
+    </div>
+    {% if adh_suiv %}
+    <a href="{% url 'rapports:mouvements_saisie' adh_suiv %}?mois={{ mois }}&annee={{ annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;
+              color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    {% endif %}
+  </div>
+  <div style="display:flex;align-items:center;gap:.5rem">
+    <span style="background:#1B2B5E;color:white;padding:.45rem 1.25rem;border-radius:20px;font-size:.82rem;font-weight:700">
+      {{ mois_label }} {{ annee }}
+    </span>
+    {% if obj and obj.pk %}
+    <span style="background:rgba(16,112,90,.1);color:#10705A;padding:.35rem .75rem;border-radius:20px;font-size:.72rem;font-weight:700">
+      <i class="fas fa-check-circle"></i> Déjà saisi
+    </span>
+    {% else %}
+    <span style="background:rgba(201,168,76,.12);color:#A8863A;padding:.35rem .75rem;border-radius:20px;font-size:.72rem;font-weight:700">
+      <i class="fas fa-plus-circle"></i> Nouveau
+    </span>
+    {% endif %}
+  </div>
+</div>
+
+{% if not obj and not mvt_obj %}
+<!-- Saisie normale manquante -->
+<div style="background:rgba(184,76,76,.06);border:1px solid rgba(184,76,76,.2);border-radius:12px;padding:1.5rem;text-align:center">
+  <i class="fas fa-exclamation-triangle" style="font-size:2rem;color:#B84C4C;margin-bottom:.75rem;display:block"></i>
+  <p style="color:#B84C4C;font-weight:600;margin-bottom:.5rem">Saisie normale introuvable</p>
+  <p style="color:#6C757D;font-size:.85rem">
+    Pour créer un complément MVT pour {{ adh.nom_prenom|title }}, effectuez d'abord la
+    <a href="{% url 'saisie:formulaire' %}?mois={{ mois }}&annee={{ annee }}" style="color:#1B2B5E;font-weight:700">saisie mensuelle normale</a>.
+  </p>
+</div>
+{% else %}
+
+<!-- Section info : données récupérées automatiquement -->
+<div style="background:#F4F5F7;border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.25rem;
+            border-left:4px solid #C9A84C">
+  <div style="font-size:.72rem;font-weight:700;color:#A8863A;text-transform:uppercase;letter-spacing:1px;margin-bottom:.75rem">
+    <i class="fas fa-info-circle"></i> Données récupérées automatiquement depuis la saisie normale
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.5rem;font-size:.78rem">
+    {% if obj %}
+    <div><span style="color:#6C757D">Fonds départ:</span> <strong>{{ obj.fonds_depart|floatformat:0|intcomma }} F</strong></div>
+    <div><span style="color:#6C757D">Fonds définitif:</span> <strong>{{ obj.fonds_definitif|floatformat:0|intcomma }} F</strong></div>
+    <div><span style="color:#6C757D">Capital composé:</span> <strong style="color:#10705A">{{ obj.capital_compose|floatformat:0|intcomma }} F</strong></div>
+    <div><span style="color:#6C757D">Reste:</span> <strong>{{ obj.reste|floatformat:0|intcomma }} F</strong></div>
+    <div><span style="color:#6C757D">Épargne:</span> <strong>{{ obj.epargne|floatformat:0|intcomma }} F</strong></div>
+    <div><span style="color:#6C757D">Prêt fonds:</span> <strong>{{ obj.pret_fonds|floatformat:0|intcomma }} F</strong></div>
+    {% elif mvt_obj %}
+    <div><span style="color:#6C757D">Fonds définitif:</span> <strong>{{ mvt_obj.fonds_definitif|floatformat:0|intcomma }} F</strong></div>
+    <div><span style="color:#6C757D">Capital composé:</span> <strong style="color:#10705A">{{ mvt_obj.capital_compose|floatformat:0|intcomma }} F</strong></div>
+    <div><span style="color:#6C757D">Reste:</span> <strong>{{ mvt_obj.reste|floatformat:0|intcomma }} F</strong></div>
+    {% endif %}
+  </div>
+</div>
+
+<form method="post">{% csrf_token %}
+<input type="hidden" name="mois" value="{{ mois }}">
+<input type="hidden" name="annee" value="{{ annee }}">
+
+<div style="display:grid;gap:1.25rem">
+
+  <!-- Prêts -->
+  <div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <div style="background:#10705A;padding:.9rem 1.5rem;display:flex;align-items:center;gap:.6rem">
+      <i class="fas fa-dollar-sign" style="color:#7ECFC0"></i>
+      <span style="color:white;font-weight:700;font-size:.9rem;letter-spacing:.5px">PRÊTS — COMPLÉMENTS</span>
+    </div>
+    <div style="padding:1.25rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.9rem">
+      {% include "dashboard/rapports/_field_num.html" with name="interet_pret_fonds"       label="Intérêt prêt fonds"     val=obj.interet_pret_fonds       ro=0 %}
+      {% include "dashboard/rapports/_field_txt.html" with name="numero_cheque"            label="N° chèque versement"    val=obj.numero_cheque %}
+      {% include "dashboard/rapports/_field_num.html" with name="remboursement_pret_fonds" label="Remboursement prêt"     val=obj.remboursement_pret_fonds ro=0 %}
+      {% include "dashboard/rapports/_field_txt.html" with name="mode_versement_remboursement" label="Mode vst remboursement" val=obj.mode_versement_remboursement %}
+      {% include "dashboard/rapports/_field_txt.html" with name="mode_versement_pret"      label="Mode vst prêt"          val=obj.mode_versement_pret %}
+      {% include "dashboard/rapports/_field_txt.html" with name="numero_cheque_pret"       label="N° chèque prêt"         val=obj.numero_cheque_pret %}
+      {% include "dashboard/rapports/_field_num.html" with name="penalite_pret_fonds"      label="Pénalité prêt fonds"    val=obj.penalite_pret_fonds      ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="penalite_fonds"           label="Pénalité fonds"         val=obj.penalite_fonds           ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="pret_definitif"           label="Prêt définitif"         val=obj.pret_definitif           ro=0 %}
+      {% include "dashboard/rapports/_field_txt.html" with name="date_remboursement"       label="Date remboursement"     val=obj.date_remboursement %}
+      {% include "dashboard/rapports/_field_txt.html" with name="statut_pret"              label="Statut prêt"            val=obj.statut_pret %}
+    </div>
+  </div>
+
+  <!-- Pénalités -->
+  <div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <div style="background:#B84C4C;padding:.9rem 1.5rem;display:flex;align-items:center;gap:.6rem">
+      <i class="fas fa-exclamation-triangle" style="color:#F0A0A0"></i>
+      <span style="color:white;font-weight:700;font-size:.9rem;letter-spacing:.5px">PÉNALITÉS</span>
+    </div>
+    <div style="padding:1.25rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.9rem">
+      {% include "dashboard/rapports/_field_num.html" with name="penalite_echec_tontine"  label="Pénalité échec tontine"  val=obj.penalite_echec_tontine  ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="penalite_retard_tontine" label="Pénalité retard tontine" val=obj.penalite_retard_tontine ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="remboursement_transport" label="Remboursement transport"  val=obj.remboursement_transport ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="don_volontaire"          label="Don volontaire"          val=obj.don_volontaire          ro=0 %}
+    </div>
+  </div>
+
+  <!-- Dépenses -->
+  <div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <div style="background:#7B5EA7;padding:.9rem 1.5rem;display:flex;align-items:center;gap:.6rem">
+      <i class="fas fa-receipt" style="color:#D4B8F0"></i>
+      <span style="color:white;font-weight:700;font-size:.9rem;letter-spacing:.5px">DÉPENSES — PART INDIVIDUELLE</span>
+    </div>
+    <div style="padding:1.25rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.9rem">
+      {% include "dashboard/rapports/_field_num.html" with name="depense_fonds_roulement"    label="Dépense fonds roulement"   val=obj.depense_fonds_roulement    ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="depense_frais_exceptionnel" label="Dépense frais exceptionnel" val=obj.depense_frais_exceptionnel ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="depense_fonds_mutuelle"     label="Dépense fonds mutuelle"    val=obj.depense_fonds_mutuelle     ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="depense_collation"          label="Dépense collation"         val=obj.depense_collation          ro=0 %}
+      {% include "dashboard/rapports/_field_num.html" with name="depense_penalite_banque"    label="Dépense pénalité banque"   val=obj.depense_penalite_banque    ro=0 %}
+    </div>
+  </div>
+
+</div>
+
+<div style="display:flex;gap:1rem;margin-top:1.5rem;padding-top:1.25rem;border-top:2px solid #E8E9EC">
+  <button type="submit" name="save"
+          style="display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 2rem;
+                 background:#1B2B5E;color:white;border:none;border-radius:8px;
+                 font-size:.875rem;font-weight:700;cursor:pointer;font-family:inherit"
+          onmouseover="this.style.background='#111C3F'" onmouseout="this.style.background='#1B2B5E'">
+    <i class="fas fa-save"></i> Enregistrer
+  </button>
+  <a href="{% url 'rapports:mouvements_liste' %}"
+     style="display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.5rem;
+            background:#E8E9EC;color:#495057;border-radius:8px;font-size:.875rem;font-weight:600;text-decoration:none"
+     onmouseover="this.style.background='#CED4DA'" onmouseout="this.style.background='#E8E9EC'">
+    Annuler
+  </a>
+</div>
+</form>
+{% endif %}
+{% endblock %}

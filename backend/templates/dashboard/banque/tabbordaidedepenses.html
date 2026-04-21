@@ -1,0 +1,113 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Aide Dépenses — {{ mois_label }} {{ annee }}{% endblock %}
+{% block contenu %}
+
+<!-- NAV -->
+<div style="background:white;border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.5rem;
+            box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;align-items:center;
+            justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+  <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+    <a href="{% url 'banque:historique' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-arrow-left"></i> Retour
+    </a>
+    <a href="?mois={{ prec_mois }}&annee={{ prec_annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-chevron-left"></i>
+    </a>
+    <span style="background:#C9A84C;color:#1B2B5E;padding:.45rem 1.25rem;border-radius:20px;font-size:.85rem;font-weight:700">
+      AIDE DÉPENSES — {{ mois_label }} {{ annee }}
+    </span>
+    <a href="?mois={{ suiv_mois }}&annee={{ suiv_annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-chevron-right"></i>
+    </a>
+    {% if agio_global %}
+    <span style="background:rgba(184,76,76,.1);color:#B84C4C;padding:.35rem .75rem;border-radius:20px;font-size:.75rem;font-weight:700">
+      Agio: {{ agio_global|floatformat:2|intcomma }} F
+    </span>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Résumé total -->
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+  <div style="background:white;border-radius:12px;padding:1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid #1B2B5E">
+    <div style="font-size:.68rem;color:#6C757D;text-transform:uppercase;letter-spacing:1px">Total chèques</div>
+    <div style="font-size:1.4rem;font-weight:700;color:#1B2B5E;margin-top:.25rem">{{ total_cheque|floatformat:0|intcomma }} F</div>
+  </div>
+  <div style="background:white;border-radius:12px;padding:1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid #10705A">
+    <div style="font-size:.68rem;color:#6C757D;text-transform:uppercase;letter-spacing:1px">Total espèces</div>
+    <div style="font-size:1.4rem;font-weight:700;color:#1B2B5E;margin-top:.25rem">{{ total_especes|floatformat:0|intcomma }} F</div>
+  </div>
+  <div style="background:white;border-radius:12px;padding:1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid #C9A84C">
+    <div style="font-size:.68rem;color:#6C757D;text-transform:uppercase;letter-spacing:1px">Total général</div>
+    <div style="font-size:1.4rem;font-weight:700;color:#1B2B5E;margin-top:.25rem">{{ total_totaux|floatformat:0|intcomma }} F</div>
+  </div>
+</div>
+
+<!-- Tableau calculé (lecture seule) -->
+<div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+  <div style="padding:.9rem 1.5rem;border-bottom:2px solid #F4F5F7">
+    <h3 style="color:#1B2B5E;margin:0;font-size:.95rem">
+      <i class="fas fa-table" style="color:#C9A84C;margin-right:.5rem"></i>
+      TABBORDAIDEDEPENSES — Vue calculée
+    </h3>
+    <p style="color:#6C757D;font-size:.78rem;margin:.3rem 0 0">
+      Données agrégées depuis la saisie normale + historique bancaire
+    </p>
+  </div>
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+      <thead>
+        <tr style="background:#1B2B5E">
+          <th style="padding:.7rem 1rem;text-align:left;color:rgba(255,255,255,.8);font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Matricule</th>
+          <th style="padding:.7rem .8rem;text-align:left;color:rgba(255,255,255,.8);font-size:.62rem;font-weight:700;text-transform:uppercase;white-space:nowrap">Nom et prénom</th>
+          <th style="padding:.7rem .8rem;text-align:right;color:rgba(255,255,255,.8);font-size:.62rem;font-weight:700;text-transform:uppercase;white-space:nowrap">Totaux</th>
+          <th style="padding:.7rem .8rem;text-align:right;color:rgba(255,255,255,.8);font-size:.62rem;font-weight:700;text-transform:uppercase;white-space:nowrap">Montant chèque</th>
+          <th style="padding:.7rem .8rem;text-align:center;color:rgba(255,255,255,.8);font-size:.62rem;font-weight:700;text-transform:uppercase;white-space:nowrap">N° Chèque</th>
+          <th style="padding:.7rem .8rem;text-align:right;color:rgba(255,255,255,.8);font-size:.62rem;font-weight:700;text-transform:uppercase;white-space:nowrap">Espèces</th>
+          <th style="padding:.7rem .8rem;text-align:right;color:rgba(255,255,255,.8);font-size:.62rem;font-weight:700;text-transform:uppercase;white-space:nowrap">Agios</th>
+          <th style="padding:.7rem .8rem;text-align:right;color:rgba(255,255,255,.8);font-size:.62rem;font-weight:700;text-transform:uppercase;white-space:nowrap">Extrait compte</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#F8F9FC'" onmouseout="this.style.background=''">
+          <td style="padding:.6rem 1rem;font-weight:700;color:#1B2B5E;white-space:nowrap;font-size:.78rem">{{ row.adherent.matricule }}</td>
+          <td style="padding:.6rem .8rem;font-weight:600;white-space:nowrap">{{ row.adherent.nom_prenom|title }}</td>
+          <td style="padding:.6rem .8rem;text-align:right;font-weight:700;color:#1B2B5E">{{ row.totaux|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .8rem;text-align:right;color:#495057">{{ row.montant_cheque|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .8rem;text-align:center;color:#6C757D;white-space:nowrap">{{ row.num_cheque|default:"—" }}</td>
+          <td style="padding:.6rem .8rem;text-align:right;color:#495057">{{ row.especes|floatformat:0|intcomma }}</td>
+          <td style="padding:.6rem .8rem;text-align:right;color:#B84C4C">{{ row.agio|floatformat:2 }}</td>
+          <td style="padding:.6rem .8rem;text-align:right;color:#10705A">
+            {% if row.extrait %}{{ row.extrait|floatformat:0|intcomma }}{% else %}—{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" style="padding:2rem;text-align:center;color:#ADB5BD">Aucune donnée pour ce mois.</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="background:#F4F5F7;font-weight:700;color:#1B2B5E">
+          <td colspan="2" style="padding:.7rem 1rem">TOTAUX</td>
+          <td style="padding:.7rem .8rem;text-align:right">{{ total_totaux|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .8rem;text-align:right">{{ total_cheque|floatformat:0|intcomma }}</td>
+          <td></td>
+          <td style="padding:.7rem .8rem;text-align:right">{{ total_especes|floatformat:0|intcomma }}</td>
+          <td style="padding:.7rem .8rem;text-align:right;color:#B84C4C">{{ agio_global|floatformat:2 }}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+{% endblock %}
