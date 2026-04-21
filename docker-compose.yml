@@ -7,8 +7,8 @@ services:
       - .env.prod
     environment:
       POSTGRES_DB:       ${DB_NAME:-aselby_db}
-      POSTGRES_USER:     ${DB_USER:-aselby_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-aselby_pass}
+      POSTGRES_USER:     ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/init-db.sh:/docker-entrypoint-initdb.d/01-init-db.sh:ro
@@ -16,7 +16,7 @@ services:
     expose:
       - "5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-aselby_user} -d ${DB_NAME:-aselby_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-aselby_db}"]
       interval: 5s
       timeout: 5s
       retries: 10
