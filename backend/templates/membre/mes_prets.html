@@ -53,6 +53,78 @@
   <!-- Montants -->
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1.25rem">
     {% for label, val, color in pret_details %}{% endfor %}
+
+{% if not prets %}
+  {% if prets_data %}
+  {% for pret in prets_data %}
+  <div style="background:white;border-radius:14px;padding:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:1.5rem;border-top:4px solid {% if pret.statut == 'REMBOURSE' %}#10705A{% else %}#1B2B5E{% endif %}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+      <div>
+        <div style="font-weight:700;color:#1B2B5E;font-size:1rem">
+          Prêt de {{ pret.montant_principal|floatformat:0|intcomma }} FCFA
+        </div>
+        <div style="font-size:.8rem;color:#6C757D;margin-top:.2rem">
+          Octroyé le {{ pret.date_octroi|date:"d/m/Y" }}
+          {% if pret.nombre_mois %} · {{ pret.nombre_mois }} mois{% endif %}
+        </div>
+      </div>
+      <span style="padding:.3rem .9rem;border-radius:20px;font-size:.75rem;font-weight:700;
+                   background:{% if pret.statut == 'REMBOURSE' %}rgba(16,112,90,.1){% else %}rgba(27,43,94,.1){% endif %};
+                   color:{% if pret.statut == 'REMBOURSE' %}#10705A{% else %}#1B2B5E{% endif %}">
+        {% if pret.statut == 'REMBOURSE' %}✓ Remboursé{% else %}En cours{% endif %}
+      </span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem;margin-bottom:1rem">
+      <div style="background:#F4F5F7;border-radius:8px;padding:.75rem">
+        <div style="font-size:.65rem;color:#6C757D;text-transform:uppercase;margin-bottom:.2rem">Montant</div>
+        <div style="font-weight:700;color:#1B2B5E">{{ pret.montant_principal|floatformat:0|intcomma }} F</div>
+      </div>
+      <div style="background:#F4F5F7;border-radius:8px;padding:.75rem">
+        <div style="font-size:.65rem;color:#6C757D;text-transform:uppercase;margin-bottom:.2rem">Remboursé</div>
+        <div style="font-weight:700;color:#10705A">{{ pret.montant_rembourse|floatformat:0|intcomma }} F</div>
+      </div>
+      <div style="background:{% if pret.solde_restant > 0 %}rgba(184,76,76,.08){% else %}rgba(16,112,90,.08){% endif %};border-radius:8px;padding:.75rem">
+        <div style="font-size:.65rem;color:#6C757D;text-transform:uppercase;margin-bottom:.2rem">Solde restant</div>
+        <div style="font-weight:700;color:{% if pret.solde_restant > 0 %}#B84C4C{% else %}#10705A{% endif %}">
+          {{ pret.solde_restant|floatformat:0|intcomma }} F
+        </div>
+      </div>
+      {% if pret.date_echeance %}
+      <div style="background:#F4F5F7;border-radius:8px;padding:.75rem">
+        <div style="font-size:.65rem;color:#6C757D;text-transform:uppercase;margin-bottom:.2rem">Échéance</div>
+        <div style="font-weight:700;color:#C9A84C">{{ pret.date_echeance|date:"d/m/Y" }}</div>
+      </div>
+      {% endif %}
+    </div>
+    {% if pret.solde_restant > 0 %}
+    <div style="height:6px;background:#E8E9EC;border-radius:3px;overflow:hidden">
+      <div style="height:100%;background:#1B2B5E;border-radius:3px;width:{{ pret.montant_rembourse|floatformat:0 }}px"
+           data-principal="{{ pret.montant_principal }}"
+           data-rembourse="{{ pret.montant_rembourse }}"
+           class="progress-pret"></div>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+  {% else %}
+  <div style="text-align:center;padding:3rem;color:#6C757D">
+    <i class="fas fa-dollar-sign" style="font-size:2.5rem;margin-bottom:1rem;display:block;opacity:.3"></i>
+    Aucun prêt enregistré pour l'exercice {{ config_exercice.annee }}.
+    <br>
+    <a href="{% url 'membre:demander_pret' %}" style="display:inline-block;margin-top:1rem;padding:.6rem 1.4rem;background:#C9A84C;color:white;border-radius:8px;font-weight:700;text-decoration:none">
+      <i class="fas fa-hand-holding-usd"></i> Faire une demande de prêt
+    </a>
+  </div>
+  {% endif %}
+{% endif %}
+
+<script>
+document.querySelectorAll('.progress-pret').forEach(function(bar) {
+  var principal = parseFloat(bar.dataset.principal) || 1;
+  var rembourse = parseFloat(bar.dataset.rembourse) || 0;
+  bar.style.width = Math.min(100, (rembourse / principal * 100)) + '%';
+});
+</script>
     <div style="background:#F4F5F7;border-radius:8px;padding:.85rem;text-align:center">
       <div style="font-size:.65rem;color:#6C757D;text-transform:uppercase;letter-spacing:1px;margin-bottom:.25rem">Montant initial</div>
       <div style="font-weight:700;color:#1B2B5E;font-size:.95rem">{{ pret.montant_principal|floatformat:0|intcomma }} F</div>

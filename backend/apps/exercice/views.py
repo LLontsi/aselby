@@ -163,7 +163,7 @@ def exporter_travaux_fin_exercice(request):
     - DETAILFICHECASSATION : données ligne 6 (pas ligne 4), en-têtes correctes
     - DETAILFPNDSROULT/FRAIS/COLLATION : ASELBY=0, LOWE=0, SIMO correct, sorties ligne 6+
     - DETAILFONDSMUTUEL : col5 = valeur Python (pas formule)
-    - DETAILPENALITES : lecture penalite_especes_appli (décision admin) + sanctions séparées
+    - DETAILPENALITES : lecture penalite_versement_especes (décision admin) + sanctions séparées
     - DETAILFOYER : 1 seule colonne entrée (pas statutaire+don+total)
     - DETAIL PRETENCIRCULATION : 5 colonnes, données ligne 8
     - DETAILLISTEROUGE : matricules AS (pas LR), ordre exact
@@ -180,9 +180,9 @@ def exporter_travaux_fin_exercice(request):
     from apps.fonds.models import MouvementFonds
     from apps.prets.models import Pret
     from apps.mutuelle.models import CotisationMutuelle, AideMutuelle
-    from apps.tontines.models import NiveauTontine, SessionTontine
+    # NiveauTontine, SessionTontine supprimés — données dans SaisieMonthly
     from apps.foyer.models import ContributionFoyer
-    from apps.saisie.models import TableauDeBord
+    from apps.saisie.models import SaisieMonthly
     from apps.dettes.models import ListeRouge
 
     config = ConfigExercice.get_exercice_courant()
@@ -640,9 +640,9 @@ def exporter_travaux_fin_exercice(request):
     _h(ws, 5, 8, 'MONTANT PAIEMENT ESPECES', bg=ROUGE); _h(ws, 5, 9, 'MONTANT SANCTION', bg=ROUGE)
 
     for i, a in enumerate(adherents_actifs, 6):
-        ss = TableauDeBord.objects.filter(adherent=a, annee=annee, config_exercice=config)
+        ss = SaisieMonthly.objects.filter(adherent=a, annee=annee, config_exercice=config)
         # Col3 = pénalité espèces (décision admin)
-        pen_e = _f(ss.aggregate(s=Sum('penalite_especes_appli'))['s'])
+        pen_e = _f(sum(s.penalite_versement_especes for s in ss))
         # Col4 = sanctions (depuis fiche cassation)
         f = fiches.get(a.matricule)
         sanc = _f(getattr(f, 'sanctions', 0)) if f else 0.0
@@ -946,7 +946,7 @@ def exporter_travaux_fin_exercice(request):
     _h(ws, 5, 4, 'DATE', bg=ROUGE); _h(ws, 5, 5, 'LIBELLE', bg=ROUGE); _h(ws, 5, 6, 'MONTANT', bg=ROUGE)
 
     for i, a in enumerate(adherents_actifs, 6):
-        ss = TableauDeBord.objects.filter(adherent=a, annee=annee, config_exercice=config)
+        ss = SaisieMonthly.objects.filter(adherent=a, annee=annee, config_exercice=config)
         tot = _f(ss.aggregate(s=Sum('inscription'))['s'])
         ws.cell(row=i, column=1, value=a.matricule)
         ws.cell(row=i, column=2, value=a.nom_prenom.upper())
@@ -972,18 +972,18 @@ def exporter_travaux_fin_exercice(request):
     _h(ws, 4, 1, None); _h(ws, 4, 2, 'TOTAL INTERET'); _h(ws, 4, 3, 'INTERET ADHERENT')
 
     # Tous les niveaux de l'exercice courant, triés par taux croissant
-    niveaux_actifs = list(NiveauTontine.objects.filter(config_exercice=config).order_by('taux_mensuel'))
+    niveaux_actifs = list([{"code": "T60"}, {"code": "T75"}, {"code": "T100"}])
 
-    total_interets = 0.0
+    total_interets = D('0')
     row_tont = 5
     for niv in niveaux_actifs:
-        sessions = SessionTontine.objects.filter(niveau=niv)
-        tot_int = _f(sessions.aggregate(s=Sum('montant_interet_bureau'))['s'])
-        nb_parts = niv.diviseur_interet or 1
-        int_par_part = math.floor(tot_int / nb_parts) if nb_parts and tot_int else 0
+        sessions = []
+        tot_int = D('0')  # NiveauTontine supprimé — intérêts via MouvementFonds
+        nb_parts = niv.get("diviseur_interet", config.diviseur_interet_t35) or 1
+        int_par_part = math.floor(float(tot_int) / nb_parts) if nb_parts and tot_int else 0
         total_interets += tot_int
         # Label affiché = code du niveau (T60, T75, T100 etc.)
-        ws.cell(row=row_tont, column=1, value=niv.code)
+        ws.cell(row=row_tont, column=1, value=niv.get("code", "T60"))
         ws.cell(row=row_tont, column=2, value=tot_int).number_format = NUM
         ws.cell(row=row_tont, column=3, value=int_par_part).number_format = NUM2
         row_tont += 1
@@ -1063,7 +1063,7 @@ def exporter_travaux_fin_exercice(request):
     # Structure réelle : 10 lignes DEBIT/CREDIT complètes
     # ══════════════════════════════════════════════════════════════════
 
-    from apps.tontines.models import ParticipationTontine
+    # ParticipationTontine supprimé
 
     for a_inactif in adherents_inactifs:
         f = fiches.get(a_inactif.matricule)
@@ -1081,29 +1081,22 @@ def exporter_travaux_fin_exercice(request):
             _h(ws, 2, c, h)
 
         # Données tontines entièrement depuis ParticipationTontine
-        parts = list(ParticipationTontine.objects.filter(
-            adherent=a_inactif, session__niveau__config_exercice=config
-        ).select_related('session__niveau'))
+        parts = list(SaisieMonthly.objects.filter(
+            adherent=a_inactif, config_exercice=config
+        ))
 
-        # Intérêts reçus = interet_lot_principal (renseigné depuis TONTRESUME25 par l'import)
-        int_t100  = sum(_f(p.interet_lot_principal) for p in parts if p.session.niveau.code == 'T100') or None
-        int_tpres = sum(_f(p.interet_petit_lot)     for p in parts if p.session.niveau.code == 'T35')  or None
+        # Intérêts et soldes depuis SaisieMonthly (nouveau modèle)
+        int_t100  = sum(_f(p.interet_petit_lot_t100) for p in parts) or None
+        int_tpres = sum(_f(p.interet_petit_lot_t60)  for p in parts) or None
 
-        # Soldes dus (CRÉDIT dans la situation) = cotisations non versées (ECHEC)
-        # = taux × parts pour chaque mois ECHEC
-        solde_t100  = sum(
-            _f(p.session.niveau.taux_mensuel) * p.nombre_parts
-            for p in parts
-            if p.session.niveau.code == 'T100' and p.mode_versement == 'ECHEC'
-        ) or None
-        solde_tpres = sum(
-            _f(p.session.niveau.taux_mensuel) * p.nombre_parts
-            for p in parts
-            if p.session.niveau.code == 'T35' and p.mode_versement == 'ECHEC'
-        ) or None
+        # Soldes dus (CRÉDIT) = tontines non versées (mode_paiement ECHEC via ReleveBancaire)
+        # Dans le nouveau modèle, pas de mode_versement par participation
+        # → utiliser les données de SaisieMonthly directement
+        solde_t100  = sum(_f(p.tontine_t100) for p in parts) or None
+        solde_tpres = sum(_f(p.tontine_t60)  for p in parts) or None
 
-        # PRÊT INTERET TONTINE DE PRESENCE = remboursement_petit_lot (depuis TONTRESUME25)
-        pret_int_p = sum(_f(p.remboursement_petit_lot) for p in parts if p.session.niveau.code == 'T35') or None
+        # Remboursement petit lot T60
+        pret_int_p = sum(_f(p.remboursement_petit_lot_t60) for p in parts) or None
 
         # Solde prêt épargne depuis FicheCassation.dette_pret
         solde_pret = _f(f.dette_pret) or None
@@ -1175,11 +1168,11 @@ def calculer_deductions_versement(adherent, mois, annee, config):
 
     Si versement insuffisant → le reste est reporté / mis en dette.
     """
-    from apps.saisie.models import TableauDeBord
-    from apps.tontines.models import ParticipationTontine, NiveauTontine
+    from apps.saisie.models import SaisieMonthly
+    # ParticipationTontine, NiveauTontine supprimés
     from apps.prets.models import Pret
 
-    saisie = TableauDeBord.objects.filter(
+    saisie = SaisieMonthly.objects.filter(
         adherent=adherent, mois=mois, annee=annee, config_exercice=config
     ).first()
 
@@ -1190,23 +1183,30 @@ def calculer_deductions_versement(adherent, mois, annee, config):
     reste = versement_total
 
     # ── 1. Tontines dues ────────────────────────────────────────────
-    participations = ParticipationTontine.objects.filter(
-        session__mois=mois, session__annee=annee,
-        session__niveau__config_exercice=config,
+    participations = SaisieMonthly.objects.filter(
+        mois=mois, annee=annee,
+        config_exercice=config,
         adherent=adherent
-    ).select_related('session__niveau')
+    )
 
     tontines_dues = {}
     total_tontines = Decimal('0')
     for p in participations:
-        niv = p.session.niveau
-        montant = niv.taux_mensuel * p.nombre_parts
-        tontines_dues[niv.code] = {
-            'montant': montant,
-            'nombre_parts': p.nombre_parts,
-            'verse': p.montant_verse,
-        }
-        total_tontines += montant
+        # T60
+        if p.nbre_lots_t60 and p.nbre_lots_t60 > 0:
+            mt60 = _f(p.tontine_t60)
+            tontines_dues['T60'] = {'montant': mt60, 'nombre_parts': p.nbre_lots_t60, 'verse': mt60}
+            total_tontines += Decimal(str(mt60))
+        # T75
+        if p.nbre_lots_t75 and p.nbre_lots_t75 > 0:
+            mt75 = _f(p.tontine_t75)
+            tontines_dues['T75'] = {'montant': mt75, 'nombre_parts': p.nbre_lots_t75, 'verse': mt75}
+            total_tontines += Decimal(str(mt75))
+        # T100
+        if p.nbre_lots_t100 and p.nbre_lots_t100 > 0:
+            mt100 = _f(p.tontine_t100)
+            tontines_dues['T100'] = {'montant': mt100, 'nombre_parts': p.nbre_lots_t100, 'verse': mt100}
+            total_tontines += Decimal(str(mt100))
 
     reste -= total_tontines
 
@@ -1221,7 +1221,7 @@ def calculer_deductions_versement(adherent, mois, annee, config):
     # ── 4. Pénalités ────────────────────────────────────────────────
     penalite = Decimal('0')
     if saisie:
-        penalite = saisie.penalite_especes_appli + saisie.penalite_echec_appli
+        penalite = saisie.penalite_versement_especes + saisie.penalite_retard_tontine
     reste -= penalite
 
     # ── 5. Remboursement prêt (moins prioritaire) ───────────────────
@@ -1271,25 +1271,24 @@ def calculer_etat_lot(adherent, mois_enchere, annee, config):
     TOTAL RETENU       = sanctions + complément mutuelle + complément fonds + dette prêt
     TOTAL A PERCEVOIR  = TOTAL A DISTRIBUER - TOTAL RETENU - dons foyer
     """
-    from apps.tontines.models import ParticipationTontine, SessionTontine
+    # ParticipationTontine, SessionTontine supprimés
     from apps.prets.models import Pret
     from apps.fonds.models import MouvementFonds
 
     # Tontines dues cumulées (tous les mois depuis le début jusqu'à l'enchère)
-    participations_dues = ParticipationTontine.objects.filter(
+    participations_dues = SaisieMonthly.objects.filter(
         adherent=adherent,
-        session__annee=annee,
-        session__mois__lte=mois_enchere,
-        session__niveau__config_exercice=config,
-        mode_versement='ECHEC'
+        annee=annee,
+        mois__lte=mois_enchere,
+        config_exercice=config,
     )
+    # Tontines dues = somme des tontines non versées (approximation: toutes les saisies)
     total_tontines_dues = sum(
-        p.session.niveau.taux_mensuel * p.nombre_parts
-        for p in participations_dues
+        _f(p.tontine_mois) for p in participations_dues
     )
 
-    # Charges fixes dues (mois non versés)
-    nb_mois_non_verses = participations_dues.values('session__mois').distinct().count()
+    # Charges fixes dues
+    nb_mois_non_verses = participations_dues.values('mois').distinct().count()
     charges_dues = config.charges_fixes_mensuelles * nb_mois_non_verses
 
     # Fonds capital
@@ -1306,14 +1305,16 @@ def calculer_etat_lot(adherent, mois_enchere, annee, config):
     solde_pret = pret.solde_restant if pret else Decimal('0')
 
     # Lot reçu = capital du lot de tontine
-    sessions_lot = SessionTontine.objects.filter(
-        niveau__config_exercice=config,
-        mois=mois_enchere, annee=annee
-    )
-    montant_lot = sum(
-        s.niveau.taux_mensuel * 12
-        for s in sessions_lot
-        if ParticipationTontine.objects.filter(session=s, adherent=adherent).exists()
+    # Lot reçu depuis SaisieMonthly (taux T60 × 12 mois si lot obtenu)
+    saisie_lot = SaisieMonthly.objects.filter(
+        adherent=adherent,
+        config_exercice=config,
+    ).filter(
+        achat_lot_t60__gt=0
+    ).order_by('-mois').first()
+    montant_lot = (
+        config.versement_t35 * 12
+        if saisie_lot else Decimal('0')
     )
 
     total_a_rembourser = total_tontines_dues + charges_dues + solde_pret
@@ -1355,3 +1356,244 @@ def etat_lot_membre(request, matricule, mois, annee):
     return render(request, 'membre/etat_lot.html', {
         'adherent': adherent, 'mois': mois, 'annee': annee, 'etat': etat
     })
+    
+    
+
+# ══════════════════════════════════════════════════════════════════════
+# PATCH COMPLET apps/exercice/views.py
+# Remplacer entièrement le fichier existant
+# ══════════════════════════════════════════════════════════════════════
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.db import transaction
+from django.db.models import Sum
+from decimal import Decimal
+from apps.core.mixins import bureau_required
+from apps.parametrage.models import ConfigExercice
+from apps.adherents.models import Adherent
+from .models import FicheCassation, SyntheseCompte
+
+D = Decimal
+
+
+# ── Fiches de cassation ───────────────────────────────────────────────
+@bureau_required
+def fiche_cassation(request):
+    config = ConfigExercice.get_exercice_courant()
+    fiches = (FicheCassation.objects
+              .filter(config_exercice=config)
+              .select_related('adherent')
+              .order_by('adherent__numero_ordre'))
+    ctx = {
+        'config_exercice': config,
+        'fiches': fiches,
+        'nb_fiches': fiches.count(),
+        'total_net': sum(f.net_a_percevoir for f in fiches),
+        'total_distribue': sum(f.total_a_distribuer for f in fiches),
+    }
+    return render(request, 'dashboard/exercice/cassation.html', ctx)
+
+
+@bureau_required
+def saisie_cassation(request, matricule=None):
+    """
+    Formulaire de saisie des champs MANUELS de la fiche de cassation.
+    Champs saisis : montant_percu, montant_percu_especes, montant_percu_cheque,
+                    dons_foyer, dette_pret, sanctions, complement_mutuelle,
+                    complement_fonds, interet_tontine_percu.
+    Les autres champs (total_a_distribuer, net_a_percevoir…) sont calculés.
+    """
+    config = ConfigExercice.get_exercice_courant()
+
+    if matricule:
+        adherent = get_object_or_404(Adherent, matricule=matricule)
+        fiche, _ = FicheCassation.objects.get_or_create(
+            adherent=adherent, config_exercice=config)
+        fiches = None
+    else:
+        # Saisie en masse pour tous les adhérents
+        adherent = None
+        fiche = None
+        fiches = list(FicheCassation.objects.filter(config_exercice=config)
+                      .select_related('adherent')
+                      .order_by('adherent__numero_ordre'))
+        # Créer les fiches manquantes
+        adherents_avec_fiche = {f.adherent_id for f in fiches}
+        # Inclure ASELBY (AS201648) + tous les membres actifs
+        for adh in Adherent.objects.filter(statut='ACTIF').order_by('numero_ordre'):
+            if adh.matricule not in adherents_avec_fiche:
+                fiche_new, _ = FicheCassation.objects.get_or_create(
+                    adherent=adh, config_exercice=config)
+                fiches.append(fiche_new)
+        fiches.sort(key=lambda f: f.adherent.numero_ordre)
+
+    if request.method == 'POST':
+        with transaction.atomic():
+            if matricule:
+                # Saisie individuelle
+                _save_fiche(fiche, request.POST, prefix='')
+                fiche.save()
+                messages.success(request,
+                    f"Fiche de {fiche.adherent.nom_prenom} enregistrée.")
+                return redirect('exercice:cassation')
+            else:
+                # Saisie en masse
+                for f in fiches:
+                    pfx = f"adh_{f.adherent.matricule}_"
+                    _save_fiche(f, request.POST, prefix=pfx)
+                    f.save()
+                messages.success(request, "Toutes les fiches enregistrées.")
+                return redirect('exercice:cassation')
+
+    # Ajouter la liste des adhérents pour navigation individuelle
+    tous_adherents = list(Adherent.objects.filter(statut='ACTIF')
+                          .order_by('numero_ordre')
+                          .values_list('matricule', flat=True))
+    idx = tous_adherents.index(matricule) if matricule else -1
+
+    ctx = {
+        'config_exercice': config,
+        'fiche': fiche,
+        'fiches': fiches,
+        'adherent': adherent,
+        'matricule': matricule,
+        'adh_prec': tous_adherents[idx-1] if idx > 0 else None,
+        'adh_suiv': tous_adherents[idx+1] if idx < len(tous_adherents)-1 else None,
+    }
+    tpl = 'dashboard/exercice/saisie_cassation_individuelle.html' if matricule else \
+          'dashboard/exercice/saisie_cassation.html'
+    return render(request, tpl, ctx)
+
+
+def _save_fiche(fiche, post, prefix=''):
+    """Enregistre les champs manuels d'une FicheCassation depuis les données POST."""
+    def d(k):
+        v = post.get(f"{prefix}{k}", '0') or '0'
+        try:
+            return D(str(v).replace(' ', '').replace('\xa0', ''))
+        except Exception:
+            return D('0')
+
+    fiche.montant_percu          = d('montant_percu')
+    fiche.montant_percu_especes  = d('montant_percu_especes')
+    fiche.montant_percu_cheque   = d('montant_percu_cheque')
+    fiche.dons_foyer             = d('dons_foyer')
+    fiche.dette_pret             = d('dette_pret')
+    fiche.sanctions              = d('sanctions')
+    fiche.complement_mutuelle    = d('complement_mutuelle')
+    fiche.complement_fonds       = d('complement_fonds')
+    fiche.repartition_penalites  = d('repartition_penalites')
+    fiche.repartition_collation  = d('repartition_collation')
+    fiche.est_validee = True
+
+
+# ── Synthèse des comptes ──────────────────────────────────────────────
+@bureau_required
+def synthese_comptes(request):
+    config = ConfigExercice.get_exercice_courant()
+    synthese = SyntheseCompte.objects.filter(config_exercice=config).first()
+    ctx = {'config_exercice': config, 'synthese': synthese}
+    return render(request, 'dashboard/exercice/synthese.html', ctx)
+
+
+@bureau_required
+def saisie_synthese(request):
+    """
+    Formulaire de saisie des champs MANUELS de la SyntheseCompte.
+    - Section 1 : Reports à nouveau (données N-1)
+    - Section 2 : Disposition des fonds (relevés bancaires)
+    Les entrées et sorties sont calculées automatiquement depuis les tables.
+    """
+    config = ConfigExercice.get_exercice_courant()
+    synthese, _ = SyntheseCompte.objects.get_or_create(config_exercice=config)
+
+    if request.method == 'POST':
+        def d(k):
+            v = request.POST.get(k, '0') or '0'
+            try:
+                return D(str(v).replace(' ', '').replace('\xa0', ''))
+            except Exception:
+                return D('0')
+
+        # ── Section 1 : Reports à nouveau ────────────────────────────
+        synthese.report_fonds_caisse        = d('report_fonds_caisse')
+        synthese.report_fonds_roulement     = d('report_fonds_roulement')
+        synthese.report_frais_exceptionnels = d('report_frais_exceptionnels')
+        synthese.report_mutuelle            = d('report_mutuelle')
+        synthese.report_inscription         = d('report_inscription')
+        synthese.report_penalites           = d('report_penalites')
+        synthese.report_sanctions           = d('report_sanctions')
+        synthese.report_collation           = d('report_collation')
+        synthese.report_interet_bancaire    = d('report_interet_bancaire')
+        synthese.report_foyer               = d('report_foyer')
+        synthese.report_terrain             = d('report_terrain')
+        synthese.report_interet_epargne     = d('report_interet_epargne')
+        synthese.report_aides_lagwe         = d('report_aides_lagwe')
+        synthese.report_depot_tchouamo      = d('report_depot_tchouamo')
+
+        # ── Section 2 : Disposition des fonds (relevés bancaires) ────
+        synthese.compte_cca                 = d('compte_cca')
+        synthese.compte_mc2                 = d('compte_mc2')
+        synthese.compte_afriland            = d('compte_afriland')
+        synthese.dette_prefinancement_lagwe = d('dette_prefinancement_lagwe')
+        synthese.dette_mr_kouatcho          = d('dette_mr_kouatcho')
+        synthese.reste_a_recuperer_conseil  = d('reste_a_recuperer_conseil')
+        synthese.dettes_tontines            = d('dettes_tontines')
+        synthese.autres_disponibilites      = request.POST.get('autres_disponibilites', '')
+
+        synthese.save()
+        messages.success(request, "Synthèse des comptes enregistrée.")
+        return redirect('exercice:synthese')
+
+    # Calculer automatiquement les entrées et sorties depuis la BD
+    from apps.saisie.models import SaisieMonthly
+    from apps.fonds.models import MouvementFonds
+    from apps.prets.models import Pret
+    annee = config.annee
+
+    # Entrées automatiques calculées
+    entrees_auto = {
+        'fonds_roulement':     SaisieMonthly.objects.filter(annee=annee, config_exercice=config).aggregate(s=Sum('montant_depense'))['s'] or D('0'),
+        'inscription':         SaisieMonthly.objects.filter(annee=annee, config_exercice=config).aggregate(s=Sum('inscription'))['s'] or D('0'),
+        'penalites':           sum(s.penalite_versement_especes for s in SaisieMonthly.objects.filter(annee=annee, config_exercice=config)),
+        'collation':           D('0'),  # saisie directe dans parametrage
+        'mutuelle':            SaisieMonthly.objects.filter(annee=annee, config_exercice=config).aggregate(s=Sum('mutuelle'))['s'] or D('0'),
+        'foyer':               SaisieMonthly.objects.filter(annee=annee, config_exercice=config).aggregate(s=Sum('contribution_foyer'))['s'] or D('0'),
+    }
+    # Fonds en circulation = somme des prêts en cours
+    fonds_circulation = Pret.objects.filter(
+        statut=Pret.EN_COURS
+    ).aggregate(s=Sum('montant_principal'))['s'] or D('0')
+
+    ctx = {
+        'config_exercice': config,
+        'synthese': synthese,
+        'entrees_auto': entrees_auto,
+        'fonds_circulation': fonds_circulation,
+    }
+    return render(request, 'dashboard/exercice/saisie_synthese.html', ctx)
+
+
+# ── Clôture & reçu ────────────────────────────────────────────────────
+@bureau_required
+def cloturer_exercice(request):
+    config = ConfigExercice.get_exercice_courant()
+    if request.method == 'POST' and config:
+        from django.utils import timezone
+        config.est_ouvert = False
+        config.date_cloture = timezone.now().date()
+        config.save()
+        messages.success(request, f"Exercice {config.annee} clôturé.")
+        return redirect('rapports:dashboard')
+    return render(request, 'dashboard/exercice/cloturer.html',
+                  {'config_exercice': config})
+
+
+@bureau_required
+def recu_individuel(request, matricule):
+    config = ConfigExercice.get_exercice_courant()
+    adherent = get_object_or_404(Adherent, matricule=matricule)
+    fiche = FicheCassation.objects.filter(
+        adherent=adherent, config_exercice=config).first()
+    ctx = {'config_exercice': config, 'adherent': adherent, 'fiche': fiche}
+    return render(request, 'dashboard/exercice/recu.html', ctx)

@@ -23,10 +23,10 @@ def fiche_adherent(request, matricule):
     config = ConfigExercice.get_exercice_courant()
     adherent = get_object_or_404(Adherent, matricule=matricule)
     from apps.fonds.models import MouvementFonds
-    from apps.tontines.models import ParticipationTontine
+    from apps.saisie.models import SaisieMonthly
     from apps.prets.models import Pret
     mouvements = MouvementFonds.objects.filter(adherent=adherent, annee=config.annee).order_by('mois')
-    participations = ParticipationTontine.objects.filter(adherent=adherent, session__annee=config.annee).select_related('session__niveau')
+    participations = SaisieMonthly.objects.filter(adherent=adherent, annee=config.annee)
     prets = Pret.objects.filter(adherent=adherent).order_by('-date_octroi')
     ctx = {
         'config_exercice': config, 'adherent': adherent,

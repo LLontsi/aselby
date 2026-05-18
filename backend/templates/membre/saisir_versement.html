@@ -22,6 +22,48 @@
 </div>
 {% endif %}
 
+
+<!-- Bloc info : ce que le membre doit payer ce mois -->
+{% if pret_en_cours or participations_mois %}
+<div style="background:linear-gradient(135deg,#1B2B5E,#243870);border-radius:12px;
+            padding:1.25rem;margin-bottom:1.5rem;color:white">
+  <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
+              color:#C9A84C;margin-bottom:.9rem">
+    <i class="fas fa-info-circle" style="margin-right:.4rem"></i>Récapitulatif de ce mois
+  </div>
+  <div style="display:flex;flex-direction:column;gap:.6rem">
+    {% for p in participations_mois %}
+    <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem">
+      <span style="color:rgba(255,255,255,.75)">Tontine {{ p.session.niveau.code }}{% if p.nombre_parts > 1 %} ({{ p.nombre_parts }} parts){% endif %}</span>
+      <strong style="color:#C9A84C">{{ p.session.niveau.taux_mensuel|floatformat:0|intcomma }} F{% if p.nombre_parts > 1 %} × {{ p.nombre_parts }}{% endif %}</strong>
+    </div>
+    {% endfor %}
+    {% if pret_en_cours %}
+    <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem;
+                padding-top:.5rem;border-top:1px solid rgba(255,255,255,.15)">
+      <div>
+        <span style="color:rgba(255,255,255,.75)">Remboursement prêt</span>
+        <div style="font-size:.68rem;color:rgba(255,255,255,.45)">
+          Échéance : {{ pret_en_cours.date_echeance|date:"d/m/Y" }} — Solde restant : {{ pret_en_cours.solde_restant|floatformat:0|intcomma }} F
+          {% if pret_en_cours.nb_mois_retard > 0 %}
+          <span style="color:#f5a0a0;font-weight:700"> ({{ pret_en_cours.nb_mois_retard }} mois retard)</span>
+          {% endif %}
+        </div>
+      </div>
+      <strong style="color:#f5a0a0">{{ pret_en_cours.remboursement_mensuel|floatformat:0|intcomma }} F</strong>
+    </div>
+    {% endif %}
+    <!-- Cotisations fixes -->
+    <div style="padding-top:.5rem;border-top:1px solid rgba(255,255,255,.15);
+                font-size:.75rem;color:rgba(255,255,255,.5)">
+      + Fonds roulement {{ config_exercice.fonds_roulement_mensuel|floatformat:0|intcomma }} F
+      + Frais excep. {{ config_exercice.frais_exceptionnels_mensuel|floatformat:0|intcomma }} F
+      + Collation {{ config_exercice.collation_mensuelle|floatformat:0|intcomma }} F
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <div style="max-width:520px">
   <div class="membre-info-card accent-bg" style="margin-bottom:1.25rem">
     <div style="font-size:.8rem;color:#6C757D;line-height:1.7">

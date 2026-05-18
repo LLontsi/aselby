@@ -41,39 +41,92 @@
 <div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:1.5rem">
   <div style="background:linear-gradient(135deg,#1B2B5E,#243870);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between">
     <div style="color:white">
-      <div style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700">{{ niveau_data.niveau.code }}</div>
-      <div style="font-size:.78rem;color:rgba(255,255,255,.7)">{{ niveau_data.niveau.taux_mensuel|floatformat:0|intcomma }} FCFA / mois par part</div>
+      <div style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700">{{ niveau_data.code }}</div>
+      <div style="font-size:.78rem;color:rgba(255,255,255,.7)">
+        {% if niveau_data.code == 'T60' %}{{ config_exercice.versement_t35|floatformat:0|intcomma }}
+        {% elif niveau_data.code == 'T75' %}{{ config_exercice.taux_t75|floatformat:0|intcomma }}
+        {% else %}{{ config_exercice.taux_t100|floatformat:0|intcomma }}{% endif %} FCFA / mois par part
+      </div>
     </div>
     <div style="text-align:right">
       <div style="font-size:.7rem;color:#C9A84C;letter-spacing:2px;text-transform:uppercase">Lot annuel</div>
-      <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:#C9A84C">{{ niveau_data.niveau.lot_annuel|floatformat:0|intcomma }} F</div>
+      <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:#C9A84C">
+        {% if niveau_data.code == 'T60' %}{{ config_exercice.versement_t35|floatformat:0|intcomma }}
+        {% elif niveau_data.code == 'T75' %}{{ config_exercice.taux_t75|floatformat:0|intcomma }}
+        {% else %}{{ config_exercice.taux_t100|floatformat:0|intcomma }}{% endif %} F
+      </div>
     </div>
   </div>
-  <div class="membre-table-wrap">
-    <table class="membre-table">
-      <thead><tr><th>Mois</th><th>Parts</th><th>Mode</th><th>Montant versé</th><th>Pén. espèces</th><th>Pén. échec</th><th>Lot principal</th></tr></thead>
-      <tbody>
-        {% for p in niveau_data.participations %}
-        <tr>
-          <td style="font-weight:600;color:#1B2B5E">{{ p.session.mois }}/{{ p.session.annee }}</td>
-          <td>{{ p.nombre_parts }}</td>
-          <td><span class="badge-membre {% if p.mode_versement == 'BANQUE' %}green{% elif p.mode_versement == 'ESPECES' %}accent{% else %}red{% endif %}">{{ p.get_mode_versement_display }}</span></td>
-          <td style="font-weight:600">{{ p.montant_verse|floatformat:0|intcomma }} F</td>
-          <td>{% if p.penalite_especes %}<span style="color:#B84C4C">{{ p.penalite_especes|floatformat:0|intcomma }} F</span>{% else %}—{% endif %}</td>
-          <td>{% if p.penalite_echec %}<span style="color:#B84C4C">{{ p.penalite_echec|floatformat:0|intcomma }} F</span>{% else %}—{% endif %}</td>
-          <td>
-            {% if p.a_obtenu_lot_principal %}
-            <span class="badge-membre green"><i class="fas fa-trophy"></i> {{ p.montant_lot_principal|floatformat:0|intcomma }} F</span>
-            {% else %}—{% endif %}
-          </td>
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+      <thead>
+        <tr style="background:#F4F5F7">
+          <th style="padding:.6rem 1rem;text-align:left;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Mois</th>
+          <th style="padding:.6rem .75rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Parts</th>
+          <th style="padding:.6rem .75rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Mode</th>
+          <th style="padding:.6rem .75rem;text-align:right;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Montant versé</th>
+          <th style="padding:.6rem .75rem;text-align:right;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Pén.</th>
+          <th style="padding:.6rem .75rem;text-align:right;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Petit lot</th>
+          <th style="padding:.6rem .75rem;text-align:right;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Int. petit lot</th>
+          <th style="padding:.6rem .75rem;text-align:right;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Lot principal</th>
+          <th style="padding:.6rem .75rem;text-align:right;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Int. lot</th>
         </tr>
-        {% empty %}<tr class="empty-row"><td colspan="7">Aucune participation.</td></tr>{% endfor %}
+      </thead>
+      <tbody>
+        {% for s in niveau_data.saisies %}
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#F8F9FC'" onmouseout="this.style.background=''">
+          <td style="padding:.6rem 1rem;font-weight:600;color:#1B2B5E">
+            {{ s.mois }}/{{ s.annee }}
+          </td>
+          <td style="padding:.6rem .75rem;text-align:center">
+            {% if niveau_data.code == 'T60' %}{{ s.nbre_lots_t60 }}
+            {% elif niveau_data.code == 'T75' %}{{ s.nbre_lots_t75 }}
+            {% else %}{{ s.nbre_lots_t100 }}{% endif %}
+          </td>
+          <td style="padding:.6rem .75rem;text-align:center">
+            <span style="padding:.15rem .5rem;border-radius:10px;font-size:.7rem;font-weight:600;
+                         background:{% if s.mode_paiement_tontine == 'BANQUE' %}rgba(27,43,94,.1){% elif s.mode_paiement_tontine == 'ESPECES' %}rgba(201,168,76,.15){% else %}rgba(184,76,76,.1){% endif %};
+                         color:{% if s.mode_paiement_tontine == 'BANQUE' %}#1B2B5E{% elif s.mode_paiement_tontine == 'ESPECES' %}#A8863A{% else %}#B84C4C{% endif %}">
+              {{ s.mode_paiement_tontine|default:"—" }}
+            </span>
+          </td>
+          <td style="padding:.6rem .75rem;text-align:right;font-weight:600">
+            {% if niveau_data.code == 'T60' %}{{ s.tontine_t60|floatformat:0|intcomma }}
+            {% elif niveau_data.code == 'T75' %}{{ s.tontine_t75|floatformat:0|intcomma }}
+            {% else %}{{ s.tontine_t100|floatformat:0|intcomma }}{% endif %} F
+          </td>
+          <td style="padding:.6rem .75rem;text-align:right;color:#B84C4C">
+            {% if s.penalite_versement_especes %}{{ s.penalite_versement_especes|floatformat:0|intcomma }}{% else %}—{% endif %}
+          </td>
+          <td style="padding:.6rem .75rem;text-align:right;color:#10705A">
+            {% if niveau_data.code == 'T60' %}{% if s.vente_petit_lot_t60 %}{{ s.vente_petit_lot_t60|floatformat:0|intcomma }}{% else %}—{% endif %}
+            {% elif niveau_data.code == 'T75' %}{% if s.vente_petit_lot_t75 %}{{ s.vente_petit_lot_t75|floatformat:0|intcomma }}{% else %}—{% endif %}
+            {% else %}{% if s.vente_petit_lot_t100 %}{{ s.vente_petit_lot_t100|floatformat:0|intcomma }}{% else %}—{% endif %}{% endif %}
+          </td>
+          <td style="padding:.6rem .75rem;text-align:right;color:#10705A">
+            {% if niveau_data.code == 'T60' %}{% if s.interet_petit_lot_t60 %}{{ s.interet_petit_lot_t60|floatformat:0|intcomma }}{% else %}—{% endif %}
+            {% elif niveau_data.code == 'T75' %}{% if s.interet_petit_lot_t75 %}{{ s.interet_petit_lot_t75|floatformat:0|intcomma }}{% else %}—{% endif %}
+            {% else %}{% if s.interet_petit_lot_t100 %}{{ s.interet_petit_lot_t100|floatformat:0|intcomma }}{% else %}—{% endif %}{% endif %}
+          </td>
+          <td style="padding:.6rem .75rem;text-align:right;color:#C9A84C;font-weight:600">
+            {% if niveau_data.code == 'T60' %}{% if s.achat_lot_t60 %}{{ s.achat_lot_t60|floatformat:0|intcomma }}{% else %}—{% endif %}
+            {% elif niveau_data.code == 'T75' %}{% if s.achat_lot_t75 %}{{ s.achat_lot_t75|floatformat:0|intcomma }}{% else %}—{% endif %}
+            {% else %}{% if s.achat_lot_t100 %}{{ s.achat_lot_t100|floatformat:0|intcomma }}{% else %}—{% endif %}{% endif %}
+          </td>
+          <td style="padding:.6rem .75rem;text-align:right;color:#C9A84C">—</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" style="padding:1.5rem;text-align:center;color:#6C757D;font-style:italic">Aucune participation.</td></tr>
+        {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
 {% empty %}
-<div class="empty-membre"><i class="fas fa-clock"></i><p>Aucune participation tontine enregistrée.</p></div>
+<div style="text-align:center;padding:3rem;color:#6C757D;background:white;border-radius:14px">
+  <i class="fas fa-clock" style="font-size:2.5rem;margin-bottom:1rem;display:block;opacity:.3"></i>
+  Aucune participation enregistrée pour cet exercice.
+</div>
 {% endfor %}
 
 {% endblock %}

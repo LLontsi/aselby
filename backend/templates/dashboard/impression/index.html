@@ -1,0 +1,101 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Impression{% endblock %}
+{% block extra_css %}
+<style>
+  @media print {
+    aside, .topbar, .btn-print-nav { display:none !important; }
+    main { padding:0 !important; }
+    body { background:white !important; }
+    .print-section { page-break-after:always; }
+    .print-section:last-child { page-break-after:avoid; }
+    table { width:100%; font-size:8pt; }
+    @page { size:A4 landscape; margin:10mm; }
+  }
+  .print-card {
+    background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);
+    padding:1.5rem;margin-bottom:1.5rem;
+  }
+  .doc-btn {
+    display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.2rem;
+    border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;
+    text-decoration:none;border:2px solid #1B2B5E;color:#1B2B5E;
+    transition:all .15s;
+  }
+  .doc-btn:hover { background:#1B2B5E;color:white; }
+  .doc-btn.primary { background:#1B2B5E;color:white; }
+  .doc-btn.primary:hover { background:#111C3F; }
+</style>
+{% endblock %}
+{% block contenu %}
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:.75rem">
+  <h2 style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:#1B2B5E;margin:0">
+    <i class="fas fa-print" style="color:#C9A84C;margin-right:.5rem"></i>
+    Documents à imprimer — Exercice {{ config_exercice.annee }}
+  </h2>
+  <button onclick="window.print()" class="doc-btn primary">
+    <i class="fas fa-print"></i> Imprimer tout
+  </button>
+</div>
+
+<div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.3);border-radius:10px;
+            padding:.75rem 1.25rem;margin-bottom:1.5rem;font-size:.82rem;color:#6C757D">
+  <i class="fas fa-info-circle" style="color:#C9A84C;margin-right:.4rem"></i>
+  Tous les documents s'impriment en <strong>format paysage A4</strong>.
+  Utilisez <kbd>Ctrl+P</kbd> ou le bouton ci-dessus — le navigateur gère la mise en page automatiquement.
+</div>
+
+<!-- SÉLECTION DU DOCUMENT À IMPRIMER -->
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-bottom:2rem">
+
+  {% for doc in documents %}
+  <div class="print-card">
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+      <div style="width:40px;height:40px;border-radius:10px;background:rgba(27,43,94,.08);
+                  display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <i class="{{ doc.icone }}" style="color:#1B2B5E;font-size:1.1rem"></i>
+      </div>
+      <div>
+        <div style="font-weight:700;color:#1B2B5E;font-size:.9rem">{{ doc.titre }}</div>
+        <div style="font-size:.72rem;color:#6C757D">{{ doc.description }}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+      <a href="{{ doc.url_apercu }}" class="doc-btn" target="_blank">
+        <i class="fas fa-eye"></i> Aperçu
+      </a>
+      <button onclick="imprimerDoc('{{ doc.url_apercu }}')" class="doc-btn primary">
+        <i class="fas fa-print"></i> Imprimer
+      </button>
+      {% if doc.url_excel %}
+      <a href="{{ doc.url_excel }}" class="doc-btn" style="border-color:#10705A;color:#10705A">
+        <i class="fas fa-file-excel"></i> Excel
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+
+</div>
+
+<!-- ZONE D'IMPRESSION DIRECTE -->
+<div id="zone-impression" class="print-section" style="display:none">
+  <iframe id="iframe-impression" style="width:100%;height:90vh;border:none"></iframe>
+</div>
+
+{% block extra_js %}
+<script>
+function imprimerDoc(url) {
+  // Ouvrir dans une fenêtre dédiée pour impression propre
+  var w = window.open(url + "?print=1", "_blank",
+    "width=1200,height=800,scrollbars=yes");
+  if (w) {
+    w.onload = function() {
+      setTimeout(function() { w.print(); }, 500);
+    };
+  }
+}
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,8 +1,8 @@
 from django import forms
-from .models import TableauDeBord
+from .models import SaisieMonthly
 
 
-class TableauDeBordForm(forms.ModelForm):
+class SaisieMonthlyForm(forms.ModelForm):
     """
     Formulaire de saisie mensuelle du tableau de bord.
 
@@ -11,7 +11,7 @@ class TableauDeBordForm(forms.ModelForm):
     Ce n'est PAS calculé automatiquement — c'est une décision manuelle du bureau.
     """
     class Meta:
-        model = TableauDeBord
+        model = SaisieMonthly
         exclude = [
             'mode_versement', 'bonus_malus', 'montant_engagement',
             'penalite_especes_appli', 'penalite_echec_appli',

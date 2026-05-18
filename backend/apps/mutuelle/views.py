@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.db.models import Sum, Count
 from apps.core.mixins import bureau_required
 from apps.parametrage.models import ConfigExercice
-from apps.saisie.models import TableauDeBord
+from apps.saisie.models import SaisieMonthly
 from apps.adherents.models import Adherent
 from .models import CotisationMutuelle, AideMutuelle
 from decimal import Decimal
@@ -21,9 +21,9 @@ def etat_mutuelle(request):
         if config_prec:
             aides = AideMutuelle.objects.filter(config_exercice=config_prec).select_related('adherent').order_by('-date')
 
-    # Cotisations — construire depuis TableauDeBord.mutuelle (données réelles importées)
+    # Cotisations — construire depuis SaisieMonthly.mutuelle (données réelles importées)
     # Grouper par adhérent : total versé en mutuelle sur l'exercice
-    saisies = TableauDeBord.objects.filter(
+    saisies = SaisieMonthly.objects.filter(
         config_exercice=config, mutuelle__gt=0
     ).values('adherent__matricule', 'adherent__nom_prenom') \
      .annotate(nb=Count('id'), total=Sum('mutuelle')) \
@@ -33,7 +33,7 @@ def etat_mutuelle(request):
     if not saisies.exists():
         config_prec2 = ConfigExercice.objects.filter(annee__lt=config.annee).order_by('-annee').first()
         if config_prec2:
-            saisies = TableauDeBord.objects.filter(
+            saisies = SaisieMonthly.objects.filter(
                 config_exercice=config_prec2, mutuelle__gt=0
             ).values('adherent__matricule', 'adherent__nom_prenom') \
              .annotate(nb=Count('id'), total=Sum('mutuelle')) \

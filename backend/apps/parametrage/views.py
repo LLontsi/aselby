@@ -51,7 +51,7 @@ def _ctx_depenses(config, modele, form_class, titre, rubrique_key):
     nb_adherents = Adherent.objects.filter(statut='ACTIF').count()
 
     # Entrées = cotisation mensuelle × nb mois saisis × nb adhérents
-    from apps.saisie.models import TableauDeBord
+    from apps.saisie.models import SaisieMonthly
     if rubrique_key == 'fonds_roulement':
         montant_mensuel = config.fonds_roulement_mensuel
     elif rubrique_key == 'frais_exceptionnels':
@@ -62,7 +62,7 @@ def _ctx_depenses(config, modele, form_class, titre, rubrique_key):
         montant_mensuel = 0
 
     # Nb mois de saisies validées
-    nb_mois = TableauDeBord.objects.filter(
+    nb_mois = SaisieMonthly.objects.filter(
         config_exercice=config, est_valide=True
     ).values('mois').distinct().count()
 

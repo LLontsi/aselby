@@ -1,0 +1,57 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block extra_css %}<style>
+@media print {
+  aside, .topbar, .no-print { display:none !important; }
+  body { background:white !important; margin:0; font-family:Arial,sans-serif; }
+  @page { size:A4 landscape; margin:8mm; }
+  table { width:100%; border-collapse:collapse; font-size:7.5pt; }
+  th, td { border:1px solid #CCC; padding:2px 4px; }
+  th { background:#1B2B5E !important; color:white !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .print-title { font-size:12pt; font-weight:700; color:#1B2B5E; margin-bottom:6px; }
+  .print-sub   { font-size:9pt; color:#6C757D; margin-bottom:10px; }
+}
+.no-print-bar {
+  margin-bottom:1rem; padding:.75rem 1.25rem; background:white;
+  border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,.06);
+  display:flex; gap:.75rem; align-items:center;
+}
+.btn-print {
+  padding:.5rem 1.2rem; background:#1B2B5E; color:white;
+  border:none; border-radius:8px; font-size:.82rem;
+  font-weight:700; cursor:pointer; font-family:inherit;
+}
+</style>{% endblock %}
+{% block contenu %}
+<div class="no-print-bar no-print">
+  <button class="btn-print" onclick="window.print()"><i class="fas fa-print"></i> Imprimer</button>
+  <span style="font-weight:700;color:#1B2B5E;font-size:.9rem">AUTREMOUVEMENT — {{ mois_label }} {{ annee }}</span>
+</div>
+<div class="print-title">AUTREMOUVEMENT — {{ mois_label }} {{ annee }}</div>
+<table>
+  <thead>
+    <tr>
+      <th style="min-width:160px">Nom et prénom</th>
+      <th>Fonds départ (C)</th><th>Retrait (E)</th>
+      <th>Fonds définitif (F)</th><th>Base calcul (G)</th>
+      <th>Intérêt attribué (H)</th><th>Capital composé (I)</th>
+      <th>Reste</th><th>Épargne nette</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in mvts %}
+    <tr>
+      <td style="font-weight:600">{{ m.adherent.nom_prenom|title }}</td>
+      <td style="text-align:right">{{ m.capital_compose_precedent|floatformat:0|intcomma }}</td>
+      <td style="text-align:right">{% if m.retrait_partiel %}{{ m.retrait_partiel|floatformat:0|intcomma }}{% else %}—{% endif %}</td>
+      <td style="text-align:right;font-weight:700">{{ m.fonds_definitif|floatformat:0|intcomma }}</td>
+      <td style="text-align:right">{% if m.base_calcul_interet %}{{ m.base_calcul_interet|floatformat:0|intcomma }}{% else %}<span style="color:#ADB5BD">inélig.</span>{% endif %}</td>
+      <td style="text-align:right;color:#C9A84C;font-weight:700">{{ m.interet_attribue|floatformat:2|intcomma }}</td>
+      <td style="text-align:right;font-weight:700;color:#10705A">{{ m.capital_compose|floatformat:0|intcomma }}</td>
+      <td style="text-align:right">{{ m.reste|floatformat:0|intcomma }}</td>
+      <td style="text-align:right">{{ m.epargne_nette|floatformat:0|intcomma }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

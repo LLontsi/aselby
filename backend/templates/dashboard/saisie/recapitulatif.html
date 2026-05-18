@@ -1,34 +1,108 @@
 {% extends "dashboard/base_dashboard.html" %}
 {% load humanize %}
-{% block _titre %}Récapitulatif Saisie{% endblock %}
+{% block _titre %}Récapitulatif — {{ mois_label }} {{ annee }}{% endblock %}
 {% block contenu %}
-<div class="page-header-admin">
-  <div>
-    <div class="breadcrumb"><a href="{% url 'saisie:formulaire' %}?mois={{ mois }}&annee={{ annee }}"><i class="fas fa-arrow-left"></i> Retour saisie</a></div>
-    <h2>Récapitulatif — {{ mois }}/{{ annee }}</h2>
+
+<div style="background:white;border-radius:12px;padding:.85rem 1.5rem;margin-bottom:1.25rem;
+            box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;
+            justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+  <div style="display:flex;align-items:center;gap:.75rem">
+    <a href="?mois={{ prec_mois }}&annee={{ prec_annee }}"
+       style="padding:.4rem .9rem;border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-chevron-left"></i>
+    </a>
+    <span style="background:#1B2B5E;color:white;padding:.45rem 1.25rem;border-radius:20px;font-size:.85rem;font-weight:700">
+      Récapitulatif {{ mois_label }} {{ annee }}
+    </span>
+    <a href="?mois={{ suiv_mois }}&annee={{ suiv_annee }}"
+       style="padding:.4rem .9rem;border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-chevron-right"></i>
+    </a>
   </div>
-  <form method="post" action="{% url 'saisie:valider' %}">{% csrf_token %}
-    <input type="hidden" name="mois" value="{{ mois }}"><input type="hidden" name="annee" value="{{ annee }}">
-    <button type="submit" class="btn-admin green"><i class="fas fa-check-double"></i> Valider tout</button>
-  </form>
+  <div style="display:flex;gap:.75rem">
+    <a href="{% url 'saisie:saisie' %}?mois={{ mois }}&annee={{ annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;
+              background:#1B2B5E;color:white;border-radius:8px;font-size:.78rem;font-weight:700;text-decoration:none">
+      <i class="fas fa-edit"></i> Modifier la saisie
+    </a>
+    <a href="{% url 'saisie:interets' %}?mois={{ mois }}&annee={{ annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;
+              background:#C9A84C;color:#1B2B5E;border-radius:8px;font-size:.78rem;font-weight:700;text-decoration:none">
+      <i class="fas fa-percentage"></i> Répartir intérêts
+    </a>
+  </div>
 </div>
+
+<!-- Stats -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem">
+  <div style="background:{% if nb_saisis >= nb_total %}rgba(16,112,90,.06){% else %}rgba(201,168,76,.06){% endif %};border-radius:10px;padding:.9rem 1.25rem;box-shadow:0 2px 6px rgba(0,0,0,.06)">
+    <div style="font-size:.62rem;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.25rem">Saisies</div>
+    <div style="font-size:1.2rem;font-weight:700;color:{% if nb_saisis >= nb_total %}#10705A{% else %}#C9A84C{% endif %}">{{ nb_saisis }}/{{ nb_total }}</div>
+    {% if nb_manquants > 0 %}<div style="font-size:.72rem;color:#B84C4C;font-weight:600">{{ nb_manquants }} manquants</div>{% endif %}
+  </div>
+  <div style="background:white;border-radius:10px;padding:.9rem 1.25rem;box-shadow:0 2px 6px rgba(0,0,0,.06)">
+    <div style="font-size:.62rem;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.25rem">Total fonds</div>
+    <div style="font-size:1.1rem;font-weight:700;color:#1B2B5E">{{ totaux_mvt.total_fonds|floatformat:0|intcomma }} F</div>
+  </div>
+  <div style="background:white;border-radius:10px;padding:.9rem 1.25rem;box-shadow:0 2px 6px rgba(0,0,0,.06)">
+    <div style="font-size:.62rem;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.25rem">Capital composé</div>
+    <div style="font-size:1.1rem;font-weight:700;color:#10705A">{{ totaux_mvt.total_capital|floatformat:0|intcomma }} F</div>
+  </div>
+  <div style="background:white;border-radius:10px;padding:.9rem 1.25rem;box-shadow:0 2px 6px rgba(0,0,0,.06)">
+    <div style="font-size:.62rem;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.25rem">Intérêts répartis</div>
+    <div style="font-size:1.1rem;font-weight:700;color:#C9A84C">{{ totaux_mvt.total_interet|floatformat:2|intcomma }} F</div>
+  </div>
+</div>
+
 <div class="table-card">
-  <div class="table-card-head"><h3>{{ saisies|length }} saisie(s)</h3></div>
+  <div class="table-card-head">
+    <h3>Saisies {{ mois_label }} {{ annee }} — Ordre alphabétique</h3>
+  </div>
   <div class="table-wrap">
     <table class="admin-table">
-      <thead><tr><th>Adhérent</th><th>Mode</th><th>Versement total</th><th>Pénalités</th><th>Reste</th><th>Épargne nette</th><th>Validé</th></tr></thead>
+      <thead>
+        <tr>
+          <th>Nom et prénom</th>
+          <th>Mode</th>
+          <th>T60</th>
+          <th>T75</th>
+          <th>T100</th>
+          <th>Tontine mois</th>
+          <th>Remb. prêt</th>
+          <th>Engagement</th>
+          <th>Reste</th>
+          <th>Fonds définitif</th>
+          <th>Capital composé</th>
+          <th>Statut</th>
+        </tr>
+      </thead>
       <tbody>
         {% for s in saisies %}
         <tr>
-          <td style="font-weight:600;color:var(--primary)">{{ s.adherent.nom_prenom|title }}</td>
-          <td><span class="badge {% if s.mode_versement == 'BANQUE' %}green{% elif s.mode_versement == 'ESPECES' %}accent{% else %}red{% endif %}">{{ s.get_mode_versement_display }}</span></td>
-          <td>{{ s.versement_banque|add:s.versement_especes|floatformat:0|intcomma }} F</td>
-          <td>{% if s.penalite_echec_appli %}<span style="color:var(--red)">{{ s.penalite_echec_appli|floatformat:0|intcomma }} F</span>{% else %}—{% endif %}</td>
-          <td>{{ s.reste|floatformat:0|intcomma }} F</td>
-          <td><strong style="color:var(--green)">{{ s.epargne_nette|floatformat:0|intcomma }} F</strong></td>
-          <td>{% if s.est_valide %}<span class="badge green"><i class="fas fa-check"></i></span>{% else %}<span class="badge gray">—</span>{% endif %}</td>
+          <td style="font-weight:600;color:var(--primary);white-space:nowrap">{{ s.adherent.nom_prenom|title }}</td>
+          <td>
+            <span class="badge {% if s.mode_paiement_tontine == 'BANQUE' %}primary{% elif s.mode_paiement_tontine == 'ESPECES' %}accent{% else %}red{% endif %}">
+              {{ s.mode_paiement_tontine }}
+            </span>
+          </td>
+          <td style="text-align:right">{{ s.tontine_t60|floatformat:0|intcomma }}</td>
+          <td style="text-align:right">{{ s.tontine_t75|floatformat:0|intcomma }}</td>
+          <td style="text-align:right">{{ s.tontine_t100|floatformat:0|intcomma }}</td>
+          <td style="text-align:right;font-weight:700;color:#1B2B5E">{{ s.tontine_mois|floatformat:0|intcomma }}</td>
+          <td style="text-align:right;color:#B84C4C">{% if s.remboursement_pret %}{{ s.remboursement_pret|floatformat:0|intcomma }}{% else %}—{% endif %}</td>
+          <td style="text-align:right;font-weight:600">{{ s.montant_engagement|floatformat:0|intcomma }}</td>
+          <td style="text-align:right;color:#10705A;font-weight:600">{{ s.reste|floatformat:0|intcomma }}</td>
+          
+          <td style="text-align:right">—</td>
+          <td style="text-align:right;font-weight:700">—</td>
+          
+          <td><span class="badge green"><i class="fas fa-check"></i></span></td>
         </tr>
-        {% empty %}<tr class="empty-row"><td colspan="7">Aucune saisie ce mois.</td></tr>{% endfor %}
+        {% empty %}
+        <tr class="empty-row"><td colspan="12">Aucune saisie pour {{ mois_label }} {{ annee }}</td></tr>
+        {% endfor %}
       </tbody>
     </table>
   </div>

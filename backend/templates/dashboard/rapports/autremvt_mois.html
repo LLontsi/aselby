@@ -1,0 +1,112 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}AUTREMOUVEMENT — {{ mois_label }} {{ annee }}{% endblock %}
+{% block contenu %}
+
+<div style="background:white;border-radius:12px;padding:.85rem 1.5rem;margin-bottom:1.25rem;
+            box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;
+            justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+  <div style="display:flex;align-items:center;gap:.75rem">
+    <a href="?mois={{ prec_mois }}&annee={{ prec_annee }}"
+       style="padding:.4rem .9rem;border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-chevron-left"></i> {{ prec_label }}
+    </a>
+    <span style="background:#1B2B5E;color:white;padding:.45rem 1.25rem;border-radius:20px;font-size:.85rem;font-weight:700">
+      AUTREMOUVEMENT {{ mois_label }} {{ annee }}
+    </span>
+    <a href="?mois={{ suiv_mois }}&annee={{ suiv_annee }}"
+       style="padding:.4rem .9rem;border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      {{ suiv_label }} <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+  <div style="display:flex;gap:.75rem">
+    <a href="{% url 'rapports:autremvt_resume' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;
+              background:#C9A84C;color:#1B2B5E;border-radius:8px;font-size:.78rem;font-weight:700;text-decoration:none">
+      <i class="fas fa-list-alt"></i> Résumé
+    </a>
+    <a href="{% url 'rapports:telecharger_autremvt' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;
+              background:#10705A;color:white;border-radius:8px;font-size:.78rem;font-weight:700;text-decoration:none">
+      <i class="fas fa-file-excel"></i> XLSX
+    </a>
+  </div>
+</div>
+
+<div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+  <div style="padding:.85rem 1.5rem;border-bottom:2px solid #F4F5F7;display:flex;align-items:center;gap:.75rem">
+    <h3 style="font-family:'Playfair Display',serif;color:#1B2B5E;font-size:1rem;margin:0">
+      AUTREMOUVEMENT — {{ mois_label }} {{ annee }}
+    </h3>
+    <span style="background:rgba(27,43,94,.08);color:#1B2B5E;padding:.25rem .75rem;border-radius:20px;font-size:.7rem;font-weight:700">
+      {{ mvts|length }} adhérents — calculé automatiquement
+    </span>
+  </div>
+  <div style="overflow-x:auto">
+    <table style="width:max-content;min-width:100%;border-collapse:collapse;font-size:.75rem">
+      <thead>
+        <tr style="background:#1B2B5E">
+          <th style="padding:.6rem .8rem;text-align:left;color:white;font-size:.6rem;font-weight:700;text-transform:uppercase;white-space:nowrap;position:sticky;left:0;background:#1B2B5E;z-index:2;min-width:160px">Nom et prénom</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:rgba(255,255,255,.85);font-size:.56rem;font-weight:700;text-transform:uppercase;white-space:nowrap;min-width:90px">Fonds départ (C)</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:rgba(255,255,255,.85);font-size:.56rem;font-weight:700;text-transform:uppercase;white-space:nowrap;min-width:90px">Reconduction (D)</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:rgba(255,255,255,.85);font-size:.56rem;font-weight:700;text-transform:uppercase;white-space:nowrap;min-width:90px">Retrait partiel (E)</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:rgba(255,255,255,.85);font-size:.56rem;font-weight:700;text-transform:uppercase;white-space:nowrap;min-width:90px">Fonds définitif (F)</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:rgba(255,255,255,.85);font-size:.56rem;font-weight:700;text-transform:uppercase;white-space:nowrap;min-width:90px">Base calcul (G)</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:rgba(255,255,255,.85);font-size:.56rem;font-weight:700;text-transform:uppercase;white-space:nowrap;min-width:90px">Répartition intérêt (H)</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:rgba(255,255,255,.85);font-size:.56rem;font-weight:700;text-transform:uppercase;white-space:nowrap;min-width:90px">Capital composé (I)</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:rgba(255,255,255,.85);font-size:.56rem;font-weight:700;text-transform:uppercase;white-space:nowrap;min-width:80px">Sanction</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:rgba(255,255,255,.85);font-size:.56rem;font-weight:700;text-transform:uppercase;white-space:nowrap;min-width:80px">Reste (L)</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:rgba(255,255,255,.85);font-size:.56rem;font-weight:700;text-transform:uppercase;white-space:nowrap;min-width:80px">Épargne nette</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:rgba(255,255,255,.85);font-size:.56rem;font-weight:700;text-transform:uppercase;white-space:nowrap;min-width:80px">Fonds roulement</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:rgba(255,255,255,.85);font-size:.56rem;font-weight:700;text-transform:uppercase;white-space:nowrap;min-width:80px">Frais excep.</th>
+          <th style="padding:.6rem .55rem;text-align:center;color:rgba(255,255,255,.85);font-size:.56rem;font-weight:700;text-transform:uppercase;white-space:nowrap;min-width:80px">Collation</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in mvts %}
+        <tr style="border-bottom:1px solid #F4F5F7"
+            onmouseover="this.style.background='#F8F9FC'" onmouseout="this.style.background=''">
+          <td style="padding:.55rem .8rem;font-weight:600;color:#1B2B5E;white-space:nowrap;position:sticky;left:0;background:white;z-index:1;border-right:2px solid #E8E9EC">
+            {{ m.adherent.nom_prenom|title }}
+          </td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ m.capital_compose_precedent|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ m.reconduction|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ m.retrait_partiel|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;font-weight:700;color:#1B2B5E">{{ m.fonds_definitif|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">
+            {% if m.base_calcul_interet > 0 %}
+            <span style="color:#10705A">{{ m.base_calcul_interet|floatformat:0|intcomma }} ✓</span>
+            {% else %}<span style="color:#ADB5BD">Sous seuil</span>{% endif %}
+          </td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#C9A84C;font-weight:700">{{ m.interet_attribue|floatformat:2|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;font-weight:700;color:#10705A">{{ m.capital_compose|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ m.sanction|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ m.reste|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ m.epargne_nette|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ m.fonds_roulement|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ m.frais_exceptionnels|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right">{{ m.collation|floatformat:0|intcomma }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="14" style="padding:2rem;text-align:center;color:#ADB5BD">Aucun mouvement pour {{ mois_label }} {{ annee }}</td></tr>
+        {% endfor %}
+        {% if mvts %}
+        <tr style="background:#F4F5F7;font-weight:700;border-top:2px solid #E8E9EC">
+          <td style="padding:.6rem .8rem;position:sticky;left:0;background:#F4F5F7;z-index:1;border-right:2px solid #E8E9EC;font-size:.78rem;color:#1B2B5E">TOTAL</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#1B2B5E">{{ totaux.capital_prec|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right"></td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#B84C4C">{{ totaux.retrait|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#1B2B5E">{{ totaux.fonds_def|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#10705A">{{ totaux.base_calcul|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#C9A84C">{{ totaux.interet|floatformat:2|intcomma }}</td>
+          <td style="padding:.5rem .55rem;text-align:right;color:#10705A">{{ totaux.capital|floatformat:0|intcomma }}</td>
+          <td colspan="6" style="padding:.5rem"></td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

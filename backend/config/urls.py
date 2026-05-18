@@ -13,7 +13,9 @@ urlpatterns = [
     path('adherents/', include('apps.adherents.urls')),
     path('tontines/', include('apps.tontines.urls')),
     path('fonds/', include('apps.fonds.urls')),
-    path('saisie/', include('apps.saisie.urls')),
+     path('releve/',         include('apps.banque.urls')),
+    # Formulaire 2 : saisie mensuelle (TABBORD)
+    path('saisie/',         include('apps.saisie.urls')),
     path('prets/', include('apps.prets.urls')),
     path('mutuelle/', include('apps.mutuelle.urls')),
     path('foyer/', include('apps.foyer.urls')),

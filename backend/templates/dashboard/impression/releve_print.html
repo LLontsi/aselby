@@ -1,0 +1,57 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize aselby_tags %}
+{% block extra_css %}
+<style>
+@media print {
+  aside,.topbar,.no-print{display:none!important}
+  body{background:white!important;font-size:7pt}
+  .wrap{overflow:visible!important}
+  table{width:100%;font-size:7pt;border-collapse:collapse}
+  th,td{border:1px solid #ccc;padding:2px 4px}
+  th{background:#1B2B5E!important;color:white!important;-webkit-print-color-adjust:exact}
+  @page{size:A4 landscape;margin:8mm}
+}
+</style>
+{% endblock %}
+{% block contenu %}
+<div class="no-print" style="margin-bottom:1rem;display:flex;gap:.75rem;align-items:center">
+  <button onclick="window.print()" style="padding:.5rem 1.2rem;background:#1B2B5E;color:white;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer">
+    <i class="fas fa-print"></i> Imprimer
+  </button>
+  <a href="{% url 'banque:releve' %}?mois={{ mois }}&annee={{ annee }}" class="no-print"
+     style="padding:.5rem 1rem;border:1px solid #E8E9EC;border-radius:8px;font-size:.78rem;color:#6C757D;text-decoration:none">
+    <i class="fas fa-arrow-left"></i> Retour
+  </a>
+  <div style="font-weight:700;color:#1B2B5E">RELEVÉ BANCAIRE — {{ mois_label }} {{ annee }}</div>
+</div>
+<div class="wrap" style="overflow-x:auto">
+<table>
+  <thead>
+    <tr>
+      <th style="min-width:180px">Nom et prénom</th>
+      <th>Versement banque</th>
+      <th>Versement espèces</th>
+      <th>Autre versement</th>
+      <th>Agio</th>
+      <th>En compte</th>
+      <th>Mode</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for adh in adherents %}
+    {% with r=releves|get_item:adh.matricule %}
+    <tr>
+      <td style="font-weight:600">{{ adh.nom_prenom|title }}</td>
+      <td style="text-align:right">{% if r %}{{ r.versement_banque|floatformat:0|intcomma }}{% else %}—{% endif %}</td>
+      <td style="text-align:right">{% if r %}{{ r.versement_especes|floatformat:0|intcomma }}{% else %}—{% endif %}</td>
+      <td style="text-align:right">{% if r %}{{ r.autre_versement|floatformat:0|intcomma }}{% else %}—{% endif %}</td>
+      <td style="text-align:right">{% if r %}{{ r.agio|floatformat:0|intcomma }}{% else %}—{% endif %}</td>
+      <td style="text-align:right;font-weight:700">{% if r %}{{ r.montant_engagement|floatformat:0|intcomma }}{% else %}—{% endif %}</td>
+      <td>{% if r %}{{ r.mode_versement }}{% endif %}</td>
+    </tr>
+    {% endwith %}
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

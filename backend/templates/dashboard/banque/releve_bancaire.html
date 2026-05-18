@@ -1,0 +1,160 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize aselby_tags %}
+{% block _titre %}① Relevé Bancaire — {{ mois_label }} {{ annee }}{% endblock %}
+{% block contenu %}
+
+<div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap">
+  <div style="background:#1B2B5E;color:white;padding:.4rem 1rem;border-radius:20px;font-size:.78rem;font-weight:700">
+    ① RELEVÉ BANCAIRE — TABBHISTOBQUE
+  </div>
+  <i class="fas fa-arrow-right" style="color:#CED4DA;font-size:.75rem"></i>
+  <a href="{% url 'saisie:saisie' %}?mois={{ mois }}&annee={{ annee }}"
+     style="background:#E8E9EC;color:#6C757D;padding:.4rem 1rem;border-radius:20px;font-size:.78rem;font-weight:600;text-decoration:none">
+    ② Saisie mensuelle TABBORD
+  </a>
+</div>
+
+<div style="background:white;border-radius:12px;padding:.85rem 1.5rem;margin-bottom:1.25rem;
+            box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;
+            justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+  <div style="display:flex;align-items:center;gap:.75rem">
+    <a href="?mois={{ prec_mois }}&annee={{ prec_annee }}"
+       style="padding:.4rem .9rem;border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-chevron-left"></i>
+    </a>
+    <span style="background:#1B2B5E;color:white;padding:.45rem 1.25rem;border-radius:20px;font-size:.85rem;font-weight:700">
+      {{ mois_label }} {{ annee }}
+    </span>
+    <a href="?mois={{ suiv_mois }}&annee={{ suiv_annee }}"
+       style="padding:.4rem .9rem;border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;color:#6C757D;text-decoration:none;font-weight:600"
+       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
+      <i class="fas fa-chevron-right"></i>
+    </a>
+  </div>
+  <div style="display:flex;gap:.75rem;align-items:center">
+    <span style="font-size:.78rem;color:#6C757D">{{ nb_saisis }}/{{ nb_total }} saisis</span>
+    <a href="{% url 'banque:telecharger' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;
+              background:#10705A;color:white;border-radius:8px;font-size:.78rem;font-weight:700;text-decoration:none">
+      <i class="fas fa-file-excel"></i> Télécharger XLSX
+    </a>
+    <a href="{% url 'saisie:saisie' %}?mois={{ mois }}&annee={{ annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;
+              background:#C9A84C;color:#1B2B5E;border-radius:8px;font-size:.78rem;font-weight:700;text-decoration:none">
+      ② Saisie mensuelle <i class="fas fa-arrow-right"></i>
+    </a>
+  </div>
+</div>
+
+{% if nb_saisis > 0 %}
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.25rem">
+  <div style="background:white;border-radius:10px;padding:.9rem 1.25rem;box-shadow:0 2px 6px rgba(0,0,0,.06)">
+    <div style="font-size:.62rem;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.25rem">Total banque</div>
+    <div style="font-size:1.1rem;font-weight:700;color:#1B2B5E">{{ total_banque|floatformat:0|intcomma }} F</div>
+  </div>
+  <div style="background:white;border-radius:10px;padding:.9rem 1.25rem;box-shadow:0 2px 6px rgba(0,0,0,.06)">
+    <div style="font-size:.62rem;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.25rem">Total espèces</div>
+    <div style="font-size:1.1rem;font-weight:700;color:#1B2B5E">{{ total_especes|floatformat:0|intcomma }} F</div>
+  </div>
+  <div style="background:rgba(16,112,90,.06);border-radius:10px;padding:.9rem 1.25rem;box-shadow:0 2px 6px rgba(0,0,0,.06)">
+    <div style="font-size:.62rem;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.25rem">Adhérents saisis</div>
+    <div style="font-size:1.1rem;font-weight:700;color:#10705A">{{ nb_saisis }} / {{ nb_total }}</div>
+  </div>
+</div>
+{% endif %}
+
+<form method="post">{% csrf_token %}
+<input type="hidden" name="mois" value="{{ mois }}">
+<input type="hidden" name="annee" value="{{ annee }}">
+<div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+  <div style="background:#1B2B5E;padding:.85rem 1.5rem;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:.6rem">
+      <i class="fas fa-university" style="color:#C9A84C"></i>
+      <span style="color:white;font-weight:700;font-size:.9rem">TABBHISTOBQUE — {{ mois_label }} {{ annee }}</span>
+    </div>
+    <span style="font-size:.68rem;color:rgba(255,255,255,.45)">Ordre alphabétique</span>
+  </div>
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+      <thead>
+        <tr style="background:#F4F5F7">
+          <th style="padding:.65rem .9rem;text-align:left;font-size:.62rem;font-weight:700;color:#6C757D;text-transform:uppercase;letter-spacing:.5px">Nom et prénom</th>
+          <th style="padding:.65rem .7rem;text-align:center;font-size:.62rem;font-weight:700;color:#1B2B5E;text-transform:uppercase">Versement banque (E)</th>
+          <th style="padding:.65rem .7rem;text-align:center;font-size:.62rem;font-weight:700;color:#1B2B5E;text-transform:uppercase">Versement espèces (D)</th>
+          <th style="padding:.65rem .7rem;text-align:center;font-size:.62rem;font-weight:700;color:#6C757D;text-transform:uppercase">Autre versement (F)</th>
+          <th style="padding:.65rem .7rem;text-align:center;font-size:.62rem;font-weight:700;color:#B84C4C;text-transform:uppercase">Agio bancaire (H)</th>
+          <th style="padding:.65rem .7rem;text-align:center;font-size:.62rem;font-weight:700;color:#10705A;text-transform:uppercase">En compte (G)</th>
+          <th style="padding:.65rem .7rem;text-align:center;font-size:.62rem;font-weight:700;color:#6C757D;text-transform:uppercase">Statut</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for adh in adherents %}
+        {% with pfx=adh.matricule|add:"_" r=releves|get_item:adh.matricule %}
+        <tr style="border-bottom:1px solid #F4F5F7"
+            onmouseover="this.style.background='#F8F9FC'" onmouseout="this.style.background=''">
+          <td style="padding:.55rem .9rem;white-space:nowrap">
+            <div style="font-weight:600;color:#1B2B5E;font-size:.85rem">{{ adh.nom_prenom|title }}</div>
+            {% if adh.poste_bureau %}<div style="font-size:.65rem;color:#C9A84C;font-weight:600">{{ adh.poste_bureau }}</div>{% endif %}
+          </td>
+          <td style="padding:.4rem .5rem;text-align:center">
+            <input type="number" step="1" name="{{ pfx }}banque"
+                   value="{% if r and r.versement_banque %}{{ r.versement_banque|floatformat:0 }}{% endif %}"
+                   placeholder="0"
+                   style="width:110px;padding:.35rem .5rem;border:1px solid #CED4DA;border-radius:6px;font-size:.82rem;text-align:right;font-weight:600;color:#1B2B5E"
+                   onfocus="this.style.borderColor='#1B2B5E'" onblur="this.style.borderColor='#CED4DA'">
+          </td>
+          <td style="padding:.4rem .5rem;text-align:center">
+            <input type="number" step="1" name="{{ pfx }}especes"
+                   value="{% if r and r.versement_especes %}{{ r.versement_especes|floatformat:0 }}{% endif %}"
+                   placeholder="0"
+                   style="width:110px;padding:.35rem .5rem;border:1px solid #CED4DA;border-radius:6px;font-size:.82rem;text-align:right;font-weight:600;color:#1B2B5E"
+                   onfocus="this.style.borderColor='#1B2B5E'" onblur="this.style.borderColor='#CED4DA'">
+          </td>
+          <td style="padding:.4rem .5rem;text-align:center">
+            <input type="number" step="1" name="{{ pfx }}autre"
+                   value="{% if r and r.autre_versement %}{{ r.autre_versement|floatformat:0 }}{% endif %}"
+                   placeholder="0"
+                   style="width:90px;padding:.35rem .5rem;border:1px solid #CED4DA;border-radius:6px;font-size:.82rem;text-align:right"
+                   onfocus="this.style.borderColor='#1B2B5E'" onblur="this.style.borderColor='#CED4DA'">
+          </td>
+          <td style="padding:.4rem .5rem;text-align:center">
+            <input type="number" step="1" name="{{ pfx }}agio"
+                   value="{% if r and r.agio %}{{ r.agio|floatformat:0 }}{% endif %}"
+                   placeholder="0"
+                   style="width:80px;padding:.35rem .5rem;border:1px solid #CED4DA;border-radius:6px;font-size:.82rem;text-align:right"
+                   onfocus="this.style.borderColor='#B84C4C'" onblur="this.style.borderColor='#CED4DA'">
+          </td>
+          <td style="padding:.4rem .7rem;text-align:center;font-weight:700;color:#10705A;font-size:.82rem">
+            {% if r %}{{ r.montant_engagement|floatformat:0|intcomma }} F{% else %}—{% endif %}
+          </td>
+          <td style="padding:.4rem .7rem;text-align:center">
+            {% if r %}
+            <span style="background:rgba(16,112,90,.1);color:#10705A;padding:.2rem .55rem;border-radius:20px;font-size:.68rem;font-weight:700"><i class="fas fa-check"></i> Saisi</span>
+            {% else %}
+            <span style="background:#F4F5F7;color:#ADB5BD;padding:.2rem .55rem;border-radius:20px;font-size:.68rem">En attente</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div style="padding:1rem 1.5rem;border-top:1px solid #F4F5F7;display:flex;gap:.75rem;align-items:center">
+    <button type="submit"
+            style="display:inline-flex;align-items:center;gap:.5rem;padding:.65rem 1.75rem;
+                   background:#1B2B5E;color:white;border:none;border-radius:8px;
+                   font-size:.875rem;font-weight:700;cursor:pointer;font-family:inherit"
+            onmouseover="this.style.background='#111C3F'" onmouseout="this.style.background='#1B2B5E'">
+      <i class="fas fa-save"></i> Enregistrer le relevé
+    </button>
+    <a href="{% url 'saisie:saisie' %}?mois={{ mois }}&annee={{ annee }}"
+       style="display:inline-flex;align-items:center;gap:.5rem;padding:.65rem 1.25rem;
+              background:#C9A84C;color:#1B2B5E;border-radius:8px;font-size:.875rem;font-weight:700;text-decoration:none">
+      <i class="fas fa-arrow-right"></i> Étape ② — Saisie mensuelle
+    </a>
+  </div>
+</div>
+</form>
+{% endblock %}

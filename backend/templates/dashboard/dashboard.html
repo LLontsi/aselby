@@ -1,59 +1,105 @@
 {% extends "dashboard/base_dashboard.html" %}
 {% load humanize %}
 {% block _titre %}Tableau de bord{% endblock %}
-
 {% block contenu %}
+
 <div class="page-header-admin">
-  <h2>Tableau de bord — {{ mois_courant }}</h2>
-  <a href="{% url 'saisie:formulaire' %}" class="btn-admin primary">
-    <i class="fas fa-plus"></i> Nouvelle saisie
-  </a>
+  <div>
+    <h2>Tableau de bord — {{ mois_courant }}</h2>
+    <div style="font-size:.8rem;color:var(--gray-400);margin-top:.2rem">
+      Exercice {{ config_exercice.annee }}
+      {% if config_exercice.est_ouvert %}
+      <span style="background:rgba(16,112,90,.1);color:#10705A;padding:.2rem .5rem;border-radius:12px;font-size:.7rem;font-weight:600;margin-left:.5rem">OUVERT</span>
+      {% else %}
+      <span style="background:rgba(184,76,76,.1);color:#B84C4C;padding:.2rem .5rem;border-radius:12px;font-size:.7rem;font-weight:600;margin-left:.5rem">CLÔTURÉ</span>
+      {% endif %}
+    </div>
+  </div>
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+    <a href="{% url 'banque:releve' %}" class="btn-admin ghost">
+      <i class="fas fa-university"></i> ① Relevé bancaire
+    </a>
+    <a href="{% url 'saisie:saisie' %}" class="btn-admin primary">
+      <i class="fas fa-edit"></i> ② Saisie mensuelle
+    </a>
+  </div>
 </div>
 
-<!-- STATS -->
-<div class="stats-grid-admin">
+<!-- Guide saisie -->
+<div style="background:linear-gradient(135deg,rgba(27,43,94,.04),rgba(201,168,76,.06));border:1px solid rgba(201,168,76,.2);
+            border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.5rem">
+  <div style="font-size:.72rem;font-weight:700;color:#A8863A;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem">
+    <i class="fas fa-route"></i> Ordre de saisie mensuelle
+  </div>
+  <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+    <a href="{% url 'banque:releve' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;
+              background:{% if nb_releves >= nb_total %}rgba(16,112,90,.1){% else %}#1B2B5E{% endif %};
+              color:{% if nb_releves >= nb_total %}#10705A{% else %}white{% endif %};border-radius:8px;font-size:.8rem;font-weight:700;text-decoration:none">
+      {% if nb_releves >= nb_total %}<i class="fas fa-check-circle"></i>{% else %}<i class="fas fa-circle" style="font-size:.5rem"></i>{% endif %}
+      ① Relevé bancaire ({{ nb_releves }}/{{ nb_total }})
+    </a>
+    <i class="fas fa-arrow-right" style="color:#CED4DA"></i>
+    <a href="{% url 'saisie:saisie' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;
+              background:{% if nb_saisis >= nb_total %}rgba(16,112,90,.1){% else %}#1B2B5E{% endif %};
+              color:{% if nb_saisis >= nb_total %}#10705A{% else %}white{% endif %};border-radius:8px;font-size:.8rem;font-weight:700;text-decoration:none">
+      {% if nb_saisis >= nb_total %}<i class="fas fa-check-circle"></i>{% else %}<i class="fas fa-circle" style="font-size:.5rem"></i>{% endif %}
+      ② Saisie mensuelle ({{ nb_saisis }}/{{ nb_total }})
+    </a>
+    <i class="fas fa-arrow-right" style="color:#CED4DA"></i>
+    <a href="{% url 'saisie:interets' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;
+              background:#E8E9EC;color:#6C757D;border-radius:8px;font-size:.8rem;font-weight:600;text-decoration:none">
+      <i class="fas fa-percentage"></i> ③ Répartition intérêts
+    </a>
+    <i class="fas fa-arrow-right" style="color:#CED4DA"></i>
+    <a href="{% url 'rapports:telecharger_tabbord' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;
+              background:#10705A;color:white;border-radius:8px;font-size:.8rem;font-weight:700;text-decoration:none">
+      <i class="fas fa-file-excel"></i> ④ Exports Excel
+    </a>
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="stats-grid-admin" style="margin-bottom:1.5rem">
   <div class="stat-card-admin">
     <div class="stat-icon-admin"><i class="fas fa-users"></i></div>
     <div><div class="stat-val">{{ nb_adherents }}</div><div class="stat-lbl">Adhérents actifs</div></div>
   </div>
-  <div class="stat-card-admin accent">
+  <div class="stat-card-admin {% if nb_saisis >= nb_total %}green{% else %}accent{% endif %}">
     <div class="stat-icon-admin"><i class="fas fa-edit"></i></div>
-    <div><div class="stat-val">{{ nb_saisis }}/{{ nb_total }}</div><div class="stat-lbl">Saisis ce mois</div></div>
+    <div>
+      <div class="stat-val">{{ nb_saisis }}/{{ nb_total }}</div>
+      <div class="stat-lbl">Saisies ce mois</div>
+    </div>
+  </div>
+  <div class="stat-card-admin">
+    <div class="stat-icon-admin"><i class="fas fa-wallet"></i></div>
+    <div>
+      <div class="stat-val">{{ total_fonds|floatformat:0|intcomma }}</div>
+      <div class="stat-lbl">Total fonds (F CFA)</div>
+    </div>
   </div>
   <div class="stat-card-admin green">
+    <div class="stat-icon-admin"><i class="fas fa-piggy-bank"></i></div>
+    <div>
+      <div class="stat-val">{{ total_capital|floatformat:0|intcomma }}</div>
+      <div class="stat-lbl">Capital composé (F CFA)</div>
+    </div>
+  </div>
+  <div class="stat-card-admin {% if kpi.nb_prets_en_cours > 0 %}accent{% endif %}">
     <div class="stat-icon-admin"><i class="fas fa-dollar-sign"></i></div>
-    <div><div class="stat-val">{{ prets_en_cours }}</div><div class="stat-lbl">Prêts en cours</div></div>
+    <div><div class="stat-val">{{ kpi.nb_prets_en_cours }}</div><div class="stat-lbl">Prêts en cours</div></div>
   </div>
-  <div class="stat-card-admin red">
+  <div class="stat-card-admin {% if kpi.nb_liste_rouge > 0 %}red{% endif %}">
     <div class="stat-icon-admin"><i class="fas fa-exclamation-triangle"></i></div>
-    <div><div class="stat-val">{{ nb_liste_rouge }}</div><div class="stat-lbl">Liste rouge</div></div>
+    <div><div class="stat-val">{{ kpi.nb_liste_rouge }}</div><div class="stat-lbl">Liste rouge</div></div>
   </div>
 </div>
 
-<!-- CAISSE DU JOUR -->
-<div class="info-card accent-border">
-  <h3><i class="fas fa-calendar-day"></i> Caisse du Jour — 3ème dimanche {{ mois_courant }}</h3>
-  <div class="info-row">
-    <div class="info-item">
-      <span class="lbl">Saisies</span>
-      <span class="val">{{ nb_saisis }}/{{ nb_total }} adhérents</span>
-    </div>
-    <div class="info-item">
-      <span class="lbl">Entrées prévues</span>
-      <span class="val">{{ entrees_prevues|floatformat:0|intcomma }} FCFA</span>
-    </div>
-    <div class="info-item">
-      <span class="lbl">Dépenses prévues</span>
-      <span class="val">{{ depenses_prevues|floatformat:0|intcomma }} FCFA</span>
-    </div>
-    <div class="info-item">
-      <span class="lbl">Solde disponible</span>
-      <span class="val green">{{ solde_disponible|floatformat:0|intcomma }} FCFA</span>
-    </div>
-  </div>
-</div>
-
-<!-- ALERTES -->
+<!-- Alertes -->
 {% if alertes %}
 <div style="margin-bottom:1.5rem">
   <div class="section-title-admin"><i class="fas fa-bell"></i> Alertes & Notifications</div>
@@ -66,65 +112,62 @@
 </div>
 {% endif %}
 
-<!-- ACTIVITÉ -->
-<div class="section-title-admin"><i class="fas fa-history"></i> Activité récente</div>
-<div class="activity-grid-admin">
-
-  <div class="activity-card-admin">
-    <div class="activity-card-head"><i class="fas fa-money-bill-wave"></i><h4>Versements — {{ mois_courant }}</h4></div>
-    <div class="activity-list">
-      {% for s in dernieres_saisies %}
-      <div class="activity-row">
-        <div class="activity-avatar">{{ s.adherent.nom_prenom|slice:":1"|upper }}</div>
-        <div class="activity-info">
-          <div class="activity-name">{{ s.adherent.nom_prenom|title|truncatechars:22 }}</div>
-          <div class="activity-sub">
-            <span class="badge {% if s.mode_versement == 'BANQUE' %}green{% elif s.mode_versement == 'ESPECES' %}accent{% else %}red{% endif %}">{{ s.get_mode_versement_display }}</span>
-            <span>{{ s.versement_banque|add:s.versement_especes|floatformat:0|intcomma }} F</span>
-          </div>
-        </div>
-      </div>
-      {% empty %}<div class="empty-act">Aucune saisie pour ce mois.</div>
-      {% endfor %}
-    </div>
+<!-- Dernières saisies -->
+{% if dernieres_saisies %}
+<div class="section-title-admin"><i class="fas fa-history"></i> Dernières saisies — {{ mois_courant }}</div>
+<div class="table-card">
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Adhérent</th>
+          <th>Tontine T60</th>
+          <th>Tontine T75</th>
+          <th>Tontine T100</th>
+          <th>Mode</th>
+          <th>Reste</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in dernieres_saisies %}
+        <tr>
+          <td style="font-weight:600;color:var(--primary)">{{ s.adherent.nom_prenom|title }}</td>
+          <td>{% if s.tontine_t60 %}{{ s.tontine_t60|floatformat:0|intcomma }} F{% else %}—{% endif %}</td>
+          <td>{% if s.tontine_t75 %}{{ s.tontine_t75|floatformat:0|intcomma }} F{% else %}—{% endif %}</td>
+          <td>{% if s.tontine_t100 %}{{ s.tontine_t100|floatformat:0|intcomma }} F{% else %}—{% endif %}</td>
+          <td>
+            <span class="badge {% if s.mode_paiement_tontine == 'BANQUE' %}primary{% elif s.mode_paiement_tontine == 'ESPECES' %}accent{% else %}red{% endif %}">
+              {{ s.mode_paiement_tontine }}
+            </span>
+          </td>
+          <td style="font-weight:600;color:#10705A">{{ s.reste|floatformat:0|intcomma }} F</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
-
-  <div class="activity-card-admin">
-    <div class="activity-card-head"><i class="fas fa-clock"></i><h4>Participations tontines</h4></div>
-    <div class="activity-list">
-      {% for niveau, nb_parts, nb_adherents in participations_tontines %}
-      <div class="activity-row">
-        <div class="activity-avatar"><i class="fas fa-layer-group"></i></div>
-        <div class="activity-info">
-          <div class="activity-name">Tontine {{ niveau }}</div>
-          <div class="activity-sub"><span>{{ nb_adherents }} adhérent(s)</span><span>{{ nb_parts }} part(s)</span></div>
-        </div>
-        <a href="{% url 'tontines:tableau' %}" class="activity-act"><i class="fas fa-arrow-right"></i></a>
-      </div>
-      {% empty %}<div class="empty-act">Aucune session ce mois.</div>
-      {% endfor %}
-    </div>
-  </div>
-
-  <div class="activity-card-admin">
-    <div class="activity-card-head"><i class="fas fa-exclamation-circle"></i><h4>Prêts en retard</h4></div>
-    <div class="activity-list">
-      {% for p in prets_retard %}
-      <div class="activity-row">
-        <div class="activity-avatar">{{ p.adherent.nom_prenom|slice:":1"|upper }}</div>
-        <div class="activity-info">
-          <div class="activity-name">{{ p.adherent.nom_prenom|title|truncatechars:20 }}</div>
-          <div class="activity-sub">
-            <span class="badge red">{{ p.solde_restant|floatformat:0|intcomma }} F</span>
-            <span>{{ p.nb_mois_retard }} mois retard</span>
-          </div>
-        </div>
-        <a href="{% url 'prets:detail' p.pk %}" class="activity-act"><i class="fas fa-eye"></i></a>
-      </div>
-      {% empty %}<div class="empty-act" style="color:var(--green)"><i class="fas fa-check-circle"></i> Aucun retard.</div>
-      {% endfor %}
-    </div>
-  </div>
-
 </div>
+{% endif %}
+
+<!-- Prêts en retard -->
+{% if prets_retard %}
+<div class="section-title-admin" style="margin-top:1.5rem"><i class="fas fa-exclamation-triangle" style="color:#B84C4C"></i> Prêts en retard</div>
+<div class="table-card" style="border-top:3px solid var(--red)">
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Adhérent</th><th>Solde restant</th><th>Retard</th></tr></thead>
+      <tbody>
+        {% for p in prets_retard %}
+        <tr>
+          <td style="font-weight:600;color:var(--primary)">{{ p.adherent.nom_prenom|title }}</td>
+          <td style="color:#B84C4C;font-weight:600">{{ p.solde_restant|floatformat:0|intcomma }} F</td>
+          <td><span class="badge red">{{ p.nb_mois_retard }} mois</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
 {% endblock %}

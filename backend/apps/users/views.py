@@ -9,10 +9,10 @@ from decimal import Decimal
 
 from apps.parametrage.models import ConfigExercice
 from apps.fonds.models import MouvementFonds
-from apps.tontines.models import ParticipationTontine, SessionTontine, NiveauTontine
 from apps.prets.models import Pret
 from apps.public.models import Annonce
-from apps.saisie.models import TableauDeBord
+from apps.saisie.models import SaisieMonthly
+from apps.banque.models import ReleveBancaire
 from .forms import ConnexionForm, ReinitialisationMotDePasseForm, DemandePretForm
 from django.views.decorators.http import require_http_methods
 MOIS_FR = ['','Janvier','Février','Mars','Avril','Mai','Juin',
@@ -91,30 +91,65 @@ def mon_espace(request):
     mois = now.month
     annee = now.year
 
-    # Fonds du mois courant
-    fonds_courant = MouvementFonds.objects.filter(
+    # Dernier MouvementFonds disponible (pas forcément le mois courant)
+    fonds_courant = (
+        MouvementFonds.objects.filter(adherent=adherent, annee=annee)
+        .order_by('-mois').first()
+    )
+    capital_compose = fonds_courant.capital_compose if fonds_courant else None
+
+    # Saisie du mois courant
+    saisie_mois = SaisieMonthly.objects.filter(
         adherent=adherent, mois=mois, annee=annee
     ).first()
 
-    # Tontines du mois
-    sessions_mois = SessionTontine.objects.filter(mois=mois, annee=annee)
-    participations_mois = ParticipationTontine.objects.filter(
-        adherent=adherent, session__in=sessions_mois
-    ).select_related('session__niveau')
-    nb_parts_total = participations_mois.aggregate(t=Sum('nombre_parts'))['t'] or 0
+    # Dernière saisie disponible (pour afficher les lots habituels si mois pas encore saisi)
+    derniere_saisie = (
+        SaisieMonthly.objects.filter(adherent=adherent, config_exercice=config)
+        .order_by('-annee', '-mois').first()
+    )
 
-    # Prêt en cours
+    # Parts tontine totales = cumul annuel
+    saisies_annee = SaisieMonthly.objects.filter(
+        adherent=adherent, annee=annee, config_exercice=config
+    )
+    nb_parts_total = sum(
+        (s.nbre_lots_t60 or 0) + (s.nbre_lots_t75 or 0) + (s.nbre_lots_t100 or 0)
+        for s in saisies_annee
+    )
+
+    # Prêt en cours — avec calcul remboursement mensuel
     pret_en_cours = Pret.objects.filter(
         adherent=adherent, statut__in=[Pret.EN_COURS, 'EN_RETARD']
     ).first()
-
-    # Saisie du mois courant (TableauDeBord)
-    saisie_mois = TableauDeBord.objects.filter(
-        adherent=adherent, mois=mois, annee=annee
-    ).first()
+    if pret_en_cours:
+        pret_en_cours.remboursement_mensuel = (
+            pret_en_cours.solde_restant / Decimal(str(max(1, pret_en_cours.nombre_mois)))
+        )
+    else:
+        # Chercher prêt non soldé dans SaisieMonthly (toutes configs)
+        s_pret = SaisieMonthly.objects.filter(
+            adherent=adherent, pret_fonds__gt=0
+        ).order_by('-annee', '-mois').first()
+        if s_pret and float(s_pret.pret_fonds or 0) > float(s_pret.remboursement_pret or 0):
+            from datetime import date
+            nb_mois = s_pret.nbre_mois_pret or 1
+            ech_mois = s_pret.mois + nb_mois
+            ech_annee = s_pret.annee + (ech_mois - 1) // 12
+            ech_mois = ((ech_mois - 1) % 12) + 1
+            solde = float(s_pret.pret_fonds or 0) - float(s_pret.remboursement_pret or 0)
+            # Créer un objet simple pour le template
+            class PretSimple:
+                pass
+            pret_en_cours = PretSimple()
+            pret_en_cours.montant_principal = float(s_pret.pret_fonds or 0)
+            pret_en_cours.solde_restant = solde
+            pret_en_cours.date_echeance = date(ech_annee, ech_mois, 17)
+            pret_en_cours.statut = 'EN_COURS'
+            pret_en_cours.remboursement_mensuel = solde / nb_mois
 
     # Nombre de mois saisis cette année
-    nb_mois_saisis = TableauDeBord.objects.filter(
+    nb_mois_saisis = SaisieMonthly.objects.filter(
         adherent=adherent, annee=annee, config_exercice=config
     ).count()
 
@@ -129,8 +164,10 @@ def mon_espace(request):
     ctx = _ctx_membre(request)
     ctx.update({
         'fonds_courant': fonds_courant,
+        'capital_compose': capital_compose,
         'nb_parts_total': nb_parts_total,
-        'participations_mois': participations_mois,
+        'saisie_mois': saisie_mois,
+        'derniere_saisie': derniere_saisie,
         'pret_en_cours': pret_en_cours,
         'liste_rouge': liste_rouge,
         'saisie_mois': saisie_mois,
@@ -157,8 +194,8 @@ def mon_fonds(request):
     total_interets = mouvements.aggregate(s=Sum('interet_attribue'))['s'] or Decimal('0')
     nb_mois_saisis = mouvements.count()
 
-    # Saisies mensuelles (TableauDeBord) — versements, mode, pénalités
-    saisies = TableauDeBord.objects.filter(
+    # Saisies mensuelles (SaisieMonthly) — versements, mode, pénalités
+    saisies = SaisieMonthly.objects.filter(
         adherent=adherent, annee=config.annee, config_exercice=config
     ).order_by('mois')
 
@@ -182,26 +219,28 @@ def mes_tontines(request):
     config = ConfigExercice.get_exercice_courant()
 
     # Toutes les participations de l'exercice
-    participations = ParticipationTontine.objects.filter(
+    saisies_tontine = SaisieMonthly.objects.filter(
         adherent=adherent,
-        session__niveau__config_exercice=config
-    ).select_related('session__niveau').order_by('session__mois')
+        config_exercice=config
+    ).order_by('mois')
 
-    # Grouper par niveau
+    # Grouper par niveau tontine (T60, T75, T100)
     niveaux_participation = []
-    for niv in NiveauTontine.objects.filter(config_exercice=config).order_by('taux_mensuel'):
-        parts = participations.filter(session__niveau=niv)
+    for code, label in [('T60','Tontine 60 000'), ('T75','Tontine 75 000'), ('T100','Tontine 100 000')]:
+        parts = saisies_tontine.filter(**{f'nbre_lots_{code.lower()}__gt': 0})
         if parts.exists():
-            niveaux_participation.append({'niveau': niv, 'participations': parts})
+            niveaux_participation.append({'code': code, 'label': label, 'saisies': parts})
 
-    nb_participations = participations.count()
-    nb_parts_total    = sum(p.nombre_parts for p in participations)
-    nb_lots_obtenus   = participations.filter(a_obtenu_lot_principal=True).count()
-    nb_mois_banque    = participations.filter(mode_versement='BANQUE').count()
+    nb_participations = saisies_tontine.count()
+    nb_parts_total    = (
+        sum(s.nbre_lots_t60 + s.nbre_lots_t75 + s.nbre_lots_t100 for s in saisies_tontine)
+    )
+    nb_lots_obtenus   = saisies_tontine.filter(achat_lot_t60__gt=0).count() +                         saisies_tontine.filter(achat_lot_t75__gt=0).count() +                         saisies_tontine.filter(achat_lot_t100__gt=0).count()
+    nb_mois_banque    = saisies_tontine.filter(nbre_lots_t60__gt=0).count()
 
     ctx = _ctx_membre(request)
     ctx.update({
-        'participations': participations,
+        'saisies_tontine': saisies_tontine,
         'niveaux_participation': niveaux_participation,
         'nb_participations': nb_participations,
         'nb_parts_total': nb_parts_total,
@@ -215,11 +254,60 @@ def mes_tontines(request):
 def mes_prets(request):
     if request.user.est_bureau:
         return redirect('rapports:dashboard')
+    adherent = request.user.adherent
+    config   = ConfigExercice.get_exercice_courant()
     ctx = _ctx_membre(request)
-    ctx['prets'] = Pret.objects.filter(
-        adherent=request.user.adherent,
-        config_exercice=ConfigExercice.get_exercice_courant()
-    ).prefetch_related('remboursements').order_by('-date_octroi')
+
+    # Prêts depuis prets_pret (table officielle)
+    prets_officiels = Pret.objects.filter(
+        adherent=adherent,
+        config_exercice=config
+    ).order_by('-date_octroi')
+
+    # Si aucun prêt officiel, construire depuis SaisieMonthly (toutes configs)
+    if not prets_officiels.exists():
+        prets_data = []
+        saisies_pret = SaisieMonthly.objects.filter(
+            adherent=adherent, pret_fonds__gt=0
+        ).order_by('annee', 'mois')
+        # Garder seulement les non soldés
+        saisies_pret = [s for s in saisies_pret
+                        if float(s.pret_fonds or 0) > float(s.remboursement_pret or 0)]
+        for s in saisies_pret:
+            montant = float(s.pret_fonds or 0)
+            remb    = float(s.remboursement_pret or 0)
+            nb_mois = s.nbre_mois_pret or 0
+            if montant <= 0: continue
+            # Solde = pret - remb direct (simplification)
+            # En réalité il faudrait sommer tous les remb des mois suivants
+            # Pour l'instant: si remb=0 sur la ligne du prêt → solde = pret entier
+            solde = max(0, montant - remb)
+            # Date échéance
+            from datetime import date
+            ech_mois  = s.mois + nb_mois
+            ech_annee = s.annee + (ech_mois - 1) // 12
+            ech_mois  = ((ech_mois - 1) % 12) + 1
+            try:
+                date_ech = date(ech_annee, ech_mois, 17)
+            except Exception:
+                date_ech = None
+            prets_data.append({
+                'montant_principal': montant,
+                'montant_total_du':  montant * 1.01 * nb_mois if nb_mois else montant,
+                'montant_rembourse': remb,
+                'solde_restant':     solde,
+                'date_octroi':       date(s.annee, s.mois, 17),
+                'date_echeance':     date_ech,
+                'nombre_mois':       nb_mois,
+                'statut':            'EN_COURS' if solde > 0 else 'REMBOURSE',
+                'mode_versement':    s.mode_paiement_pret,
+            })
+        ctx['prets'] = prets_officiels  # vide
+        ctx['prets_data'] = prets_data
+    else:
+        ctx['prets'] = prets_officiels
+        ctx['prets_data'] = []
+
     return render(request, 'membre/mes_prets.html', ctx)
 
 
@@ -290,19 +378,22 @@ def ma_situation(request):
     dette_pret = pret_actif.solde_restant if pret_actif else Decimal('0')
 
     # Stats tontines
-    participations = ParticipationTontine.objects.filter(
-        adherent=adherent, session__niveau__config_exercice=config
+    saisies_tontine = SaisieMonthly.objects.filter(
+        adherent=adherent, config_exercice=config
     )
-    nb_parts_total = sum(p.nombre_parts for p in participations)
+    nb_parts_total = sum(
+        (s.nbre_lots_t60 or 0) + (s.nbre_lots_t75 or 0) + (s.nbre_lots_t100 or 0)
+        for s in saisies_tontine
+    )
 
-    # Stats saisies (TableauDeBord)
-    saisies_annee = TableauDeBord.objects.filter(
+    # Stats saisies (SaisieMonthly)
+    saisies_annee = SaisieMonthly.objects.filter(
         adherent=adherent, annee=config.annee, config_exercice=config
     )
     nb_mois_saisis  = saisies_annee.count()
-    nb_mois_banque  = saisies_annee.filter(mode_versement='BANQUE').count()
-    nb_mois_especes = saisies_annee.filter(mode_versement='ESPECES').count()
-    nb_echecs       = saisies_annee.filter(mode_versement='ECHEC').count()
+    nb_mois_banque  = saisies_annee.filter(nbre_lots_t60__gt=0).count()
+    nb_mois_especes = saisies_annee.filter(nbre_lots_t60__gt=0).count()
+    nb_echecs       = saisies_annee.filter(nbre_lots_t60=0).count()
 
     ctx = _ctx_membre(request)
     ctx.update({
@@ -332,7 +423,7 @@ def saisir_versement(request):
     mois = int(request.GET.get('mois', now.month))
     annee = int(request.GET.get('annee', now.year))
 
-    saisie_existante = TableauDeBord.objects.filter(
+    saisie_existante = SaisieMonthly.objects.filter(
         adherent=adherent, mois=mois, annee=annee
     ).first()
 
@@ -347,7 +438,7 @@ def saisir_versement(request):
         elif saisie_existante and saisie_existante.est_valide:
             messages.error(request, "Cette saisie a déjà été validée par le bureau.")
         else:
-            obj, created = TableauDeBord.objects.update_or_create(
+            obj, created = SaisieMonthly.objects.update_or_create(
                 adherent=adherent, mois=mois, annee=annee,
                 defaults=dict(
                     config_exercice=config,
@@ -360,7 +451,25 @@ def saisir_versement(request):
             messages.success(request, f"Versement {'soumis' if created else 'mis à jour'} — en attente de validation du bureau.")
             return redirect('membre:mon_espace')
 
+    # Informations tontines et prêt pour affichage dans le formulaire
+    # Données tontines du mois depuis SaisieMonthly
+    saisies_tontine_mois = SaisieMonthly.objects.filter(
+        adherent=adherent, mois=mois, annee=annee
+    )
+    pret_membre = Pret.objects.filter(
+        adherent=adherent, statut__in=[Pret.EN_COURS]
+    ).first()
+    if pret_membre:
+        pret_membre.remboursement_mensuel = (
+            pret_membre.solde_restant / Decimal(str(max(1, pret_membre.nombre_mois)))
+        )
+
     ctx = _ctx_membre(request)
-    ctx.update({'mois': mois, 'annee': annee,
-                'saisie_existante': saisie_existante, 'config': config})
+    ctx.update({
+        'mois': mois, 'annee': annee,
+        'saisie_existante': saisie_existante,
+        'config': config,
+        'saisie_mois': saisie_mois,
+        'pret_en_cours': pret_membre,
+    })
     return render(request, 'membre/saisir_versement.html', ctx)

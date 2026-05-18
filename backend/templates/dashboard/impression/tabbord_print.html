@@ -1,0 +1,78 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize aselby_tags %}
+{% block extra_css %}<style>
+@media print {
+  aside, .topbar, .no-print { display:none !important; }
+  body { background:white !important; margin:0; font-family:Arial,sans-serif; }
+  @page { size:A4 landscape; margin:8mm; }
+  table { width:100%; border-collapse:collapse; font-size:7.5pt; }
+  th, td { border:1px solid #CCC; padding:2px 4px; }
+  th { background:#1B2B5E !important; color:white !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .print-title { font-size:12pt; font-weight:700; color:#1B2B5E; margin-bottom:6px; }
+  .print-sub   { font-size:9pt; color:#6C757D; margin-bottom:10px; }
+}
+.no-print-bar {
+  margin-bottom:1rem; padding:.75rem 1.25rem; background:white;
+  border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,.06);
+  display:flex; gap:.75rem; align-items:center;
+}
+.btn-print {
+  padding:.5rem 1.2rem; background:#1B2B5E; color:white;
+  border:none; border-radius:8px; font-size:.82rem;
+  font-weight:700; cursor:pointer; font-family:inherit;
+}
+</style>{% endblock %}
+{% block contenu %}
+<div class="no-print-bar no-print">
+  <button class="btn-print" onclick="window.print()"><i class="fas fa-print"></i> Imprimer</button>
+  <a href="{% url 'banque:releve' %}?mois={{ mois }}&annee={{ annee }}" style="font-size:.82rem;color:#6C757D;text-decoration:none"><i class="fas fa-arrow-left"></i> Retour</a>
+  <span style="font-weight:700;color:#1B2B5E;font-size:.9rem">TABBORD — {{ mois_label }} {{ annee }}</span>
+</div>
+<div class="print-title">TABLEAU DE BORD — {{ mois_label }} {{ annee }}</div>
+<div class="print-sub">ASELBY — Exercice {{ annee }}</div>
+<div style="overflow-x:auto">
+<table>
+  <thead>
+    <tr>
+      <th style="min-width:140px">Nom et prénom</th>
+      <th>Banque</th><th>Espèces</th><th>Autre</th>
+      <th>Nbre T60</th><th>Tont. T60</th>
+      <th>Nbre T75</th><th>Tont. T75</th>
+      <th>Nbre T100</th><th>Tont. T100</th>
+      <th>Mode</th>
+      <th>Tont. mois</th>
+      <th>Remb. prêt</th>
+      <th>Engagement</th>
+      <th>Reste</th>
+      <th>Libellé dép.</th>
+      <th>Montant dép.</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for adh in adherents %}
+    {% with s=saisies|get_item:adh.matricule r=releves|get_item:adh.matricule %}
+    <tr>
+      <td style="font-weight:600">{{ adh.nom_prenom|title }}</td>
+      <td style="text-align:right">{% if r %}{{ r.versement_banque|floatformat:0|intcomma }}{% else %}—{% endif %}</td>
+      <td style="text-align:right">{% if r %}{{ r.versement_especes|floatformat:0|intcomma }}{% else %}—{% endif %}</td>
+      <td style="text-align:right">{% if r %}{{ r.autre_versement|floatformat:0|intcomma }}{% else %}—{% endif %}</td>
+      <td style="text-align:center">{% if s %}{{ s.nbre_lots_t60 }}{% else %}—{% endif %}</td>
+      <td style="text-align:right">{% if s %}{{ s.tontine_t60|floatformat:0|intcomma }}{% else %}—{% endif %}</td>
+      <td style="text-align:center">{% if s %}{{ s.nbre_lots_t75 }}{% else %}—{% endif %}</td>
+      <td style="text-align:right">{% if s %}{{ s.tontine_t75|floatformat:0|intcomma }}{% else %}—{% endif %}</td>
+      <td style="text-align:center">{% if s %}{{ s.nbre_lots_t100 }}{% else %}—{% endif %}</td>
+      <td style="text-align:right">{% if s %}{{ s.tontine_t100|floatformat:0|intcomma }}{% else %}—{% endif %}</td>
+      <td style="text-align:center">{% if s %}{{ s.mode_paiement_tontine }}{% endif %}</td>
+      <td style="text-align:right;font-weight:700">{% if s %}{{ s.tontine_mois|floatformat:0|intcomma }}{% else %}—{% endif %}</td>
+      <td style="text-align:right">{% if s and s.remboursement_pret %}{{ s.remboursement_pret|floatformat:0|intcomma }}{% else %}—{% endif %}</td>
+      <td style="text-align:right;font-weight:700">{% if s %}{{ s.montant_engagement|floatformat:0|intcomma }}{% else %}—{% endif %}</td>
+      <td style="text-align:right">{% if s %}{{ s.reste|floatformat:0|intcomma }}{% else %}—{% endif %}</td>
+      <td>{% if s %}{{ s.libelle_depense }}{% endif %}</td>
+      <td style="text-align:right">{% if s and s.montant_depense %}{{ s.montant_depense|floatformat:0|intcomma }}{% else %}—{% endif %}</td>
+    </tr>
+    {% endwith %}
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

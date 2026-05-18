@@ -1,0 +1,63 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block extra_css %}<style>
+@media print {
+  aside, .topbar, .no-print { display:none !important; }
+  body { background:white !important; margin:0; font-family:Arial,sans-serif; }
+  @page { size:A4 landscape; margin:8mm; }
+  table { width:100%; border-collapse:collapse; font-size:7.5pt; }
+  th, td { border:1px solid #CCC; padding:2px 4px; }
+  th { background:#1B2B5E !important; color:white !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .print-title { font-size:12pt; font-weight:700; color:#1B2B5E; margin-bottom:6px; }
+  .print-sub   { font-size:9pt; color:#6C757D; margin-bottom:10px; }
+}
+.no-print-bar {
+  margin-bottom:1rem; padding:.75rem 1.25rem; background:white;
+  border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,.06);
+  display:flex; gap:.75rem; align-items:center;
+}
+.btn-print {
+  padding:.5rem 1.2rem; background:#1B2B5E; color:white;
+  border:none; border-radius:8px; font-size:.82rem;
+  font-weight:700; cursor:pointer; font-family:inherit;
+}
+</style>{% endblock %}
+{% block contenu %}
+<div class="no-print-bar no-print">
+  <button class="btn-print" onclick="window.print()"><i class="fas fa-print"></i> Imprimer</button>
+  <span style="font-weight:700;color:#1B2B5E;font-size:.9rem">PRÊTS EN COURS — {{ config_exercice.annee }}</span>
+</div>
+<div class="print-title">PRÊTS EN COURS — ASELBY {{ config_exercice.annee }}</div>
+<table>
+  <thead>
+    <tr>
+      <th style="min-width:160px">Adhérent</th>
+      <th>Montant principal</th><th>Taux mensuel</th>
+      <th>Nb mois</th><th>Intérêt total</th>
+      <th>Montant total dû</th><th>Déjà remboursé</th>
+      <th>Solde restant</th><th>Date octroi</th>
+      <th>Date échéance</th><th>Mode</th><th>Statut</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in prets %}
+    <tr>
+      <td style="font-weight:600">{{ p.adherent.nom_prenom|title }}</td>
+      <td style="text-align:right">{{ p.montant_principal|floatformat:0|intcomma }}</td>
+      <td style="text-align:center">{{ p.taux_mensuel }}%</td>
+      <td style="text-align:center">{{ p.nombre_mois }}</td>
+      <td style="text-align:right">{{ p.interet_total|floatformat:0|intcomma }}</td>
+      <td style="text-align:right;font-weight:700">{{ p.montant_total_du|floatformat:0|intcomma }}</td>
+      <td style="text-align:right">{{ p.montant_rembourse|floatformat:0|intcomma }}</td>
+      <td style="text-align:right;font-weight:700;color:#B84C4C">{{ p.solde_restant|floatformat:0|intcomma }}</td>
+      <td>{{ p.date_octroi }}</td>
+      <td>{{ p.date_echeance }}</td>
+      <td>{{ p.mode_versement }}</td>
+      <td><span style="font-weight:700;color:{% if p.nb_mois_retard > 0 %}#B84C4C{% else %}#10705A{% endif %}">
+        {% if p.nb_mois_retard > 0 %}{{ p.nb_mois_retard }} mois retard{% else %}A jour{% endif %}
+      </span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

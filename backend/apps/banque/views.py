@@ -1,513 +1,332 @@
-"""PATCH apps/banque/views.py — ajouter vues TABBHISTOBQUE et TABBORDAIDEDEPENSES"""
-from django.shortcuts import render, redirect, get_object_or_404
+"""
+apps/banque/views.py
+Formulaire 1 : Relevé bancaire mensuel (TABBHISTOBQUE).
+À saisir EN PREMIER avant la saisie mensuelle.
+"""
+from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Sum
-from django.http import HttpResponse
+from django.db import transaction
+from decimal import Decimal
 from apps.core.mixins import bureau_required
 from apps.parametrage.models import ConfigExercice
-from apps.saisie.models import TableauDeBord
 from apps.adherents.models import Adherent
-from .models import HistoriqueBancaire, Cheque
-from decimal import Decimal
+from .models import ReleveBancaire, AgioBancaire
 
 MOIS_FR = ['','Janvier','Février','Mars','Avril','Mai','Juin',
            'Juillet','Août','Septembre','Octobre','Novembre','Décembre']
-MOIS_CODE = ['','JANV','FEV','MARS','AVRIL','MAI','JUIN',
-             'JUIL','AOUT','SEPT','OCT','NOV','DEC']
+D = Decimal
 
-# ─── Vue existante : historique ────────────────────────────────────────────────
+
 @bureau_required
-def historique(request):
-    config = ConfigExercice.get_exercice_courant()
-    mois  = int(request.GET.get('mois',  timezone.now().month))
-    annee = int(request.GET.get('annee', timezone.now().year))
-
-    historiques = HistoriqueBancaire.objects.filter(
-        mois=mois, annee=annee, config_exercice=config
-    ).select_related('adherent').order_by('adherent__numero_ordre')
-
-    if not historiques.exists() and not request.GET.get('mois'):
-        dernier = TableauDeBord.objects.filter(
-            config_exercice=config
-        ).order_by('-annee', '-mois').first()
-        if dernier:
-            mois, annee = dernier.mois, dernier.annee
-
-    saisies = TableauDeBord.objects.filter(
-        mois=mois, annee=annee, config_exercice=config
-    ).select_related('adherent').order_by('adherent__numero_ordre')
-
-    prec = (12, annee-1) if mois == 1 else (mois-1, annee)
-    suiv = (1, annee+1)  if mois == 12 else (mois+1, annee)
-
-    ctx = {
-        'config_exercice': config,
-        'historiques':    historiques if historiques.exists() else saisies,
-        'saisies':        saisies,
-        'depuis_saisies': not historiques.exists(),
-        'mois': mois, 'annee': annee,
-        'mois_label': MOIS_FR[mois] if 1 <= mois <= 12 else str(mois),
-        'prec_mois': prec[0], 'prec_annee': prec[1],
-        'suiv_mois': suiv[0], 'suiv_annee': suiv[1],
-    }
-    return render(request, 'dashboard/banque/historique.html', ctx)
-
-
-# ─── Nouvelle vue : TABBHISTOBQUE ─────────────────────────────────────────────
-@bureau_required
-def tabbhistobque(request):
+def releve_bancaire(request):
     """
-    Vue TABBHISTOBQUE = historique bancaire détaillé par adhérent/mois.
-    Saisie + consultation + téléchargement Excel.
+    Grille : tous les adhérents × 4 champs (banque, espèces, autre, agio).
+    Sauvegarde tous les adhérents en une seule soumission.
     """
     config = ConfigExercice.get_exercice_courant()
     mois   = int(request.GET.get('mois',  timezone.now().month))
     annee  = int(request.GET.get('annee', config.annee))
-    prec   = (12, annee-1) if mois == 1 else (mois-1, annee)
-    suiv   = (1, annee+1)  if mois == 12 else (mois+1, annee)
-    adherents = Adherent.objects.filter(statut='ACTIF').order_by('numero_ordre')
 
-    if request.method == 'POST' and 'save' in request.POST:
-        for adh in adherents:
-            pfx = f"adh_{adh.matricule}_"
-            def d(k):
-                v = request.POST.get(f"{pfx}{k}", '0') or '0'
-                try: return Decimal(str(v).replace(' ',''))
-                except: return Decimal('0')
+    adherents = sorted(Adherent.objects.filter(statut='ACTIF'), key=lambda a: (0 if a.matricule=='AS201648' else 1, a.numero_ordre))
 
-            HistoriqueBancaire.objects.update_or_create(
-                adherent=adh, mois=mois, annee=annee,
-                defaults=dict(
-                    config_exercice=config,
-                    versement_tontine=d('versement_tontine'),
-                    versement_especes=d('versement_especes'),
-                    versement_banque=d('versement_banque'),
-                    autre_versement=d('autre_versement'),
-                    montant_engagement=d('montant_engagement'),
-                    agio=d('agio'),
-                    en_compte_reel=d('en_compte_reel'),
-                    montant_a_justifier_saisi=d('montant_a_justifier_saisi'),
-                )
-            )
-        messages.success(request,
-            f"Historique bancaire {MOIS_FR[mois]} {annee} enregistré.")
-        return redirect(f"?mois={mois}&annee={annee}")
+    if request.method == 'POST':
+        mois  = int(request.POST.get('mois',  mois))
+        annee = int(request.POST.get('annee', annee))
 
-    # GET — préparer lignes (hist existant ou calculé depuis TableauDeBord)
-    hist_map = {
-        h.adherent_id: h
-        for h in HistoriqueBancaire.objects.filter(
+        def d(key):
+            v = request.POST.get(key, '0') or '0'
+            try:
+                return D(str(v).replace(' ', '').replace('\xa0', ''))
+            except Exception:
+                return D('0')
+
+        nb_saisis = 0
+        with transaction.atomic():
+            for adh in adherents:
+                pfx = f"{adh.matricule}_"
+                banque  = d(f"{pfx}banque")
+                especes = d(f"{pfx}especes")
+                autre   = d(f"{pfx}autre")
+                agio    = d(f"{pfx}agio")
+
+                # Ne sauvegarder que si au moins une valeur non nulle
+                if banque or especes or autre or agio:
+                    ReleveBancaire.objects.update_or_create(
+                        adherent=adh, mois=mois, annee=annee,
+                        defaults={
+                            'config_exercice':  config,
+                            'versement_banque':  banque,
+                            'versement_especes': especes,
+                            'autre_versement':   autre,
+                            'agio':              agio,
+                        }
+                    )
+                    nb_saisis += 1
+
+        messages.success(
+            request,
+            f"Relevé bancaire {MOIS_FR[mois]} {annee} enregistré "
+            f"({nb_saisis} adhérent(s)). "
+            f"Passez maintenant à la Saisie mensuelle."
+        )
+        return redirect(f"{request.path}?mois={mois}&annee={annee}")
+
+    # GET — charger les données existantes
+    releves = {
+        r.adherent_id: r
+        for r in ReleveBancaire.objects.filter(
             mois=mois, annee=annee, config_exercice=config)
     }
-    tb_map = {
-        tb.adherent_id: tb
-        for tb in TableauDeBord.objects.filter(
-            mois=mois, annee=annee, config_exercice=config)
-    }
 
-    rows = []
-    for adh in adherents:
-        hist = hist_map.get(adh.matricule)
-        tb   = tb_map.get(adh.matricule)
-        # Préremplir depuis TableauDeBord si pas de HistoriqueBancaire
-        if not hist and tb:
-            hist = HistoriqueBancaire(
-                adherent=adh, mois=mois, annee=annee, config_exercice=config,
-                versement_banque=tb.versement_banque,
-                versement_especes=tb.versement_especes,
-                autre_versement=tb.autre_versement,
-                montant_engagement=tb.montant_engagement,
-            )
-        rows.append({'adherent': adh, 'hist': hist, 'tb': tb})
+    # Navigation mois
+    prec = (12, annee-1) if mois == 1 else (mois-1, annee)
+    suiv = (1,  annee+1) if mois == 12 else (mois+1, annee)
 
-    # Totaux
-    total_tontine  = sum(r['hist'].versement_tontine  if r['hist'] else 0 for r in rows)
-    total_banque   = sum(r['hist'].versement_banque   if r['hist'] else 0 for r in rows)
-    total_especes  = sum(r['hist'].versement_especes  if r['hist'] else 0 for r in rows)
-    total_engagement = sum(r['hist'].montant_engagement if r['hist'] else 0 for r in rows)
+    nb_saisis    = len(releves)
+    total_banque = sum(r.versement_banque  for r in releves.values())
+    total_esp    = sum(r.versement_especes for r in releves.values())
 
-    ctx = dict(
-        config_exercice=config, rows=rows,
-        mois=mois, annee=annee, mois_label=MOIS_FR[mois],
-        prec_mois=prec[0], prec_annee=prec[1],
-        suiv_mois=suiv[0], suiv_annee=suiv[1],
-        total_tontine=total_tontine, total_banque=total_banque,
-        total_especes=total_especes, total_engagement=total_engagement,
-    )
-    return render(request, 'dashboard/banque/tabbhistobque.html', ctx)
-
-
-# ─── Nouvelle vue : TABBORDAIDEDEPENSES ───────────────────────────────────────
-@bureau_required
-def tabbordaidedepenses(request):
-    """
-    Vue calculée TABBORDAIDEDEPENSES = récapitulatif aide/dépenses par adhérent/mois.
-    Agrège TableauDeBord + ComplementHistorique + AgioBancaire.
-    """
-    config = ConfigExercice.get_exercice_courant()
-    mois   = int(request.GET.get('mois', timezone.now().month))
-    annee  = int(request.GET.get('annee', config.annee))
-    prec   = (12, annee-1) if mois == 1 else (mois-1, annee)
-    suiv   = (1, annee+1)  if mois == 12 else (mois+1, annee)
-    adherents = Adherent.objects.filter(statut='ACTIF').order_by('numero_ordre')
-
-    # TableauDeBord
-    tb_map = {tb.adherent_id: tb for tb in
-              TableauDeBord.objects.filter(mois=mois, annee=annee, config_exercice=config)}
-
-    # ComplementHistorique pour num_cheque et montant_cheque_effectif
-    try:
-        from apps.rapports.models import ComplementHistorique
-        ch_map = {ch.adherent_id: ch for ch in
-                  ComplementHistorique.objects.filter(
-                      tableau_bord__mois=mois, tableau_bord__annee=annee,
-                      config_exercice=config).select_related('tableau_bord')}
-    except Exception:
-        ch_map = {}
-
-    # Agio global du mois
-    from apps.parametrage.models import AgioBancaire
-    agio_mois = AgioBancaire.objects.filter(
-        config_exercice=config, mois=mois, annee=annee).first()
-    agio_global = agio_mois.montant_agio if agio_mois else Decimal('0')
-
-    # HistoriqueBancaire pour "extrait de compte"
-    hist_map = {h.adherent_id: h for h in
-                HistoriqueBancaire.objects.filter(
-                    mois=mois, annee=annee, config_exercice=config)}
-
-    rows = []
-    total_cheque = total_especes = total_totaux = Decimal('0')
-    for adh in adherents:
-        tb = tb_map.get(adh.matricule)
-        ch = ch_map.get(adh.matricule)
-        ht = hist_map.get(adh.matricule)
-        montant_cheque = tb.versement_banque if tb else Decimal('0')
-        num_cheque     = ch.numero_cheque_effectif if ch else ''
-        especes        = tb.versement_especes if tb else Decimal('0')
-        totaux         = montant_cheque + especes
-        extrait        = ht.en_compte_reel if ht else Decimal('0')
-
-        total_cheque  += montant_cheque
-        total_especes += especes
-        total_totaux  += totaux
-
-        rows.append({
-            'adherent':      adh,
-            'totaux':        totaux,
-            'montant_cheque': montant_cheque,
-            'num_cheque':    num_cheque,
-            'especes':       especes,
-            'agio':          agio_global,
-            'extrait':       extrait,
-        })
-
-    ctx = dict(
-        config_exercice=config, rows=rows,
-        mois=mois, annee=annee, mois_label=MOIS_FR[mois],
-        prec_mois=prec[0], prec_annee=prec[1],
-        suiv_mois=suiv[0], suiv_annee=suiv[1],
-        total_cheque=total_cheque, total_especes=total_especes,
-        total_totaux=total_totaux, agio_global=agio_global,
-    )
-    return render(request, 'dashboard/banque/tabbordaidedepenses.html', ctx)
-
-
-# ─── Téléchargement TABBHISTOBQUE ─────────────────────────────────────────────
-@bureau_required
-def telecharger_tabbhistobque(request):
-    import io
-    from openpyxl import Workbook
-    from openpyxl.styles import Font, PatternFill, Alignment
-    from openpyxl.utils import get_column_letter
-
-    config = ConfigExercice.get_exercice_courant()
-    annee  = config.annee
-    wb     = Workbook()
-    wb.remove(wb.active)
-    BLEU = '1B2B5E'; BLANC = 'FFFFFF'
-
-    COLS = ['MATRICULE','NOM ET PRENOM','HISTORIQUE TONTINE','HITORIQUE ESPECES',
-            'HITORIQUE BANQUE','AUTRE VERSEMENT','EN COMPTE','MONTANT ENGAGEMENT',
-            'MONTANT A JUSTIFIER','AGIO']
-
-    def _hdr(ws):
-        ws.cell(1,1,'ASSOCIATION'); ws.cell(1,2,'ASELBY')
-        ws.cell(2,1,'ANNEE'); ws.cell(2,2,annee)
-        ws.cell(3,1,'HISTORIQUE BANCAIRE')
-        fill = PatternFill('solid', fgColor=BLEU)
-        fn   = Font(bold=True, color=BLANC, size=8, name='Arial')
-        for j,c in enumerate(COLS,1):
-            cell = ws.cell(5,j,c)
-            cell.fill=fill; cell.font=fn
-            cell.alignment = Alignment(wrap_text=True, horizontal='center')
-            ws.column_dimensions[get_column_letter(j)].width = 16
-
-    adherents = Adherent.objects.filter(statut='ACTIF').order_by('numero_ordre')
-    sheets = [(12, annee-1, f'HISTOBQUEDEC{str(annee-1)[-2:]}')]
-    for m in range(1,13):
-        sheets.append((m, annee, f'HISTOBQUE{MOIS_CODE[m]}{str(annee)[-2:]}'))
-
-    for (m, a, label) in sheets:
-        ws = wb.create_sheet(label)
-        _hdr(ws)
-        hist_map = {h.adherent_id: h for h in
-                    HistoriqueBancaire.objects.filter(mois=m, annee=a)}
-        tb_map   = {tb.adherent_id: tb for tb in
-                    TableauDeBord.objects.filter(mois=m, annee=a)}
-        for i, adh in enumerate(adherents, 6):
-            h  = hist_map.get(adh.matricule)
-            tb = tb_map.get(adh.matricule)
-            vt = float(h.versement_tontine if h else 0)
-            ve = float((h.versement_especes if h else 0) or (tb.versement_especes if tb else 0))
-            vb = float((h.versement_banque if h else 0)  or (tb.versement_banque if tb else 0))
-            av = float(h.autre_versement   if h else 0)
-            ec = float(h.en_compte         if h else (vt+ve+vb+av))
-            me = float((h.montant_engagement if h else 0) or (tb.montant_engagement if tb else 0))
-            aj = float(h.montant_a_justifier if h else max(me-(vt+ve+vb+av), 0))
-            ag = float(h.agio if h else 0)
-            ws.cell(i,1,adh.matricule); ws.cell(i,2,adh.nom_prenom)
-            for j,v in enumerate([vt,ve,vb,av,ec,me,aj,ag], 3):
-                ws.cell(i,j,v)
-
-    # Feuille résumé
-    ws_r = wb.create_sheet(f'HISTOBQUERESUME{str(annee)[-2:]}')
-    _hdr(ws_r)
-    hist_all = {}
-    for h in HistoriqueBancaire.objects.filter(annee=annee).select_related('adherent'):
-        hist_all.setdefault(h.adherent_id, []).append(h)
-    for i, adh in enumerate(adherents, 6):
-        hlist = hist_all.get(adh.matricule, [])
-        vt=ve=vb=av=ec=me=aj=ag = 0
-        for h in hlist:
-            vt+=float(h.versement_tontine); ve+=float(h.versement_especes)
-            vb+=float(h.versement_banque);  av+=float(h.autre_versement)
-            ec+=float(h.en_compte);         me+=float(h.montant_engagement)
-            aj+=float(h.montant_a_justifier); ag+=float(h.agio)
-        ws_r.cell(i,1,adh.matricule); ws_r.cell(i,2,adh.nom_prenom)
-        for j,v in enumerate([vt,ve,vb,av,ec,me,aj,ag],3):
-            ws_r.cell(i,j,v)
-
-    buf = io.BytesIO()
-    wb.save(buf); buf.seek(0)
-    resp = HttpResponse(buf.getvalue(),
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    resp['Content-Disposition'] = f'attachment; filename="ASELBY{annee}TABBHISTOBQUE.xlsx"'
-    return resp
-
-
-# ─── Vues existantes (inchangées) ─────────────────────────────────────────────
-@bureau_required
-def cheques(request):
-    config = ConfigExercice.get_exercice_courant()
-    mois  = request.GET.get('mois')
-    annee = request.GET.get('annee')
-    cheques_qs = Cheque.objects.filter(
-        config_exercice=config
-    ).select_related('adherent').order_by('annee', 'mois', 'adherent__numero_ordre')
-    if mois and annee:
-        cheques_qs = cheques_qs.filter(mois=int(mois), annee=int(annee))
-    mois_disponibles = (Cheque.objects.filter(config_exercice=config)
-        .values('mois','annee').order_by('annee','mois').distinct())
-    ctx = {
-        'config_exercice':  config,
-        'cheques':          cheques_qs,
-        'mois_filter':      int(mois) if mois else None,
-        'annee_filter':     int(annee) if annee else None,
-        'mois_disponibles': mois_disponibles,
-        'total_cheques':    cheques_qs.aggregate(t=Sum('montant'))['t'] or 0,
-    }
-    return render(request, 'dashboard/banque/cheques.html', ctx)
+    return render(request, 'dashboard/banque/releve_bancaire.html', {
+        'config_exercice': config,
+        'adherents':       adherents,
+        'releves':         releves,
+        'mois':            mois,
+        'annee':           annee,
+        'mois_label':      MOIS_FR[mois],
+        'mois_fr':         MOIS_FR,
+        'prec_mois':       prec[0], 'prec_annee': prec[1],
+        'suiv_mois':       suiv[0], 'suiv_annee': suiv[1],
+        'nb_total':        len(adherents),
+        'nb_saisis':       nb_saisis,
+        'total_banque':    total_banque,
+        'total_especes':   total_esp,
+    })
 
 
 @bureau_required
 def tresorerie(request):
+    """Vue synthèse trésorerie — inchangée."""
+    from apps.banque.models import ReleveBancaire
+    from django.db.models import Sum
     config = ConfigExercice.get_exercice_courant()
-    saisies_all = TableauDeBord.objects.filter(
-        config_exercice=config
-    ).values('mois','annee').annotate(
-        banque=Sum('versement_banque'),
-        especes=Sum('versement_especes'),
-        engagement=Sum('montant_engagement'),
-    ).order_by('annee','mois')
+    mois   = int(request.GET.get('mois', timezone.now().month))
+    annee  = int(request.GET.get('annee', config.annee))
 
-    synthese_mensuelle = []
-    for s in saisies_all:
-        en_compte  = (s['banque'] or Decimal('0')) + (s['especes'] or Decimal('0'))
-        engagement = s['engagement'] or Decimal('0')
-        synthese_mensuelle.append({
-            'mois': s['mois'], 'annee': s['annee'],
-            'banque': s['banque'] or Decimal('0'),
-            'especes': s['especes'] or Decimal('0'),
-            'en_compte': en_compte,
-            'engagement': engagement,
-            'a_justifier': max(engagement - en_compte, Decimal('0')),
-        })
+    releves = ReleveBancaire.objects.filter(
+        mois=mois, annee=annee, config_exercice=config
+    ).select_related('adherent').order_by('adherent__numero_ordre')
 
-    ctx = {
+    totaux = releves.aggregate(
+        total_banque  = Sum('versement_banque'),
+        total_especes = Sum('versement_especes'),
+        total_autre   = Sum('autre_versement'),
+        total_agio    = Sum('agio'),
+    )
+
+    return render(request, 'dashboard/banque/tresorerie.html', {
         'config_exercice': config,
-        'synthese_mensuelle': synthese_mensuelle,
-        'total_banque':  sum(l['banque']    for l in synthese_mensuelle),
-        'total_especes': sum(l['especes']   for l in synthese_mensuelle),
-        'total_en_compte': sum(l['en_compte'] for l in synthese_mensuelle),
-    }
-    return render(request, 'dashboard/banque/tresorerie.html', ctx)
+        'releves':  releves,
+        'totaux':   totaux,
+        'mois':     mois,
+        'annee':    annee,
+        'mois_label': MOIS_FR[mois],
+        'mois_fr':  MOIS_FR,
+    })
 
-
-# ══════════════════════════════════════════════════════════════
-# AJOUTER à la fin de apps/banque/views.py
-# ══════════════════════════════════════════════════════════════
 
 @bureau_required
-def telecharger_tabbordaidedepenses(request):
+def telecharger_tabbhistobque(request):
     """
-    Génère TABBORDAIDEDEPENSES.xlsx — vue calculée :
-    Montant chèque, N° chèque, Espèces, Agios, Extrait de compte.
-    Une feuille par mois + résumé annuel.
+    TABBHISTOBQUE — 10 colonnes fidèles au réel:
+      A = MATRICULE
+      B = NOM ET PRENOM
+      C = HISTORIQUE TONTINE = tontine_t60 + tontine_t75 + tontine_t100
+      D = HISTORIQUE ESPECES = versement_especes
+      E = HISTORIQUE BANQUE  = versement_banque
+      F = AUTRE VERSEMENT    = autre_versement
+      G = EN COMPTE          = autre_versement (même valeur que F)
+      H = MONTANT ENGAGEMENT = D + E + F
+      I = MONTANT A JUSTIFIER= H - C  (positif=excédent, négatif=manque)
+      J = AGIO               = ReleveBancaire.agio (intérêts bancaires)
+
+    Structure:
+      L1: ASSOCIATION / ASELBY
+      L2: MOIS / mois-annee
+      L3: numérotation 1..10
+      L4: HISTORIQUE BANCAIRE (titre centré)
+      L5: entêtes
+      L6+: données (seulement membres avec au moins un versement)
+      Ln: TOTAUX
     """
     import io
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment
     from openpyxl.utils import get_column_letter
     from django.http import HttpResponse
-    from django.db.models import Sum
-    from decimal import Decimal as D
-    from apps.saisie.models import TableauDeBord
-    from apps.adherents.models import Adherent
-    from apps.parametrage.models import AgioBancaire
+    from apps.saisie.models import SaisieMonthly
 
-    MOIS_CODE_L = ['','JANV','FEV','MARS','AVRIL','MAI','JUIN',
-                   'JUIL','AOUT','SEPT','OCT','NOV','DEC']
+    D = __import__('decimal').Decimal
+
+    def _d(v):
+        if v is None: return D('0')
+        try: return D(str(v))
+        except: return D('0')
 
     config    = ConfigExercice.get_exercice_courant()
     annee     = config.annee
-    adherents = Adherent.objects.filter(statut='ACTIF').order_by('numero_ordre')
+    adherents = sorted(
+        Adherent.objects.filter(statut='ACTIF'),
+        key=lambda a: (0 if a.matricule == 'AS201648' else 1, a.numero_ordre)
+    )
 
-    # Charger ComplementHistorique pour les N° chèques
-    try:
-        from apps.rapports.models import ComplementHistorique
-        has_ch = True
-    except ImportError:
-        has_ch = False
+    BLEU = '1B2B5E'; BLANC = 'FFFFFF'
+    COLS = ['MATRICULE','NOM ET PRENOM','HISTORIQUE TONTINE',
+            'HITORIQUE ESPECES','HITORIQUE BANQUE','AUTRE VERSEMENT',
+            'EN COMPTE','MONTANT ENGAGEMENT','MONTANT A JUSTIFIER','AGIO']
 
-    wb   = Workbook(); wb.remove(wb.active)
-    BLEU = '1B2B5E'; OR = 'C9A84C'; BLANC = 'FFFFFF'
+    MOIS_CODE = {1:'JANV',2:'FEV',3:'MARS',4:'AVRIL',5:'MAI',6:'JUIN',
+                 7:'JUIL',8:'AOUT',9:'SEPT',10:'OCT',11:'NOV',12:'DEC'}
+    MOIS_FR_COURT = {
+        1:'janv',2:'févr',3:'mars',4:'avr',5:'mai',6:'juin',
+        7:'juil',8:'août',9:'sept',10:'oct',11:'nov',12:'déc'
+    }
 
-    COLS = ['MATRICULE', 'NOM ET PRENOM', 'TOTAUX',
-            'MONTANT CHEQUE', 'NUM CHEQUE', 'ESPECES', 'AGIOS', 'Extrait de compte']
+    wb = Workbook()
+    wb.remove(wb.active)
 
-    def _hdr(ws, mois_label):
-        ws.cell(1, 1, 'ASSOCIATION'); ws.cell(1, 2, 'ASELBY')
-        ws.cell(2, 1, 'ANNEE');       ws.cell(2, 2, annee)
-        f  = PatternFill('solid', fgColor=BLEU)
-        fn = Font(bold=True, color=BLANC, size=8, name='Arial')
-        for j, c in enumerate(COLS, 1):
-            cl = ws.cell(5, j, c)
-            cl.fill = f; cl.font = fn
-            cl.alignment = Alignment(wrap_text=True, horizontal='center')
-            ws.column_dimensions[get_column_letter(j)].width = 16
-        ws.row_dimensions[5].height = 28
+    # Pré-charger toutes les données
+    releves_all = {}
+    for r in ReleveBancaire.objects.filter(annee=annee, config_exercice=config):
+        releves_all[(r.adherent_id, r.mois)] = r
+    saisies_all = {}
+    for s in SaisieMonthly.objects.filter(annee=annee, config_exercice=config):
+        saisies_all[(s.adherent_id, s.mois)] = s
 
-    def _write_month(ws, mois, a):
-        _hdr(ws, MOIS_CODE_L[mois] if mois else '')
+    # Cumul annuel pour RESUME
+    cumul = {adh.matricule: [D('0')]*8 for adh in adherents}
 
-        # Agio du mois
-        agio_obj = AgioBancaire.objects.filter(
-            config_exercice=config, mois=mois, annee=a).first()
-        agio_global = float(agio_obj.montant_agio) if agio_obj else 0
+    for mois in range(1, 13):
+        label = f"HISTOBQUE{MOIS_CODE[mois]}{str(annee)[-2:]}"
+        ws    = wb.create_sheet(label)
+        mois_label = f"{MOIS_FR_COURT[mois]}-{str(annee)[-2:]}"
 
-        # Résumé totaux ligne 4
-        tb_all = TableauDeBord.objects.filter(mois=mois, annee=a, config_exercice=config)
-        total_cheque  = float(tb_all.aggregate(t=Sum('versement_banque'))['t']  or 0)
-        total_especes = float(tb_all.aggregate(t=Sum('versement_especes'))['t'] or 0)
-        ws.cell(4, 1, 'CHEQUE ETABLI')
-        ws.cell(4, 3, total_cheque)
-        ws.cell(4, 4, total_especes)
+        # En-têtes
+        ws['A1'] = 'ASSOCIATION'; ws['B1'] = 'ASELBY'
+        ws['A2'] = 'MOIS';        ws['B2'] = mois_label
 
-        # N° chèques depuis ComplementHistorique
-        ch_map = {}
-        if has_ch:
-            for ch in ComplementHistorique.objects.filter(
-                tableau_bord__mois=mois, tableau_bord__annee=a,
-                config_exercice=config
-            ).select_related('tableau_bord'):
-                ch_map[ch.adherent_id] = ch
+        # L3: numérotation
+        for j in range(1, len(COLS)+1):
+            ws.cell(3, j, j)
 
-        tb_map = {tb.adherent_id: tb for tb in tb_all}
-        ht_map = {}
-        try:
-            for ht in HistoriqueBancaire.objects.filter(mois=mois, annee=a, config_exercice=config):
-                ht_map[ht.adherent_id] = ht
-        except Exception:
-            pass
+        # L4: titre HISTORIQUE BANCAIRE
+        ws.merge_cells('A4:J4')
+        titre = ws['A4']
+        titre.value = 'HISTORIQUE BANCAIRE'
+        titre.font = Font(bold=True, size=14, name='Arial')
+        titre.alignment = Alignment(horizontal='center', vertical='center')
+        ws.row_dimensions[4].height = 24
 
-        for i, adh in enumerate(adherents, 6):
-            tb = tb_map.get(adh.matricule)
-            ch = ch_map.get(adh.matricule)
-            ht = ht_map.get(adh.matricule)
+        # L5: entêtes colonnes
+        fill = PatternFill('solid', fgColor=BLEU)
+        fn   = Font(bold=True, color=BLANC, size=8, name='Arial')
+        for j, h in enumerate(COLS, 1):
+            cl = ws.cell(5, j, h)
+            cl.fill = fill; cl.font = fn
+            cl.alignment = Alignment(horizontal='center', wrap_text=True)
+            ws.column_dimensions[get_column_letter(j)].width = 18
+        ws.row_dimensions[5].height = 32
 
-            montant_cheque = float(tb.versement_banque)  if tb else 0
-            num_cheque     = ch.numero_cheque_effectif   if ch else ''
-            especes        = float(tb.versement_especes) if tb else 0
-            totaux         = montant_cheque + especes
-            extrait        = float(ht.en_compte_reel)    if ht else 0
+        # Largeur colonnes
+        ws.column_dimensions['A'].width = 12
+        ws.column_dimensions['B'].width = 26
 
-            ws.cell(i, 1, adh.matricule)
-            ws.cell(i, 2, adh.nom_prenom)
-            ws.cell(i, 3, totaux)
-            ws.cell(i, 4, montant_cheque)
-            ws.cell(i, 5, num_cheque or ('OK' if montant_cheque > 0 else ''))
-            ws.cell(i, 6, especes)
-            ws.cell(i, 7, agio_global)
-            ws.cell(i, 8, extrait)
+        # Données
+        row_n = 6
+        tot = [D('0')] * 8  # totaux colonnes C-J
 
-            # Mettre en gras les lignes avec des données
-            if totaux > 0:
-                for j in [1, 2, 3, 4]:
-                    ws.cell(i, j).font = Font(bold=True, name='Arial', size=9)
+        for adh in adherents:
+            r = releves_all.get((adh.matricule, mois))
+            s = saisies_all.get((adh.matricule, mois))
 
-    # Feuilles mensuelles
-    for m in range(1, 13):
-        label = f'HISTO{MOIS_CODE_L[m]}{str(annee)[-2:]}'
-        ws = wb.create_sheet(label)
-        _write_month(ws, m, annee)
+            D_esp = _d(r.versement_especes)  if r else D('0')
+            E_bq  = _d(r.versement_banque)   if r else D('0')
+            F_aut = _d(r.autre_versement)    if r else D('0')
+            agio  = _d(r.agio)              if r else D('0')
 
-    # Feuille résumé annuel
-    ws_r = wb.create_sheet(f'HISTORESUME{str(annee)[-2:]}')
-    _hdr(ws_r, 'RESUME')
-    ws_r.cell(4, 1, 'TOTAL ANNUEL')
+            if s:
+                C = _d(s.tontine_t60) + _d(s.tontine_t75) + _d(s.tontine_t100)
+            else:
+                C = D('0')
 
-    for i, adh in enumerate(adherents, 6):
-        # Cumuler sur l'année
-        tbs = TableauDeBord.objects.filter(
-            adherent=adh, annee=annee, config_exercice=config)
-        tot_cheque  = float(tbs.aggregate(t=Sum('versement_banque'))['t']  or 0)
-        tot_especes = float(tbs.aggregate(t=Sum('versement_especes'))['t'] or 0)
-        totaux      = tot_cheque + tot_especes
+            H = D_esp + E_bq + F_aut      # MONTANT ENGAGEMENT
+            I = H - C                      # MONTANT A JUSTIFIER
 
-        # Dernier N° chèque de l'année
-        last_num = ''
-        if has_ch:
-            last_ch = ComplementHistorique.objects.filter(
-                adherent=adh, config_exercice=config,
-                tableau_bord__annee=annee
-            ).exclude(numero_cheque_effectif='').order_by('-tableau_bord__mois').first()
-            if last_ch:
-                last_num = last_ch.numero_cheque_effectif
+            vals = [C, D_esp, E_bq, F_aut, F_aut, H, I, agio]
 
-        ws_r.cell(i, 1, adh.matricule)
-        ws_r.cell(i, 2, adh.nom_prenom)
-        ws_r.cell(i, 3, totaux)
-        ws_r.cell(i, 4, tot_cheque)
-        ws_r.cell(i, 5, last_num)
-        ws_r.cell(i, 6, tot_especes)
+            # Cumuler
+            for k, v in enumerate(vals):
+                cumul[adh.matricule][k] += v
+                tot[k] += v
+
+            ws.cell(row_n, 1, adh.matricule)
+            ws.cell(row_n, 2, adh.nom_prenom)
+            for k, v in enumerate(vals, 3):
+                cell = ws.cell(row_n, k, float(v) if v != 0 else 0)
+                if v < 0:
+                    cell.font = Font(color='FF0000', size=9, name='Arial')
+                elif k in [3, 4]:  # C=tontine, D=espèces en rouge dans l'image
+                    cell.font = Font(color='FF0000', size=9, name='Arial')
+            row_n += 1
+
+        # Ligne TOTAUX
+        ws.cell(row_n, 2, 'TOTAUX').font = Font(bold=True, size=9, name='Arial')
+        for k, v in enumerate(tot, 3):
+            ws.cell(row_n, k, float(v)).font = Font(bold=True, size=9, name='Arial')
+
+    # Feuille RESUME (cumul annuel)
+    label_r = f"HISTOBQUERESUME{str(annee)[-2:]}"
+    ws_r = wb.create_sheet(label_r)
+    ws_r['A1'] = 'ASSOCIATION'; ws_r['B1'] = 'ASELBY'
+    ws_r['A2'] = 'MOIS';        ws_r['B2'] = 'RESUME'
+    for j in range(1, len(COLS)+1):
+        ws_r.cell(3, j, j)
+    ws_r.merge_cells('A4:J4')
+    titre = ws_r['A4']
+    titre.value = 'HISTORIQUE BANCAIRE — RESUME ANNUEL'
+    titre.font = Font(bold=True, size=14, name='Arial')
+    titre.alignment = Alignment(horizontal='center', vertical='center')
+    ws_r.row_dimensions[4].height = 24
+    fill = PatternFill('solid', fgColor=BLEU)
+    fn   = Font(bold=True, color=BLANC, size=8, name='Arial')
+    for j, h in enumerate(COLS, 1):
+        cl = ws_r.cell(5, j, h)
+        cl.fill = fill; cl.font = fn
+        cl.alignment = Alignment(horizontal='center', wrap_text=True)
+        ws_r.column_dimensions[get_column_letter(j)].width = 18
+    ws_r.column_dimensions['A'].width = 12
+    ws_r.column_dimensions['B'].width = 26
+    ws_r.row_dimensions[5].height = 32
+
+    row_n = 6
+    tot_r = [D('0')] * 8
+    for adh in adherents:
+        c_vals = cumul[adh.matricule]
+        ws_r.cell(row_n, 1, adh.matricule)
+        ws_r.cell(row_n, 2, adh.nom_prenom)
+        for k, v in enumerate(c_vals, 3):
+            ws_r.cell(row_n, k, float(v) if v != 0 else 0)
+            tot_r[k-3] += v
+        row_n += 1
+
+    ws_r.cell(row_n, 2, 'TOTAUX').font = Font(bold=True, size=9)
+    for k, v in enumerate(tot_r, 3):
+        ws_r.cell(row_n, k, float(v)).font = Font(bold=True, size=9)
 
     buf = io.BytesIO()
     wb.save(buf); buf.seek(0)
-    resp = HttpResponse(
-        buf.getvalue(),
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    resp['Content-Disposition'] = f'attachment; filename="ASELBY{annee}TABBORDAIDEDEPENSES.xlsx"'
+    resp = HttpResponse(buf.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    resp['Content-Disposition'] = (
+        f'attachment; filename=ASELBY{annee}TABBHISTOBQUE.xlsx')
     return resp

@@ -1,0 +1,450 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize aselby_tags %}
+{% block _titre %}② Saisie Mensuelle — {{ mois_label }} {{ annee }}{% endblock %}
+{% block contenu %}
+
+<div style="display:flex;gap:.5rem;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap">
+  <a href="{% url 'banque:releve' %}?mois={{ mois }}&annee={{ annee }}"
+     style="background:#E8E9EC;color:#6C757D;padding:.4rem 1rem;border-radius:20px;font-size:.78rem;font-weight:600;text-decoration:none">
+    ① Relevé bancaire
+  </a>
+  <i class="fas fa-arrow-right" style="color:#CED4DA;font-size:.75rem"></i>
+  <div style="background:#1B2B5E;color:white;padding:.4rem 1rem;border-radius:20px;font-size:.78rem;font-weight:700">
+    ② SAISIE MENSUELLE — TABBORD
+  </div>
+</div>
+
+<div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.3);border-radius:10px;padding:.75rem 1.25rem;margin-bottom:1.25rem;font-size:.8rem;color:#6C757D">
+  <i class="fas fa-info-circle" style="color:#C9A84C;margin-right:.4rem"></i>
+  Les versements banque/espèces sont lus depuis le <strong>Relevé bancaire</strong> (Étape ①).
+  {% if nb_releves < nb_total %}
+  <span style="color:#B84C4C;font-weight:600"> ⚠ {{ nb_releves }}/{{ nb_total }} relevés bancaires saisis. Faites d'abord l'Étape ①.</span>
+  {% endif %}
+</div>
+
+<div style="background:white;border-radius:12px;padding:.85rem 1.5rem;margin-bottom:1.25rem;
+            box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;
+            justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+  <div style="display:flex;align-items:center;gap:.75rem">
+    <a href="?mois={{ prec_mois }}&annee={{ prec_annee }}"
+       style="padding:.4rem .9rem;border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;color:#6C757D;text-decoration:none;font-weight:600">
+      <i class="fas fa-chevron-left"></i></a>
+    <span style="background:#1B2B5E;color:white;padding:.45rem 1.25rem;border-radius:20px;font-size:.85rem;font-weight:700">
+      {{ mois_label }} {{ annee }}</span>
+    <a href="?mois={{ suiv_mois }}&annee={{ suiv_annee }}"
+       style="padding:.4rem .9rem;border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;color:#6C757D;text-decoration:none;font-weight:600">
+      <i class="fas fa-chevron-right"></i></a>
+  </div>
+  <div style="display:flex;gap:.75rem;align-items:center">
+    <span style="font-size:.78rem;color:#6C757D">{{ nb_saisis }}/{{ nb_total }} saisis</span>
+    <a href="{% url 'saisie:recap' %}?mois={{ mois }}&annee={{ annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;
+              border:1px solid #E8E9EC;border-radius:8px;font-size:.78rem;font-weight:600;color:#6C757D;text-decoration:none">
+      <i class="fas fa-list"></i> Récapitulatif</a>
+    <a href="{% url 'rapports:telecharger_tabbord' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;
+              background:#10705A;color:white;border-radius:8px;font-size:.78rem;font-weight:700;text-decoration:none">
+      <i class="fas fa-file-excel"></i> TABBORD.xlsx</a>
+  </div>
+</div>
+
+<form method="post">{% csrf_token %}
+<input type="hidden" name="mois" value="{{ mois }}">
+<input type="hidden" name="annee" value="{{ annee }}">
+
+<div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+  <div style="background:#1B2B5E;padding:.85rem 1.5rem;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:.6rem">
+      <i class="fas fa-edit" style="color:#C9A84C"></i>
+      <span style="color:white;font-weight:700;font-size:.9rem">TABBORD — {{ mois_label }} {{ annee }}</span>
+    </div>
+    <span style="font-size:.68rem;color:rgba(255,255,255,.45)">Champs auto = calculés depuis Relevé bancaire</span>
+  </div>
+  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <table style="width:max-content;min-width:100%;border-collapse:collapse;font-size:.78rem">
+      <thead>
+        <tr style="background:#F4F5F7">
+          <th style="padding:.6rem .9rem;text-align:left;font-size:.6rem;font-weight:700;color:#6C757D;text-transform:uppercase;position:sticky;left:0;background:#F4F5F7;z-index:2;min-width:180px;white-space:nowrap">Nom et prénom</th>
+          <!-- Relevé bancaire (lecture seule) -->
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#6C757D;text-transform:uppercase;background:#F0F2F5;min-width:80px">Banque<br><span style="font-size:.55rem;font-weight:400">(auto)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#6C757D;text-transform:uppercase;background:#F0F2F5;min-width:80px">Espèces<br><span style="font-size:.55rem;font-weight:400">(auto)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#6C757D;text-transform:uppercase;background:#F0F2F5;min-width:80px">Autre vers.<br><span style="font-size:.55rem;font-weight:400">(auto)</span></th>
+          <!-- Tontines -->
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#1B2B5E;text-transform:uppercase;min-width:65px">Nbre T60<br><span style="font-size:.55rem">(J)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#1B2B5E;text-transform:uppercase;min-width:65px">Nbre T75<br><span style="font-size:.55rem">(L)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#1B2B5E;text-transform:uppercase;min-width:65px">Nbre T100<br><span style="font-size:.55rem">(N)</span></th>
+          <!-- Bonus Malus + Pénalité espèces (modifiables) — avant complément épargne -->
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#7B5EA7;text-transform:uppercase;background:#F5F0FF;min-width:90px">Bonus/Malus<br><span style="font-size:.55rem">(C) ≈auto</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#B84C4C;text-transform:uppercase;background:#FFF0F0;min-width:85px">Pén. espèces<br><span style="font-size:.55rem">(H) ≈auto</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#6C757D;text-transform:uppercase;min-width:80px">Compl. épargne<br><span style="font-size:.55rem">(G)</span></th>
+          <!-- Lots principaux achetés -->
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#C9A84C;text-transform:uppercase;min-width:80px">Achat T60<br><span style="font-size:.55rem">(AC)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#C9A84C;text-transform:uppercase;min-width:80px">Achat T75<br><span style="font-size:.55rem">(AD)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#C9A84C;text-transform:uppercase;min-width:80px">Achat T100<br><span style="font-size:.55rem">(AE)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#C9A84C;text-transform:uppercase;min-width:80px">Mode lot<br><span style="font-size:.55rem">(AF)</span></th>
+
+          <!-- Ventes petit lot -->
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#10705A;text-transform:uppercase;min-width:80px">Vente T60<br><span style="font-size:.55rem">(AI)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#10705A;text-transform:uppercase;min-width:80px">Vente T75<br><span style="font-size:.55rem">(AJ)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#10705A;text-transform:uppercase;min-width:80px">Vente T100<br><span style="font-size:.55rem">(AK)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#10705A;text-transform:uppercase;min-width:75px">Int. T60<br><span style="font-size:.55rem">(AL)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#10705A;text-transform:uppercase;min-width:75px">Int. T75<br><span style="font-size:.55rem">(AM)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#10705A;text-transform:uppercase;min-width:75px">Int. T100<br><span style="font-size:.55rem">(AN)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#6C757D;text-transform:uppercase;min-width:80px">Mode remb pl<br><span style="font-size:.55rem">(AP)</span></th>
+          <!-- Prêts -->
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#B84C4C;text-transform:uppercase;min-width:80px">Remb. prêt<br><span style="font-size:.55rem">(S)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#B84C4C;text-transform:uppercase;min-width:80px">Mode remb<br><span style="font-size:.55rem">(T)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#B84C4C;text-transform:uppercase;min-width:80px">Prêt fonds<br><span style="font-size:.55rem">(Z)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#B84C4C;text-transform:uppercase;min-width:80px">Mode prêt<br><span style="font-size:.55rem">(AA)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#B84C4C;text-transform:uppercase;min-width:60px">Nbre mois<br><span style="font-size:.55rem">(BG)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#B84C4C;text-transform:uppercase;background:#FFF0F0;min-width:85px">Int. prêt<br><span style="font-size:.55rem">(BF) ≈auto</span></th>
+          <!-- Dépenses -->
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#7B5EA7;text-transform:uppercase;min-width:130px">Libellé dépense<br><span style="font-size:.55rem">(BO)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#7B5EA7;text-transform:uppercase;min-width:110px">Compte<br><span style="font-size:.55rem">(BP)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#7B5EA7;text-transform:uppercase;min-width:80px">Montant dép.<br><span style="font-size:.55rem">(BQ)</span></th>
+          <!-- Exceptionnels -->
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#6C757D;text-transform:uppercase;min-width:70px">Sanction<br><span style="font-size:.55rem">(V)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#6C757D;text-transform:uppercase;min-width:70px">Inscript.<br><span style="font-size:.55rem">(W)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#6C757D;text-transform:uppercase;min-width:70px">Retrait<br><span style="font-size:.55rem">(AV)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#6C757D;text-transform:uppercase;min-width:70px">Mutuelle<br><span style="font-size:.55rem">(AT)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#6C757D;text-transform:uppercase;min-width:80px">Foyer<br><span style="font-size:.55rem">(BB)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#6C757D;text-transform:uppercase;min-width:70px">Pen. prêt<br><span style="font-size:.55rem">(BL)</span></th>
+
+          <!-- Num cheque + Montant espèces -->
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#6C757D;text-transform:uppercase;min-width:80px">Num. chèque<br><span style="font-size:.55rem">(BE)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#6C757D;text-transform:uppercase;min-width:80px">Mont. espèces<br><span style="font-size:.55rem">(BA)</span></th>
+          <th style="padding:.6rem .6rem;text-align:center;font-size:.6rem;font-weight:700;color:#6C757D;text-transform:uppercase;min-width:60px">Statut</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for adh in adherents %}
+        {% with pfx=adh.matricule|add:"_" s=saisies|get_item:adh.matricule r=releves|get_item:adh.matricule %}
+        <tr style="border-bottom:1px solid #F4F5F7"
+            onmouseover="this.style.background='#F8F9FC'" onmouseout="this.style.background=''">
+          <!-- NOM -->
+          <td style="padding:.5rem .9rem;white-space:nowrap;position:sticky;left:0;background:white;z-index:1;border-right:2px solid #E8E9EC">
+            <div style="font-weight:600;color:#1B2B5E;font-size:.83rem">{{ adh.nom_prenom|title }}</div>
+            {% if adh.poste_bureau %}<div style="font-size:.62rem;color:#C9A84C;font-weight:600">{{ adh.poste_bureau }}</div>{% endif %}
+          </td>
+          <!-- Relevé bancaire (lecture seule) -->
+          <td style="padding:.4rem .5rem;text-align:center;background:#F8F9FB;color:#6C757D;font-size:.78rem;font-weight:600">
+            {% if r and r.versement_banque %}{{ r.versement_banque|floatformat:0|intcomma }}{% else %}—{% endif %}
+          </td>
+          <td style="padding:.4rem .5rem;text-align:center;background:#F8F9FB;color:#6C757D;font-size:.78rem">
+            {% if r and r.versement_especes %}{{ r.versement_especes|floatformat:0|intcomma }}{% else %}—{% endif %}
+          </td>
+          <td style="padding:.4rem .5rem;text-align:center;background:#F8F9FB;color:#6C757D;font-size:.78rem">
+            {% if r and r.autre_versement %}{{ r.autre_versement|floatformat:0|intcomma }}{% else %}—{% endif %}
+          </td>
+          <!-- Tontines -->
+          <td style="padding:.3rem .4rem">
+            <input type="number" min="0" max="10" name="{{ pfx }}nbre_lots_t60"
+                   value="{% if s %}{{ s.nbre_lots_t60 }}{% endif %}" placeholder="0"
+                   style="width:52px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:center;font-weight:700;color:#1B2B5E">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <input type="number" min="0" max="10" name="{{ pfx }}nbre_lots_t75"
+                   value="{% if s %}{{ s.nbre_lots_t75 }}{% endif %}" placeholder="0"
+                   style="width:52px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:center;font-weight:700;color:#1B2B5E">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <input type="number" min="0" max="10" name="{{ pfx }}nbre_lots_t100"
+                   value="{% if s %}{{ s.nbre_lots_t100 }}{% endif %}" placeholder="0"
+                   style="width:52px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:center;font-weight:700;color:#1B2B5E">
+          </td>
+          <!-- Bonus Malus (calcul auto + modifiable) -->
+          <td style="padding:.3rem .4rem;background:#FAF7FF">
+            <input type="number" step="1" name="{{ pfx }}bonus_malus_saisi"
+                   value="{% if s and s.bonus_malus_saisi %}{{ s.bonus_malus_saisi|floatformat:0 }}{% endif %}"
+                   placeholder="{% if s %}{{ s.bonus_malus|floatformat:0 }}{% else %}0{% endif %}"
+                   title="Calcul auto = {{ s.bonus_malus|floatformat:0|default:'0' }} F"
+                   class="bm-input"
+                   data-val="{% if s %}{{ s.bonus_malus|floatformat:0|default:'0' }}{% else %}0{% endif %}"
+                   {% if s and s.bonus_malus_saisi %}data-saisi="1"{% endif %}
+                   style="width:82px;padding:.3rem .4rem;border:2px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <!-- Pénalité espèces (auto + modifiable) -->
+          <td style="padding:.3rem .4rem;background:#FFF8F8">
+            <input type="number" step="1" name="{{ pfx }}penalite_versement_especes_saisi"
+                   value="{% if s and s.penalite_versement_especes_saisi %}{{ s.penalite_versement_especes_saisi|floatformat:0 }}{% endif %}"
+                   placeholder="{% if s %}{{ s.penalite_versement_especes|floatformat:0 }}{% else %}auto{% endif %}"
+                   title="Auto = {{ s.penalite_versement_especes|floatformat:0|default:'0' }} F"
+                   style="width:78px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+
+          </td>
+          <!-- Complément épargne -->
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}complement_epargne"
+                   value="{% if s and s.complement_epargne %}{{ s.complement_epargne|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:75px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <!-- Lots principaux -->
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}achat_lot_t60"
+                   value="{% if s and s.achat_lot_t60 %}{{ s.achat_lot_t60|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:75px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}achat_lot_t75"
+                   value="{% if s and s.achat_lot_t75 %}{{ s.achat_lot_t75|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:75px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}achat_lot_t100"
+                   value="{% if s and s.achat_lot_t100 %}{{ s.achat_lot_t100|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:75px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <select name="{{ pfx }}mode_paiement_lot"
+                    style="padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.75rem">
+              <option value="">—</option>
+              <option value="BANQUE" {% if s and s.mode_paiement_lot == "BANQUE" %}selected{% endif %}>Banque</option>
+              <option value="ESPECES" {% if s and s.mode_paiement_lot == "ESPECES" %}selected{% endif %}>Espèces</option>
+              <option value="EN COMPTE" {% if s and s.mode_paiement_lot == "EN COMPTE" %}selected{% endif %}>En compte</option>
+            </select>
+          </td>
+
+          <!-- Ventes petit lot -->
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}vente_petit_lot_t60"
+                   value="{% if s and s.vente_petit_lot_t60 %}{{ s.vente_petit_lot_t60|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:75px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}vente_petit_lot_t75"
+                   value="{% if s and s.vente_petit_lot_t75 %}{{ s.vente_petit_lot_t75|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:75px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}vente_petit_lot_t100"
+                   value="{% if s and s.vente_petit_lot_t100 %}{{ s.vente_petit_lot_t100|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:75px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}interet_petit_t60"
+                   value="{% if s and s.interet_petit_lot_t60 %}{{ s.interet_petit_lot_t60|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:68px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}interet_petit_t75"
+                   value="{% if s and s.interet_petit_lot_t75 %}{{ s.interet_petit_lot_t75|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:68px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}interet_petit_t100"
+                   value="{% if s and s.interet_petit_lot_t100 %}{{ s.interet_petit_lot_t100|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:68px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <select name="{{ pfx }}mode_remb_petit_lot"
+                    style="padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.75rem">
+              <option value="">—</option>
+              <option value="BANQUE" {% if s and s.mode_remb_petit_lot == "BANQUE" %}selected{% endif %}>Banque</option>
+              <option value="ESPECES" {% if s and s.mode_remb_petit_lot == "ESPECES" %}selected{% endif %}>Espèces</option>
+            </select>
+          </td>
+          <!-- Prêts -->
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}remboursement_pret"
+                   value="{% if s and s.remboursement_pret %}{{ s.remboursement_pret|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:80px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <select name="{{ pfx }}mode_remb_pret"
+                    style="padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.75rem">
+              <option value="">—</option>
+              <option value="BANQUE" {% if s and s.mode_remb_pret == "BANQUE" %}selected{% endif %}>Banque</option>
+              <option value="ESPECES" {% if s and s.mode_remb_pret == "ESPECES" %}selected{% endif %}>Espèces</option>
+              <option value="EN COMPTE" {% if s and s.mode_remb_pret == "EN COMPTE" %}selected{% endif %}>En compte</option>
+            </select>
+          </td>
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}pret_fonds"
+                   value="{% if s and s.pret_fonds %}{{ s.pret_fonds|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:80px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <select name="{{ pfx }}mode_paiement_pret"
+                    style="padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.75rem">
+              <option value="">—</option>
+              <option value="BANQUE" {% if s and s.mode_paiement_pret == "BANQUE" %}selected{% endif %}>Banque</option>
+              <option value="ESPECES" {% if s and s.mode_paiement_pret == "ESPECES" %}selected{% endif %}>Espèces</option>
+            </select>
+          </td>
+          <td style="padding:.3rem .4rem">
+            <input type="number" min="0" max="36" name="{{ pfx }}nbre_mois_pret"
+                   value="{% if s and s.nbre_mois_pret %}{{ s.nbre_mois_pret }}{% endif %}" placeholder="0"
+                   style="width:52px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:center">
+          </td>
+          <!-- Intérêt prêt (auto calculé, modifiable) -->
+          <td style="padding:.3rem .4rem;background:#FFF8F8">
+            <input type="number" step="1" name="{{ pfx }}interet_pret_saisi"
+                   value="{% if s and s.interet_pret_saisi %}{{ s.interet_pret_saisi|floatformat:0 }}{% endif %}"
+                   placeholder="{% if s %}{{ s.interet_pret|floatformat:0 }}{% else %}auto{% endif %}"
+                   title="Calcul auto = {{ s.interet_pret|floatformat:0|default:'0' }} F. Laisser vide = calcul auto."
+                   style="width:80px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+            {% if s and s.interet_pret %}<div style="font-size:.56rem;color:#ADB5BD;text-align:right">≈{{ s.interet_pret|floatformat:0 }}</div>{% endif %}
+          </td>
+          <!-- Dépenses -->
+          <td style="padding:.3rem .4rem">
+            <select name="{{ pfx }}libelle_depense_select"
+                    id="{{ pfx }}lib_sel"
+                    onchange="toggleLibelle('{{ pfx }}')"
+                    style="width:125px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.75rem">
+              <option value="">—</option>
+              {% for lib in libelles_depense %}
+              <option value="{{ lib }}" {% if s and s.libelle_depense == lib %}selected{% endif %}>{{ lib }}</option>
+              {% endfor %}
+              <option value="__AUTRE__" {% if s and s.libelle_depense and s.libelle_depense not in libelles_depense %}selected{% endif %}>Autre...</option>
+            </select>
+            <input type="text" name="{{ pfx }}libelle_depense"
+                   id="{{ pfx }}lib_txt"
+                   value="{% if s %}{{ s.libelle_depense }}{% endif %}"
+                   placeholder="Préciser..."
+                   class="lib-txt-input"
+                   style="display:none;width:125px;padding:.3rem .4rem;border:1px solid #C9A84C;border-radius:5px;font-size:.75rem;margin-top:2px"
+                   {% if s and s.libelle_depense and s.libelle_depense not in libelles_depense %}data-show="1"{% endif %}>
+          </td>
+          <td style="padding:.3rem .4rem">
+            <select name="{{ pfx }}compte_depense"
+                    style="width:110px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.75rem">
+              <option value="">—</option>
+              <option value="FONDS DE ROULEMENT" {% if s and s.compte_depense == "FONDS DE ROULEMENT" %}selected{% endif %}>Fonds roulement</option>
+              <option value="FRAIS EXEPTIONNEL" {% if s and s.compte_depense == "FRAIS EXEPTIONNEL" %}selected{% endif %}>Frais exceptionnel</option>
+              <option value="COLLATION" {% if s and s.compte_depense == "COLLATION" %}selected{% endif %}>Collation</option>
+              <option value="MUTUELLE" {% if s and s.compte_depense == "MUTUELLE" %}selected{% endif %}>Mutuelle</option>
+              <option value="AUTRES DEPENSES" {% if s and s.compte_depense == "AUTRES DEPENSES" %}selected{% endif %}>Autres dépenses</option>
+            </select>
+          </td>
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}montant_depense"
+                   value="{% if s and s.montant_depense %}{{ s.montant_depense|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:75px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <!-- Exceptionnels -->
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}sanction"
+                   value="{% if s and s.sanction %}{{ s.sanction|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:65px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}inscription"
+                   value="{% if s and s.inscription %}{{ s.inscription|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:65px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}retrait_partiel"
+                   value="{% if s and s.retrait_partiel %}{{ s.retrait_partiel|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:65px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}mutuelle"
+                   value="{% if s and s.mutuelle %}{{ s.mutuelle|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:65px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}contribution_foyer"
+                   value="{% if s and s.contribution_foyer %}{{ s.contribution_foyer|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:75px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}penalite_pret_fonds"
+                   value="{% if s and s.penalite_pret_fonds %}{{ s.penalite_pret_fonds|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:65px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+
+          <!-- Numéro chèque + Montant espèces -->
+          <td style="padding:.3rem .4rem">
+            <input type="text" name="{{ pfx }}numero_cheque"
+                   value="{% if s %}{{ s.numero_cheque }}{% endif %}" placeholder="—"
+                   style="width:70px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:center">
+          </td>
+          <td style="padding:.3rem .4rem">
+            <input type="number" step="1" name="{{ pfx }}montant_especes"
+                   value="{% if s and s.montant_especes %}{{ s.montant_especes|floatformat:0 }}{% endif %}" placeholder="0"
+                   style="width:75px;padding:.3rem .4rem;border:1px solid #CED4DA;border-radius:5px;font-size:.78rem;text-align:right">
+          </td>
+          <!-- Statut -->
+          <td style="padding:.4rem .5rem;text-align:center">
+            {% if s %}
+            <span style="background:rgba(16,112,90,.1);color:#10705A;padding:.2rem .55rem;border-radius:20px;font-size:.65rem;font-weight:700"><i class="fas fa-check"></i></span>
+            {% else %}
+            <span style="background:#F4F5F7;color:#ADB5BD;padding:.2rem .55rem;border-radius:20px;font-size:.65rem">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div style="padding:1rem 1.5rem;border-top:1px solid #F4F5F7;display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+    <button type="submit"
+            style="display:inline-flex;align-items:center;gap:.5rem;padding:.65rem 1.75rem;
+                   background:#1B2B5E;color:white;border:none;border-radius:8px;
+                   font-size:.875rem;font-weight:700;cursor:pointer;font-family:inherit"
+            onmouseover="this.style.background='#111C3F'" onmouseout="this.style.background='#1B2B5E'">
+      <i class="fas fa-save"></i> Enregistrer la saisie
+    </button>
+    <a href="{% url 'saisie:recap' %}?mois={{ mois }}&annee={{ annee }}"
+       style="display:inline-flex;align-items:center;gap:.5rem;padding:.65rem 1.25rem;
+              background:#E8E9EC;color:#495057;border-radius:8px;font-size:.875rem;font-weight:600;text-decoration:none">
+      <i class="fas fa-list"></i> Récapitulatif
+    </a>
+    <span style="font-size:.72rem;color:#6C757D;font-style:italic">
+      MouvementFonds calculé automatiquement · Colonnes ≈auto = valeur suggérée, modifiable
+    </span>
+  </div>
+</div>
+</form>
+
+<script>
+// Libellé dépense: select + champ libre "Autre"
+function toggleLibelle(pfx) {
+  var sel = document.getElementById(pfx + 'lib_sel');
+  var txt = document.getElementById(pfx + 'lib_txt');
+  if (sel.value === '__AUTRE__') {
+    txt.style.display = 'block';
+    txt.focus();
+    txt.name = pfx + 'libelle_depense';
+    sel.name = '_sel_' + pfx + 'libelle_depense';
+  } else {
+    txt.style.display = 'none';
+    txt.name = '_txt_' + pfx + 'libelle_depense';
+    sel.name = pfx + 'libelle_depense';
+  }
+}
+
+// Init au chargement
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('[id$="lib_sel"]').forEach(function(sel) {
+    var pfx = sel.id.replace('lib_sel','');
+    var txt = document.getElementById(pfx + 'lib_txt');
+    // Restaurer l'affichage depuis data-show
+    if (txt && txt.dataset.show === '1') {
+      txt.style.display = 'block';
+      txt.name = pfx + 'libelle_depense';
+      sel.name = '_sel_' + pfx + 'libelle_depense';
+    } else if (txt) {
+      txt.name = '_txt_' + pfx + 'libelle_depense';
+      sel.name = pfx + 'libelle_depense';
+    }
+  });
+  // Restaurer couleur bordure bonus_malus depuis data-saisi
+  // Bonus/Malus: bordure violette si saisi, couleur placeholder selon valeur auto
+  document.querySelectorAll('.bm-input').forEach(function(inp) {
+    var val = parseFloat(inp.dataset.val || '0');
+    // Couleur bordure
+    if (inp.dataset.saisi === '1') inp.style.border = '2px solid #7B5EA7';
+    // Couleur du texte placeholder selon signe (via ::placeholder pas possible en JS, on colorie le texte)
+    inp.style.color = inp.value ? '#1B2B5E' : (val < 0 ? '#B84C4C' : val > 0 ? '#10705A' : '#ADB5BD');
+    inp.addEventListener('input', function() {
+      this.style.border = this.value ? '2px solid #7B5EA7' : '2px solid #CED4DA';
+      this.style.color = '#1B2B5E';
+    });
+  });
+
+
+});
+</script>
+{% endblock %}

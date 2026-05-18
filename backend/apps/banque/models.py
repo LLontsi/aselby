@@ -1,54 +1,87 @@
-
+"""
+apps/banque/models.py
+Relevé bancaire mensuel — TABBHISTOBQUE
+Saisi EN PREMIER, avant la saisie mensuelle.
+Colonnes manuelles : versement_banque (E), versement_especes (D),
+                     autre_versement (F), agio (H)
+Colonnes auto      : montant_engagement (G) = D+E+F
+"""
 from django.db import models
 from decimal import Decimal
+D = Decimal
 
 
-class HistoriqueBancaire(models.Model):
-    adherent           = models.ForeignKey('adherents.Adherent', on_delete=models.PROTECT,
-                                           related_name='historique_bancaire')
-    mois               = models.IntegerField()
-    annee              = models.IntegerField()
-    versement_tontine  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0'))
-    versement_especes  = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0'))
-    versement_banque   = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0'))
-    autre_versement    = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0'))
-    montant_engagement = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0'))
-    agio               = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0'))
-    # Nouveaux champs pour TABBHISTOBQUE
-    en_compte_reel          = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0'),
-        verbose_name="En compte", help_text="Montant constaté en compte")
-    montant_a_justifier_saisi = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal('0'),
-        verbose_name="Montant à justifier", help_text="Écart à justifier")
-    config_exercice    = models.ForeignKey('parametrage.ConfigExercice', on_delete=models.PROTECT)
-
-    class Meta:
-        verbose_name = "Historique bancaire"
-        unique_together = [('adherent', 'mois', 'annee')]
-
-    @property
-    def en_compte(self):
-        """Total versements ou valeur saisie si disponible."""
-        calcule = self.versement_tontine + self.versement_especes + self.versement_banque + self.autre_versement
-        return self.en_compte_reel if self.en_compte_reel > 0 else calcule
-
-    @property
-    def montant_a_justifier(self):
-        """Écart saisi ou calculé."""
-        if self.montant_a_justifier_saisi != Decimal('0'):
-            return self.montant_a_justifier_saisi
-        return self.montant_engagement - self.en_compte
-
-
-class Cheque(models.Model):
-    adherent        = models.ForeignKey('adherents.Adherent', on_delete=models.PROTECT,
-                                        related_name='cheques')
+class ReleveBancaire(models.Model):
+    """
+    TABBHISTOBQUE — une ligne par adhérent par mois.
+    Saisie manuelle : versements réels du relevé bancaire + agio.
+    """
+    adherent        = models.ForeignKey(
+        'adherents.Adherent', on_delete=models.PROTECT,
+        related_name='releves_bancaires')
     mois            = models.IntegerField()
     annee           = models.IntegerField()
-    numero          = models.CharField(max_length=50)
-    montant         = models.DecimalField(max_digits=14, decimal_places=2)
-    affectation     = models.CharField(max_length=200)
-    config_exercice = models.ForeignKey('parametrage.ConfigExercice', on_delete=models.PROTECT)
+    config_exercice = models.ForeignKey(
+        'parametrage.ConfigExercice', on_delete=models.PROTECT)
+
+    # ── Champs manuels ────────────────────────────────────────────
+    versement_banque  = models.DecimalField(
+        max_digits=14, decimal_places=2, default=D('0'),
+        help_text="Col E — chèques/virements")
+    versement_especes = models.DecimalField(
+        max_digits=14, decimal_places=2, default=D('0'),
+        help_text="Col D — espèces")
+    autre_versement   = models.DecimalField(
+        max_digits=14, decimal_places=2, default=D('0'),
+        help_text="Col F — versements exceptionnels")
+    agio              = models.DecimalField(
+        max_digits=10, decimal_places=2, default=D('0'),
+        help_text="Col H — frais bancaires du mois")
+
+    # Soumission membre depuis espace personnel
+    est_valide_membre  = models.BooleanField(default=False,
+        help_text="Soumis par le membre depuis son espace")
+    est_valide_bureau  = models.BooleanField(default=True,
+        help_text="Validé par le bureau (False = en attente)")
+    date_saisie       = models.DateTimeField(auto_now_add=True)
+    date_modification = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Chèque"
+        verbose_name        = "Relevé bancaire"
+        verbose_name_plural = "Relevés bancaires"
+        unique_together     = [('adherent', 'mois', 'annee')]
+        ordering            = ['annee', 'mois', 'adherent__numero_ordre']
+
+    def __str__(self):
+        return f"Relevé {self.adherent.matricule} {self.mois:02d}/{self.annee}"
+
+    @property
+    def montant_engagement(self):
+        """Col G = D + E + F"""
+        return self.versement_banque + self.versement_especes + self.autre_versement
+
+    @property
+    def mode_versement(self):
+        """BANQUE si banque > 0, ESPECES si espèces > 0, sinon ECHEC"""
+        if self.versement_banque > 0:
+            return 'BANQUE'
+        if self.versement_especes > 0:
+            return 'ESPECES'
+        return 'ECHEC'
+
+
+class AgioBancaire(models.Model):
+    """Agio global de l'association (pas par adhérent)."""
+    mois            = models.IntegerField()
+    annee           = models.IntegerField()
+    config_exercice = models.ForeignKey(
+        'parametrage.ConfigExercice', on_delete=models.PROTECT)
+    numero          = models.CharField(max_length=50, blank=True)
+    montant         = models.DecimalField(max_digits=12, decimal_places=2, default=D('0'))
+    affectation     = models.CharField(max_length=200, blank=True)
+
+    class Meta:
         ordering = ['annee', 'mois']
+
+    def __str__(self):
+        return f"Agio {self.mois:02d}/{self.annee} — {self.montant:,.0f} F"

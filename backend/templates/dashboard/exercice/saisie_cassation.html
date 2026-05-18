@@ -1,0 +1,217 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize aselby_tags %}
+{% block _titre %}Saisie Fiches de Cassation{% endblock %}
+{% block extra_css %}
+<style>
+.tbl-cass th, .tbl-cass td {
+  padding:.45rem .5rem; font-size:.72rem; white-space:nowrap;
+  border:1px solid #E8E9EC; text-align:right;
+}
+.tbl-cass th { background:#1B2B5E; color:white; text-align:center; }
+.tbl-cass th.auto { background:#3D5A80; }
+.tbl-cass th.saisie { background:#C9A84C; color:#1B2B5E; }
+.tbl-cass th.result { background:#10705A; }
+.tbl-cass td.auto { background:#F8F9FB; color:#6C757D; }
+.tbl-cass td.adh { text-align:left; min-width:180px; font-weight:600;
+                   color:#1B2B5E; position:sticky; left:0; background:white; z-index:1; }
+.tbl-cass input[type=number] {
+  width:90px; text-align:right; border:1px solid #CBD0D8; border-radius:4px;
+  padding:3px 5px; font-size:.72rem; font-family:inherit; background:#FFFBF0;
+}
+.tbl-cass input:focus { outline:none; border-color:#C9A84C; background:#FFF; }
+.tbl-cass tr:hover td:not(.adh) { background:#F0F4FF; }
+@media print {
+  aside, .topbar, .no-print { display:none !important; }
+  @page { size:A4 landscape; margin:6mm; }
+  .tbl-cass input { border:none; background:transparent; }
+}
+</style>
+{% endblock %}
+{% block contenu %}
+
+<div class="no-print" style="display:flex;justify-content:space-between;align-items:center;
+     margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem">
+  <div>
+    <a href="{% url 'exercice:cassation' %}" style="font-size:.8rem;color:#6C757D;
+       text-decoration:none"><i class="fas fa-arrow-left"></i> Retour</a>
+    <h2 style="font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;
+       color:#1B2B5E;margin:.25rem 0 0">
+      Fiches de Cassation — Exercice {{ config_exercice.annee }}
+    </h2>
+    <div style="font-size:.75rem;color:#6C757D">
+      <span style="color:#C9A84C">■</span> Champs à saisir &nbsp;
+      <span style="color:#3D5A80">■</span> Calculés automatiquement &nbsp;
+      <span style="color:#10705A">■</span> Résultats
+    </div>
+  </div>
+  <div style="display:flex;gap:.6rem">
+    <button onclick="document.getElementById('form-cass').submit()"
+            style="padding:.55rem 1.2rem;background:#1B2B5E;color:white;border:none;
+            border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer">
+      <i class="fas fa-save"></i> Enregistrer
+    </button>
+    <a href="javascript:window.print()"
+       style="padding:.55rem 1rem;background:white;color:#1B2B5E;border:2px solid #1B2B5E;
+       border-radius:8px;font-size:.8rem;font-weight:700;text-decoration:none">
+      <i class="fas fa-print"></i> Imprimer
+    </a>
+  </div>
+</div>
+
+<form id="form-cass" method="post">{% csrf_token %}
+<div style="background:white;border-radius:14px;overflow:hidden;
+     box-shadow:0 4px 12px rgba(0,0,0,.08)">
+<div style="overflow-x:auto">
+<table class="tbl-cass" style="min-width:2200px;width:100%;border-collapse:collapse">
+  <thead>
+    <tr>
+      <th class="adh no-print" style="text-align:left">Adhérent</th>
+      <!-- Colonnes calculées — gris bleu -->
+      <th class="auto">C<br>Fonds caisse</th>
+      <th class="auto">D<br>Reconduction</th>
+      <th class="auto">E<br>Rép. intérêts</th>
+      <th class="auto">F<br>Épargne</th>
+      <!-- Colonnes saisies — or -->
+      <th class="saisie">G<br>Rép. pénalité<br>remb. prêt</th>
+      <th class="saisie">H<br>Rép. collation</th>
+      <!-- Calculé -->
+      <th class="result">I<br>Total à distrib.</th>
+      <!-- Saisies -->
+      <th class="saisie">J<br>Sanction</th>
+      <th class="saisie">K<br>Comp. mutuelle</th>
+      <th class="saisie">L<br>Comp. fonds</th>
+      <th class="saisie">M<br>Dette prêt fonds</th>
+      <!-- Calculé -->
+      <th class="auto">N<br>Total retenu</th>
+      <!-- Calculé -->
+      <th class="result">O<br>Net à percevoir</th>
+      <!-- Saisies -->
+      <th class="saisie">P<br>Montant perçu</th>
+      <th class="saisie">T<br>Dont espèces</th>
+      <th class="saisie">U<br>Dont chèque</th>
+      <th class="saisie">S<br>Dons foyer</th>
+      <!-- Calculés -->
+      <th class="result">Q<br>Reconduction<br>{{ config_exercice.annee|add:1 }}</th>
+      <th class="auto">R<br>Nouveau fonds</th>
+      <th class="auto">V<br>Intérêt</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for f in fiches %}
+    {% with pfx="adh_"|add:f.adherent.matricule|add:"_" %}
+    <tr>
+      <td class="adh">
+        <div style="font-weight:700;font-size:.78rem">{{ f.adherent.nom_prenom|title }}</div>
+        <div style="font-size:.62rem;color:#6C757D">{{ f.adherent.matricule }}</div>
+      </td>
+      <!-- C — auto -->
+      <td class="auto">{{ f.fonds_caisse|floatformat:0|intcomma }}</td>
+      <!-- D — auto -->
+      <td class="auto">{{ f.repartition_interets|floatformat:0|intcomma }}</td>
+      <!-- E — auto: intérêts prêts -->
+      <td class="auto">{{ f.repartition_interets|floatformat:2|intcomma }}</td>
+      <!-- F — auto: épargne -->
+      <td class="auto">{{ f.epargne_cumulee|floatformat:0|intcomma }}</td>
+      <!-- G — saisie: repartition_penalites -->
+      <td>
+        <input type="number" step="1" name="{{ pfx }}repartition_penalites"
+               value="{{ f.repartition_penalites|floatformat:0 }}" placeholder="0">
+      </td>
+      <!-- H — saisie: repartition_collation -->
+      <td>
+        <input type="number" step="1" name="{{ pfx }}repartition_collation"
+               value="{{ f.repartition_collation|floatformat:0 }}" placeholder="0">
+      </td>
+      <!-- I — calculé: total_a_distribuer -->
+      <td class="result" style="font-weight:700">{{ f.total_a_distribuer|floatformat:0|intcomma }}</td>
+      <!-- J — saisie: sanctions -->
+      <td>
+        <input type="number" step="1" name="{{ pfx }}sanctions"
+               value="{{ f.sanctions|floatformat:0 }}" placeholder="0">
+      </td>
+      <!-- K — saisie: complement_mutuelle -->
+      <td>
+        <input type="number" step="1" name="{{ pfx }}complement_mutuelle"
+               value="{{ f.complement_mutuelle|floatformat:0 }}" placeholder="0">
+      </td>
+      <!-- L — saisie: complement_fonds -->
+      <td>
+        <input type="number" step="1" name="{{ pfx }}complement_fonds"
+               value="{{ f.complement_fonds|floatformat:0 }}" placeholder="0">
+      </td>
+      <!-- M — saisie: dette_pret -->
+      <td>
+        <input type="number" step="1" name="{{ pfx }}dette_pret"
+               value="{{ f.dette_pret|floatformat:0 }}" placeholder="0">
+      </td>
+      <!-- N — calculé: total_retenu -->
+      <td class="auto">{{ f.total_retenu|floatformat:0|intcomma }}</td>
+      <!-- O — calculé: net_a_percevoir -->
+      <td class="result" style="font-weight:700;color:#10705A">{{ f.net_a_percevoir|floatformat:0|intcomma }}</td>
+      <!-- P — saisie: montant_percu -->
+      <td>
+        <input type="number" step="1" name="{{ pfx }}montant_percu"
+               value="{{ f.montant_percu|floatformat:0 }}" placeholder="0">
+      </td>
+      <!-- T — saisie: espèces -->
+      <td>
+        <input type="number" step="1" name="{{ pfx }}montant_percu_especes"
+               value="{{ f.montant_percu_especes|floatformat:0 }}" placeholder="0">
+      </td>
+      <!-- U — saisie: chèque -->
+      <td>
+        <input type="number" step="1" name="{{ pfx }}montant_percu_cheque"
+               value="{{ f.montant_percu_cheque|floatformat:0 }}" placeholder="0">
+      </td>
+      <!-- S — saisie: dons_foyer -->
+      <td>
+        <input type="number" step="1" name="{{ pfx }}dons_foyer"
+               value="{{ f.dons_foyer|floatformat:0 }}" placeholder="0">
+      </td>
+      <!-- Q — calculé: reconduction suivante -->
+      <td class="result" style="font-weight:700">{{ f.calculer_reconduction|floatformat:0|intcomma }}</td>
+      <!-- R — auto: nouveau_fonds -->
+      <td class="auto">{{ f.nouveau_fonds|floatformat:0|intcomma }}</td>
+      <!-- V — auto: intérêt -->
+      <td class="auto">{{ f.repartition_interets|floatformat:2|intcomma }}</td>
+    </tr>
+    {% endwith %}
+    {% empty %}
+    <tr><td colspan="21" style="text-align:center;padding:2rem;color:#6C757D">
+      Aucune fiche — cliquez sur "Saisir les montants perçus" depuis les fiches de cassation.
+    </td></tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr style="background:#F0F4FF;font-weight:700;font-size:.72rem">
+      <td class="adh" style="font-weight:700;color:#1B2B5E">TOTAUX</td>
+      <td class="auto" id="tot-C">—</td>
+      <td class="auto" id="tot-D">—</td>
+      <td class="auto" id="tot-E">—</td>
+      <td class="auto" id="tot-F">—</td>
+      <td id="tot-G">—</td><td id="tot-H">—</td>
+      <td class="result" id="tot-I">—</td>
+      <td id="tot-J">—</td><td id="tot-K">—</td>
+      <td id="tot-L">—</td><td id="tot-M">—</td>
+      <td class="auto" id="tot-N">—</td>
+      <td class="result" id="tot-O">—</td>
+      <td id="tot-P">—</td><td id="tot-T">—</td>
+      <td id="tot-U">—</td><td id="tot-S">—</td>
+      <td class="result" id="tot-Q">—</td>
+      <td class="auto" id="tot-R">—</td>
+      <td class="auto" id="tot-V">—</td>
+    </tr>
+  </tfoot>
+</table>
+</div>
+</div>
+</form>
+
+<script>
+// Calcul automatique des totaux sur les colonnes numériques
+document.addEventListener('DOMContentLoaded', function() {
+  // Les totaux sont calculés à l'affichage et pas dynamiquement
+  // (les valeurs sont en read-only pour les colonnes auto)
+});
+</script>
+{% endblock %}

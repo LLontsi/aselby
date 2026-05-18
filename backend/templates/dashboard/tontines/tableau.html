@@ -1,198 +1,151 @@
 {% extends "dashboard/base_dashboard.html" %}
-{% load humanize rapports_extras %}
+{% load humanize %}
 {% block _titre %}Tontines — {{ mois_label }} {{ annee }}{% endblock %}
 {% block contenu %}
 
-<!-- NAV MOIS -->
-<div style="background:white;border-radius:12px;padding:1rem 1.5rem;margin-bottom:1.5rem;
-            box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;align-items:center;
+<div style="background:white;border-radius:12px;padding:.85rem 1.5rem;margin-bottom:1.25rem;
+            box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;
             justify-content:space-between;flex-wrap:wrap;gap:.75rem">
-  <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+  <div style="display:flex;align-items:center;gap:.75rem">
     <a href="?mois={{ prec_mois }}&annee={{ prec_annee }}"
-       style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;
-              border:1px solid #E8E9EC;border-radius:8px;font-size:.82rem;
-              color:#6C757D;text-decoration:none;font-weight:600"
+       style="padding:.4rem .9rem;border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;color:#6C757D;text-decoration:none;font-weight:600"
        onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
-      <i class="fas fa-chevron-left"></i> {{ mois_fr|get_mois:prec_mois }}
+      <i class="fas fa-chevron-left"></i>
     </a>
-    <span style="background:#1B2B5E;color:white;padding:.5rem 1.5rem;border-radius:20px;
-                 font-size:.9rem;font-weight:700;letter-spacing:.5px">
-      {{ mois_label }} {{ annee }}
+    <span style="background:#1B2B5E;color:white;padding:.45rem 1.25rem;border-radius:20px;font-size:.85rem;font-weight:700">
+      Tontines — {{ mois_label }} {{ annee }}
     </span>
     <a href="?mois={{ suiv_mois }}&annee={{ suiv_annee }}"
-       style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;
-              border:1px solid #E8E9EC;border-radius:8px;font-size:.82rem;
-              color:#6C757D;text-decoration:none;font-weight:600"
+       style="padding:.4rem .9rem;border:1px solid #E8E9EC;border-radius:8px;font-size:.8rem;color:#6C757D;text-decoration:none;font-weight:600"
        onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
-      {{ mois_fr|get_mois:suiv_mois }} <i class="fas fa-chevron-right"></i>
+      <i class="fas fa-chevron-right"></i>
     </a>
   </div>
-  <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-    <a href="{% url 'tontines:calendrier' %}"
-       style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;
-              border:1px solid #E8E9EC;border-radius:8px;font-size:.82rem;color:#6C757D;text-decoration:none;font-weight:600"
-       onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
-      <i class="fas fa-calendar"></i> Calendrier
+  <div style="display:flex;gap:.75rem">
+    <a href="{% url 'saisie:saisie' %}?mois={{ mois }}&annee={{ annee }}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;
+              background:#1B2B5E;color:white;border-radius:8px;font-size:.78rem;font-weight:700;text-decoration:none">
+      <i class="fas fa-edit"></i> Modifier la saisie
     </a>
-    <a href="{% url 'tontines:enchere' %}"
-       style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;
-              background:#C9A84C;color:#1B2B5E;border-radius:8px;font-size:.82rem;text-decoration:none;font-weight:700"
-       onmouseover="this.style.background='#B8973B'" onmouseout="this.style.background='#C9A84C'">
-      <i class="fas fa-gavel"></i> Enchères
+    <a href="{% url 'tontines:telecharger' 'T60' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;
+              background:#10705A;color:white;border-radius:8px;font-size:.78rem;font-weight:700;text-decoration:none">
+      <i class="fas fa-file-excel"></i> T60.xlsx
+    </a>
+    <a href="{% url 'tontines:telecharger' 'T75' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;
+              background:#10705A;color:white;border-radius:8px;font-size:.78rem;font-weight:700;text-decoration:none">
+      <i class="fas fa-file-excel"></i> T75.xlsx
+    </a>
+    <a href="{% url 'tontines:telecharger' 'T100' %}"
+       style="display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;
+              background:#10705A;color:white;border-radius:8px;font-size:.78rem;font-weight:700;text-decoration:none">
+      <i class="fas fa-file-excel"></i> T100.xlsx
     </a>
   </div>
 </div>
 
-<!-- SESSIONS DU MOIS -->
-{% if sessions %}
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem;margin-bottom:1.5rem">
-  {% for session in sessions %}
-  <div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.07)">
-    <div style="background:#1B2B5E;padding:.9rem 1.25rem;display:flex;align-items:center;justify-content:space-between">
-      <div style="display:flex;align-items:center;gap:.6rem">
-        <i class="fas fa-layer-group" style="color:#C9A84C"></i>
-        <span style="color:white;font-weight:700;font-size:.95rem">Tontine {{ session.niveau.code }}</span>
-      </div>
-      <span style="background:rgba(201,168,76,.2);color:#C9A84C;padding:.25rem .75rem;border-radius:20px;font-size:.72rem;font-weight:700">
-        {{ session.participations.count }} parts
-      </span>
-    </div>
-    <div style="padding:1.1rem 1.25rem">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;font-size:.8rem;margin-bottom:1rem">
-        <div>
-          <div style="color:#6C757D;font-size:.65rem;text-transform:uppercase;letter-spacing:.5px">Taux</div>
-          <div style="font-weight:700;color:#1B2B5E">{{ session.niveau.taux_mensuel|floatformat:0|intcomma }} F</div>
-        </div>
-        <div>
-          <div style="color:#6C757D;font-size:.65rem;text-transform:uppercase;letter-spacing:.5px">Versement/part</div>
-          <div style="font-weight:700;color:#1B2B5E">{{ session.niveau.versement_mensuel_par_part|floatformat:0|intcomma }} F</div>
-        </div>
-        <div>
-          <div style="color:#6C757D;font-size:.65rem;text-transform:uppercase;letter-spacing:.5px">Intérêts bureau</div>
-          <div style="font-weight:700;color:#C9A84C">{{ session.montant_interet_bureau|floatformat:0|intcomma }} F</div>
-        </div>
-        <div>
-          <div style="color:#6C757D;font-size:.65rem;text-transform:uppercase;letter-spacing:.5px">Intérêt/adhérent</div>
-          <div style="font-weight:700;color:#10705A">{{ session.interet_par_adherent|floatformat:0|intcomma }} F</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:.5rem">
-        <a href="{% url 'tontines:saisie' session.niveau.code %}?mois={{ mois }}&annee={{ annee }}"
-           style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;
-                  padding:.5rem;background:#1B2B5E;color:white;border-radius:8px;
-                  text-decoration:none;font-size:.78rem;font-weight:600"
-           onmouseover="this.style.background='#111C3F'" onmouseout="this.style.background='#1B2B5E'">
-          <i class="fas fa-edit"></i> Saisir
-        </a>
-        <a href="{% url 'tontines:detail_participants' session.niveau.code %}"
-           style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;
-                  padding:.5rem;border:1px solid #1B2B5E;color:#1B2B5E;border-radius:8px;
-                  text-decoration:none;font-size:.78rem;font-weight:600"
-           onmouseover="this.style.background='#F4F5F7'" onmouseout="this.style.background=''">
-          <i class="fas fa-users"></i> Détail
-        </a>
-      </div>
-    </div>
+<!-- KPIs tontines -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem">
+  <div style="background:white;border-radius:12px;padding:1rem 1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <div style="font-size:.62rem;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.25rem">Total T60</div>
+    <div style="font-size:1.1rem;font-weight:700;color:#1B2B5E">{{ tot_t60|floatformat:0|intcomma }} F</div>
+    <div style="font-size:.72rem;color:#6C757D">{{ saisies|length }} adhérents</div>
   </div>
-  {% endfor %}
+  <div style="background:white;border-radius:12px;padding:1rem 1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <div style="font-size:.62rem;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.25rem">Total T75</div>
+    <div style="font-size:1.1rem;font-weight:700;color:#1B2B5E">{{ tot_t75|floatformat:0|intcomma }} F</div>
+  </div>
+  <div style="background:white;border-radius:12px;padding:1rem 1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <div style="font-size:.62rem;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.25rem">Total T100</div>
+    <div style="font-size:1.1rem;font-weight:700;color:#1B2B5E">{{ tot_t100|floatformat:0|intcomma }} F</div>
+  </div>
+  <div style="background:rgba(201,168,76,.08);border-radius:12px;padding:1rem 1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <div style="font-size:.62rem;color:#6C757D;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.25rem">Total du mois</div>
+    <div style="font-size:1.1rem;font-weight:700;color:#C9A84C">{{ tot_mois|floatformat:0|intcomma }} F</div>
+  </div>
 </div>
-{% else %}
-<div style="background:white;border-radius:12px;padding:2.5rem;text-align:center;
-            box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:1.5rem">
-  <i class="fas fa-clock" style="font-size:2.5rem;color:#CED4DA;margin-bottom:1rem;display:block"></i>
-  <p style="color:#6C757D;font-size:.9rem;margin-bottom:1rem">Aucune session créée pour {{ mois_label }} {{ annee }}.</p>
-  {% for niveau in niveaux %}
-  <a href="{% url 'tontines:saisie' niveau.code %}?mois={{ mois }}&annee={{ annee }}"
-     style="display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.25rem;
-            background:#1B2B5E;color:white;border-radius:8px;text-decoration:none;
-            font-size:.82rem;font-weight:600;margin:.25rem"
-     onmouseover="this.style.background='#111C3F'" onmouseout="this.style.background='#1B2B5E'">
-    <i class="fas fa-plus"></i> Créer {{ niveau.code }}
-  </a>
-  {% endfor %}
+
+{% if lots_t60 or lots_t75 or lots_t100 %}
+<div style="background:rgba(16,112,90,.06);border:1px solid rgba(16,112,90,.2);border-radius:10px;padding:.75rem 1.25rem;margin-bottom:1.25rem;font-size:.82rem;color:#10705A">
+  <i class="fas fa-trophy" style="margin-right:.4rem"></i>
+  <strong>Lots attribués ce mois :</strong>
+  {% for s in lots_t60 %} {{ s.adherent.nom_prenom|title }} (T60 — {{ s.achat_lot_t60|floatformat:0|intcomma }} F){% endfor %}
+  {% for s in lots_t75 %} {{ s.adherent.nom_prenom|title }} (T75 — {{ s.achat_lot_t75|floatformat:0|intcomma }} F){% endfor %}
+  {% for s in lots_t100 %} {{ s.adherent.nom_prenom|title }} (T100 — {{ s.achat_lot_t100|floatformat:0|intcomma }} F){% endfor %}
 </div>
 {% endif %}
 
-<!-- TABLEAU PARTICIPATIONS -->
+<!-- Tableau détail par adhérent -->
 <div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">
-  <div style="padding:.9rem 1.5rem;border-bottom:2px solid #F4F5F7;display:flex;align-items:center;justify-content:space-between">
-    <h3 style="color:#1B2B5E;margin:0;font-size:.95rem">
-      <i class="fas fa-list" style="color:#C9A84C;margin-right:.5rem"></i>
-      Participations — {{ mois_label }} {{ annee }}
-    </h3>
-    <span style="background:rgba(27,43,94,.07);color:#1B2B5E;padding:.3rem .75rem;border-radius:20px;font-size:.72rem;font-weight:700">
-      {{ participations|length }} lignes
+  <div style="background:#1B2B5E;padding:.85rem 1.5rem">
+    <span style="color:white;font-weight:700;font-size:.9rem">
+      <i class="fas fa-clock" style="color:#C9A84C;margin-right:.5rem"></i>
+      Détail — {{ mois_label }} {{ annee }} — Ordre alphabétique
     </span>
   </div>
-  {% if niveau_code %}
-  <div style="padding:.6rem 1.5rem;background:#F8F9FC;border-bottom:1px solid #E8E9EC;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
-    <span style="font-size:.75rem;color:#6C757D">Filtrer :</span>
-    <a href="?mois={{ mois }}&annee={{ annee }}"
-       style="padding:.3rem .75rem;border-radius:20px;font-size:.72rem;font-weight:600;
-              background:#E8E9EC;color:#495057;text-decoration:none">Tous</a>
-    {% for niveau in niveaux %}
-    <a href="?mois={{ mois }}&annee={{ annee }}&niveau={{ niveau.code }}"
-       style="padding:.3rem .75rem;border-radius:20px;font-size:.72rem;font-weight:600;text-decoration:none;
-              {% if niveau.code == niveau_code %}background:#1B2B5E;color:white{% else %}background:#E8E9EC;color:#495057{% endif %}">
-      {{ niveau.code }}
-    </a>
-    {% endfor %}
-  </div>
-  {% endif %}
   <div style="overflow-x:auto">
-    <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+    <table style="width:100%;border-collapse:collapse;font-size:.8rem">
       <thead>
         <tr style="background:#F4F5F7">
-          <th style="padding:.7rem 1rem;text-align:left;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase;letter-spacing:.5px">Adhérent</th>
-          <th style="padding:.7rem .8rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Tontine</th>
-          <th style="padding:.7rem .8rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Parts</th>
-          <th style="padding:.7rem .8rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Mode</th>
-          <th style="padding:.7rem .8rem;text-align:right;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Montant versé</th>
-          <th style="padding:.7rem .8rem;text-align:right;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Pénalité</th>
-          <th style="padding:.7rem .8rem;text-align:right;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Lot principal</th>
-          <th style="padding:.7rem .8rem;text-align:center;font-size:.65rem;font-weight:700;color:#6C757D;text-transform:uppercase">Actions</th>
+          <th style="padding:.65rem .9rem;text-align:left;font-size:.62rem;font-weight:700;color:#6C757D;text-transform:uppercase;letter-spacing:.5px">Nom et prénom</th>
+          <th style="padding:.65rem .7rem;text-align:center;font-size:.62rem;font-weight:700;color:#1B2B5E;text-transform:uppercase">Mode</th>
+          <th style="padding:.65rem .7rem;text-align:center;font-size:.62rem;font-weight:700;color:#1B2B5E;text-transform:uppercase">Nbre T60</th>
+          <th style="padding:.65rem .7rem;text-align:right;font-size:.62rem;font-weight:700;color:#1B2B5E;text-transform:uppercase">Tontine T60</th>
+          <th style="padding:.65rem .7rem;text-align:center;font-size:.62rem;font-weight:700;color:#1B2B5E;text-transform:uppercase">Nbre T75</th>
+          <th style="padding:.65rem .7rem;text-align:right;font-size:.62rem;font-weight:700;color:#1B2B5E;text-transform:uppercase">Tontine T75</th>
+          <th style="padding:.65rem .7rem;text-align:center;font-size:.62rem;font-weight:700;color:#1B2B5E;text-transform:uppercase">Nbre T100</th>
+          <th style="padding:.65rem .7rem;text-align:right;font-size:.62rem;font-weight:700;color:#1B2B5E;text-transform:uppercase">Tontine T100</th>
+          <th style="padding:.65rem .7rem;text-align:right;font-size:.62rem;font-weight:700;color:#C9A84C;text-transform:uppercase">Total mois</th>
+          <th style="padding:.65rem .7rem;text-align:right;font-size:.62rem;font-weight:700;color:#10705A;text-transform:uppercase">Achat lot T60</th>
+          <th style="padding:.65rem .7rem;text-align:right;font-size:.62rem;font-weight:700;color:#10705A;text-transform:uppercase">Achat lot T75</th>
+          <th style="padding:.65rem .7rem;text-align:right;font-size:.62rem;font-weight:700;color:#10705A;text-transform:uppercase">Achat lot T100</th>
+          <th style="padding:.65rem .7rem;text-align:right;font-size:.62rem;font-weight:700;color:#7B5EA7;text-transform:uppercase">Vente petit T60</th>
+          <th style="padding:.65rem .7rem;text-align:right;font-size:.62rem;font-weight:700;color:#7B5EA7;text-transform:uppercase">Vente petit T75</th>
+          <th style="padding:.65rem .7rem;text-align:right;font-size:.62rem;font-weight:700;color:#7B5EA7;text-transform:uppercase">Vente petit T100</th>
         </tr>
       </thead>
       <tbody>
-        {% for p in participations %}
-        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#F8F9FC'" onmouseout="this.style.background=''">
-          <td style="padding:.6rem 1rem">
-            <div style="font-weight:700;color:#1B2B5E;font-size:.82rem">{{ p.adherent.nom_prenom|title }}</div>
-            <div style="font-size:.68rem;color:#6C757D">{{ p.adherent.matricule }}</div>
+        {% for s in saisies %}
+        <tr style="border-bottom:1px solid #F4F5F7"
+            onmouseover="this.style.background='#F8F9FC'" onmouseout="this.style.background=''">
+          <td style="padding:.55rem .9rem;font-weight:600;color:#1B2B5E;white-space:nowrap">
+            {{ s.adherent.nom_prenom|title }}
           </td>
-          <td style="padding:.6rem .8rem;text-align:center">
-            <span style="background:rgba(27,43,94,.1);color:#1B2B5E;padding:.2rem .6rem;border-radius:20px;font-size:.72rem;font-weight:700">
-              {{ p.session.niveau.code }}
+          <td style="padding:.5rem .7rem;text-align:center">
+            <span style="padding:.2rem .6rem;border-radius:20px;font-size:.7rem;font-weight:700;
+                  background:{% if s.mode_paiement_tontine == 'BANQUE' %}rgba(27,43,94,.1);color:#1B2B5E{% elif s.mode_paiement_tontine == 'ESPECES' %}rgba(201,168,76,.15);color:#A8863A{% else %}rgba(184,76,76,.1);color:#B84C4C{% endif %}">
+              {{ s.mode_paiement_tontine }}
             </span>
           </td>
-          <td style="padding:.6rem .8rem;text-align:center;font-weight:700;color:#1B2B5E">{{ p.nombre_parts }}</td>
-          <td style="padding:.6rem .8rem;text-align:center">
-            <span style="padding:.2rem .6rem;border-radius:20px;font-size:.7rem;font-weight:600;
-              {% if p.mode_versement == 'BANQUE' %}background:rgba(16,112,90,.1);color:#10705A
-              {% elif p.mode_versement == 'ESPECES' %}background:rgba(201,168,76,.15);color:#A8863A
-              {% else %}background:rgba(184,76,76,.1);color:#B84C4C{% endif %}">
-              {{ p.mode_versement }}
-            </span>
+          <td style="padding:.5rem .7rem;text-align:center;font-weight:700">{{ s.nbre_lots_t60 }}</td>
+          <td style="padding:.5rem .7rem;text-align:right">{{ s.tontine_t60|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .7rem;text-align:center;font-weight:700">{{ s.nbre_lots_t75 }}</td>
+          <td style="padding:.5rem .7rem;text-align:right">{{ s.tontine_t75|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .7rem;text-align:center;font-weight:700">{{ s.nbre_lots_t100 }}</td>
+          <td style="padding:.5rem .7rem;text-align:right">{{ s.tontine_t100|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .7rem;text-align:right;font-weight:700;color:#C9A84C">{{ s.tontine_mois|floatformat:0|intcomma }}</td>
+          <td style="padding:.5rem .7rem;text-align:right;color:#10705A">
+            {% if s.achat_lot_t60 %}{{ s.achat_lot_t60|floatformat:0|intcomma }}{% else %}—{% endif %}
           </td>
-          <td style="padding:.6rem .8rem;text-align:right;font-weight:600;color:#1B2B5E">{{ p.montant_verse|floatformat:0|intcomma }} F</td>
-          <td style="padding:.6rem .8rem;text-align:right;color:{% if p.penalite_especes > 0 or p.penalite_echec > 0 %}#B84C4C{% else %}#ADB5BD{% endif %}">
-            {% if p.penalite_especes > 0 %}{{ p.penalite_especes|floatformat:0|intcomma }}{% elif p.penalite_echec > 0 %}{{ p.penalite_echec|floatformat:0|intcomma }}{% else %}—{% endif %}
+          <td style="padding:.5rem .7rem;text-align:right;color:#10705A">
+            {% if s.achat_lot_t75 %}{{ s.achat_lot_t75|floatformat:0|intcomma }}{% else %}—{% endif %}
           </td>
-          <td style="padding:.6rem .8rem;text-align:right;color:#10705A;font-weight:600">
-            {% if p.montant_lot_principal > 0 %}{{ p.montant_lot_principal|floatformat:0|intcomma }} F{% else %}—{% endif %}
+          <td style="padding:.5rem .7rem;text-align:right;color:#10705A">
+            {% if s.achat_lot_t100 %}{{ s.achat_lot_t100|floatformat:0|intcomma }}{% else %}—{% endif %}
           </td>
-          <td style="padding:.6rem .8rem;text-align:center">
-            <a href="{% url 'tontines:saisie' p.session.niveau.code %}?mois={{ mois }}&annee={{ annee }}"
-               style="font-size:.72rem;color:#1B2B5E;font-weight:600;text-decoration:none"
-               onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
-              <i class="fas fa-edit"></i>
-            </a>
+          <td style="padding:.5rem .7rem;text-align:right;color:#7B5EA7">
+            {% if s.vente_petit_lot_t60 %}{{ s.vente_petit_lot_t60|floatformat:0|intcomma }}{% else %}—{% endif %}
+          </td>
+          <td style="padding:.5rem .7rem;text-align:right;color:#7B5EA7">
+            {% if s.vente_petit_lot_t75 %}{{ s.vente_petit_lot_t75|floatformat:0|intcomma }}{% else %}—{% endif %}
+          </td>
+          <td style="padding:.5rem .7rem;text-align:right;color:#7B5EA7">
+            {% if s.vente_petit_lot_t100 %}{{ s.vente_petit_lot_t100|floatformat:0|intcomma }}{% else %}—{% endif %}
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="8" style="padding:2rem;text-align:center;color:#ADB5BD">
-          Aucune participation pour {{ mois_label }} {{ annee }}.
-        </td></tr>
+        <tr><td colspan="15" style="padding:2rem;text-align:center;color:#ADB5BD">Aucune saisie pour {{ mois_label }} {{ annee }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

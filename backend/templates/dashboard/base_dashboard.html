@@ -35,91 +35,140 @@
       <!-- PRINCIPAL -->
       <div class="sidebar-section">PRINCIPAL</div>
       <a href="{% url 'rapports:dashboard' %}"
-         class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+         class="sidebar-link {% if request.resolver_match.app_name == 'rapports' and request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
         <i class="fas fa-th-large"></i> Tableau de bord
       </a>
-      <a href="{% url 'saisie:formulaire' %}"
-         class="sidebar-link {% if 'saisie' in request.resolver_match.app_name %}active{% endif %}">
-        <i class="fas fa-edit"></i> Saisie mensuelle
+
+      <!-- SAISIE MENSUELLE -->
+      <div class="sidebar-section">SAISIE MENSUELLE</div>
+      <a href="{% url 'banque:releve' %}"
+         class="sidebar-link {% if request.resolver_match.app_name == 'banque' and request.resolver_match.url_name == 'releve' %}active{% endif %}">
+        <i class="fas fa-university"></i> ① Relevé bancaire
+        <span style="font-size:.6rem;color:rgba(201,168,76,.7);margin-left:auto">TABBHISTO</span>
       </a>
-      <a href="{% url 'saisie:membres_en_attente' %}"
-         class="sidebar-link {% if request.resolver_match.url_name == 'membres_en_attente' %}active{% endif %}">
-        <i class="fas fa-clock"></i> Saisies en attente
+      <a href="{% url 'saisie:saisie' %}"
+         class="sidebar-link {% if request.resolver_match.app_name == 'saisie' and request.resolver_match.url_name == 'saisie' %}active{% endif %}">
+        <i class="fas fa-edit"></i> ② Saisie mensuelle
+        <span style="font-size:.6rem;color:rgba(201,168,76,.7);margin-left:auto">TABBORD</span>
+      </a>
+      <a href="{% url 'saisie:recap' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'recap' %}active{% endif %}">
+        <i class="fas fa-list-check"></i> Récapitulatif mois
+      </a>
+      <a href="{% url 'saisie:interets' %}"
+         class="sidebar-link {% if request.resolver_match.app_name == 'saisie' and request.resolver_match.url_name == 'interets' %}active{% endif %}">
+        <i class="fas fa-percentage"></i> Répartition intérêts
+      </a>
+      <a href="{% url 'saisie:attente' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'attente' %}active{% endif %}">
+        <i class="fas fa-clock"></i> Saisies membres en attente
+      </a>
+
+      <!-- VISUALISATION DONNÉES -->
+      <div class="sidebar-section">VISUALISER LES DONNÉES</div>
+      <a href="{% url 'rapports:tabbord' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'tabbord' %}active{% endif %}">
+        <i class="fas fa-table"></i> TABBORD — par mois
+      </a>
+      <a href="{% url 'rapports:tabbord_resume' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'tabbord_resume' %}active{% endif %}">
+        <i class="fas fa-list-alt"></i> TABBORD — résumé
+      </a>
+      <a href="{% url 'rapports:autremvt' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'autremvt' %}active{% endif %}">
+        <i class="fas fa-exchange-alt"></i> AUTREMOUVEMENT — par mois
+      </a>
+      <a href="{% url 'rapports:autremvt_resume' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'autremvt_resume' %}active{% endif %}">
+        <i class="fas fa-list-alt"></i> AUTREMOUVEMENT — résumé
+      </a>
+      <a href="{% url 'banque:tresorerie' %}"
+         class="sidebar-link {% if request.resolver_match.app_name == 'banque' and request.resolver_match.url_name == 'tresorerie' %}active{% endif %}">
+        <i class="fas fa-coins"></i> TABBHISTOBQUE — par mois
+      </a>
+      <a href="{% url 'tontines:tableau' %}"
+         class="sidebar-link {% if request.resolver_match.app_name == 'tontines' and request.resolver_match.url_name == 'tableau' %}active{% endif %}">
+        <i class="fas fa-layer-group"></i> Tontines — par mois
       </a>
 
       <!-- FINANCES -->
       <div class="sidebar-section">FINANCES</div>
-      <a href="{% url 'tontines:tableau' %}"
-         class="sidebar-link {% if 'tontines' in request.resolver_match.app_name %}active{% endif %}">
-        <i class="fas fa-layer-group"></i> Tontines
-      </a>
       <a href="{% url 'fonds:etat' %}"
-         class="sidebar-link {% if 'fonds' in request.resolver_match.app_name %}active{% endif %}">
+         class="sidebar-link {% if request.resolver_match.app_name == 'fonds' %}active{% endif %}">
         <i class="fas fa-wallet"></i> Fonds de caisse
       </a>
       <a href="{% url 'prets:liste' %}"
-         class="sidebar-link {% if 'prets' in request.resolver_match.app_name %}active{% endif %}">
+         class="sidebar-link {% if request.resolver_match.app_name == 'prets' %}active{% endif %}">
         <i class="fas fa-dollar-sign"></i> Prêts
       </a>
       <a href="{% url 'mutuelle:etat' %}"
-         class="sidebar-link {% if 'mutuelle' in request.resolver_match.app_name %}active{% endif %}">
+         class="sidebar-link {% if request.resolver_match.app_name == 'mutuelle' %}active{% endif %}">
         <i class="fas fa-heart"></i> Mutuelle
       </a>
       <a href="{% url 'foyer:etat' %}"
-         class="sidebar-link {% if 'foyer' in request.resolver_match.app_name %}active{% endif %}">
+         class="sidebar-link {% if request.resolver_match.app_name == 'foyer' %}active{% endif %}">
         <i class="fas fa-home"></i> Fonds foyer
       </a>
 
-      <!-- TRÉSORERIE -->
-      <div class="sidebar-section">TRÉSORERIE</div>
-      <a href="{% url 'banque:historique' %}"
-         class="sidebar-link {% if request.resolver_match.url_name == 'historique' and 'banque' in request.resolver_match.app_name %}active{% endif %}">
-        <i class="fas fa-chart-line"></i> Historique bancaire
+      <!-- EXPORTS EXCEL -->
+      <div class="sidebar-section">EXPORTS EXCEL</div>
+      <a href="{% url 'rapports:telecharger_tabbord' %}" class="sidebar-link">
+        <i class="fas fa-file-excel" style="color:#10705A"></i> TABBORD.xlsx
       </a>
-      <a href="{% url 'banque:tabbhistobque' %}"
-         class="sidebar-link {% if request.resolver_match.url_name == 'tabbhistobque' %}active{% endif %}">
-        <i class="fas fa-table"></i> TABBHISTOBQUE
+      <a href="{% url 'rapports:telecharger_autremvt' %}" class="sidebar-link">
+        <i class="fas fa-file-excel" style="color:#10705A"></i> AUTREMOUVEMENT.xlsx
       </a>
-      <a href="{% url 'banque:tabbordaidedepenses' %}"
-         class="sidebar-link {% if request.resolver_match.url_name == 'tabbordaidedepenses' %}active{% endif %}">
-        <i class="fas fa-receipt"></i> Aide dépenses
+      <a href="{% url 'banque:telecharger' %}" class="sidebar-link">
+        <i class="fas fa-file-excel" style="color:#10705A"></i> TABBHISTOBQUE.xlsx
       </a>
-      <a href="{% url 'banque:tresorerie' %}"
-         class="sidebar-link {% if request.resolver_match.url_name == 'tresorerie' %}active{% endif %}">
-        <i class="fas fa-coins"></i> Trésorerie
+      <a href="{% url 'tontines:telecharger' 'T60' %}" class="sidebar-link">
+        <i class="fas fa-file-excel" style="color:#10705A"></i> TONTINE T60.xlsx
       </a>
-      <a href="{% url 'banque:cheques' %}"
-         class="sidebar-link {% if request.resolver_match.url_name == 'cheques' %}active{% endif %}">
-        <i class="fas fa-money-check-alt"></i> Chèques
+      <a href="{% url 'tontines:telecharger' 'T75' %}" class="sidebar-link">
+        <i class="fas fa-file-excel" style="color:#10705A"></i> TONTINE T75.xlsx
+      </a>
+      <a href="{% url 'tontines:telecharger' 'T100' %}" class="sidebar-link">
+        <i class="fas fa-file-excel" style="color:#10705A"></i> TONTINE T100.xlsx
+      </a>
+      <a href="{% url 'fonds:telecharger_basecalcul' %}" class="sidebar-link">
+        <i class="fas fa-file-excel" style="color:#10705A"></i> BASECALCUL.xlsx
+      </a>
+      <a href="{% url 'fonds:telecharger_fondscaisse' %}" class="sidebar-link">
+        <i class="fas fa-file-excel" style="color:#10705A"></i> FONDSCAISSE.xlsx
+      </a>
+      <a href="{% url 'rapports:telecharger_tabbordaidedepenses' %}" class="sidebar-link">
+        <i class="fas fa-file-excel" style="color:#10705A"></i> TABBORDAIDEDEPENSES.xlsx
+      </a>
+      <a href="{% url 'rapports:telecharger_listeadherent' %}" class="sidebar-link">
+        <i class="fas fa-file-excel" style="color:#10705A"></i> LISTEADHERENT.xlsx
+      </a>
+      <a href="{% url 'exercice:exporter' %}" class="sidebar-link">
+        <i class="fas fa-file-excel" style="color:#10705A"></i> TRAVAUXFINEXERCICE.xlsx
       </a>
 
-      <!-- RAPPORTS -->
-      <div class="sidebar-section">RAPPORTS EXCEL</div>
-      <a href="{% url 'rapports:mouvements_liste' %}"
-         class="sidebar-link {% if 'mouvements' in request.resolver_match.url_name %}active{% endif %}">
-        <i class="fas fa-exchange-alt"></i> Mouvements (MVT)
-      </a>
-      <a href="{% url 'rapports:historique_liste' %}"
-         class="sidebar-link {% if 'historique' in request.resolver_match.url_name and request.resolver_match.app_name == 'rapports' %}active{% endif %}">
-        <i class="fas fa-history"></i> Historique (TABBORD)
+      <!-- IMPRESSION -->
+      <div class="sidebar-section">IMPRESSION</div>
+      <a href="{% url 'rapports:impression' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'impression' or 'impression' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fas fa-print"></i> Imprimer des documents
       </a>
 
       <!-- GESTION -->
       <div class="sidebar-section">GESTION</div>
       <a href="{% url 'adherents:liste' %}"
-         class="sidebar-link {% if 'adherents' in request.resolver_match.app_name %}active{% endif %}">
+         class="sidebar-link {% if request.resolver_match.app_name == 'adherents' %}active{% endif %}">
         <i class="fas fa-users"></i> Adhérents
       </a>
       <a href="{% url 'dettes:liste' %}"
-         class="sidebar-link {% if 'dettes' in request.resolver_match.app_name %}active{% endif %}">
+         class="sidebar-link {% if request.resolver_match.app_name == 'dettes' %}active{% endif %}">
         <i class="fas fa-exclamation-triangle"></i> Liste rouge
       </a>
       <a href="{% url 'exercice:cassation' %}"
-         class="sidebar-link {% if 'exercice' in request.resolver_match.app_name %}active{% endif %}">
+         class="sidebar-link {% if request.resolver_match.app_name == 'exercice' %}active{% endif %}">
         <i class="fas fa-file-alt"></i> Fin d'exercice
       </a>
       <a href="{% url 'parametrage:config' %}"
-         class="sidebar-link {% if 'parametrage' in request.resolver_match.app_name %}active{% endif %}">
+         class="sidebar-link {% if request.resolver_match.app_name == 'parametrage' %}active{% endif %}">
         <i class="fas fa-cog"></i> Paramétrage
       </a>
 

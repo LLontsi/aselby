@@ -7,12 +7,17 @@
     <div class="breadcrumb"><a href="{% url 'exercice:cassation' %}"><i class="fas fa-arrow-left"></i> Cassation</a></div>
     <h2>Synthèse Exercice {{ config_exercice.annee }}</h2>
   </div>
-  <div style="display:flex;gap:.75rem">
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+    <a href="{% url 'exercice:saisie_synthese' %}"
+       style="display:inline-flex;align-items:center;gap:.5rem;padding:.55rem 1.2rem;
+              background:#1B2B5E;color:white;border-radius:8px;text-decoration:none;font-size:.82rem;font-weight:700">
+      <i class="fas fa-edit"></i> Saisir reports & fonds
+    </a>
     <a href="{% url 'exercice:exporter' %}" class="btn-admin green">
-      <i class="fas fa-file-excel"></i> Télécharger Excel complet
+      <i class="fas fa-file-excel"></i> Excel complet
     </a>
     <a href="{% url 'exercice:cassation' %}" class="btn-admin primary">
-      <i class="fas fa-file-alt"></i> Fiches de cassation
+      <i class="fas fa-file-alt"></i> Fiches cassation
     </a>
   </div>
 </div>

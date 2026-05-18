@@ -1,0 +1,379 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load humanize %}
+{% block _titre %}Saisie Synthèse Comptes{% endblock %}
+{% block contenu %}
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
+  <div>
+    <a href="{% url 'exercice:synthese' %}" style="font-size:.82rem;color:#6C757D;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem;margin-bottom:.5rem">
+      <i class="fas fa-arrow-left"></i> Retour à la synthèse
+    </a>
+    <h2 style="font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:700;color:#1B2B5E;margin:0">
+      Saisie Synthèse Comptes — {{ config_exercice.annee }}
+    </h2>
+    <div style="font-size:.8rem;color:#6C757D;margin-top:.25rem">
+      Reports à nouveau (données N-1) + Disposition des fonds (relevés bancaires)
+    </div>
+  </div>
+</div>
+
+<form method="post">{% csrf_token %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+
+<!-- ═══ SECTION 1 : REPORTS À NOUVEAU ═══════════════════════════ -->
+<div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08)">
+  <div style="background:#1B2B5E;padding:.9rem 1.25rem;display:flex;align-items:center;gap:.75rem">
+    <i class="fas fa-redo" style="color:#C9A84C"></i>
+    <h3 style="color:white;margin:0;font-size:.95rem;font-weight:700">Reports à nouveau (données N-1)</h3>
+  </div>
+  <div style="padding:1.25rem">
+    <div style="font-size:.75rem;color:#6C757D;margin-bottom:1rem;padding:.6rem;background:#F4F5F7;border-radius:8px">
+      <i class="fas fa-info-circle" style="color:#C9A84C;margin-right:.4rem"></i>
+      Saisir les soldes reportés de l'exercice précédent pour chaque rubrique.
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+      <thead>
+        <tr style="background:#F4F5F7;border-bottom:2px solid #E8E9EC">
+          <th style="padding:.55rem .75rem;text-align:left;color:#6C757D;font-size:.68rem;text-transform:uppercase;letter-spacing:.5px">Rubrique</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#B84C4C;font-size:.68rem;text-transform:uppercase;letter-spacing:.5px">Report *</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#10705A;font-size:.68rem;text-transform:uppercase;letter-spacing:.5px">Entrées (auto)</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#B84C4C;font-size:.68rem;text-transform:uppercase;letter-spacing:.5px">Sorties (auto)</th>
+          <th style="padding:.55rem .5rem;text-align:right;color:#1B2B5E;font-size:.68rem;text-transform:uppercase;letter-spacing:.5px;font-weight:700">Solde</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
+          <td style="padding:.45rem .75rem;font-weight:600;color:#343A40;font-size:.8rem">Fonds de caisse</td>
+          <td style="padding:.35rem .5rem;text-align:right;background:rgba(184,76,76,.04)">
+            <input type="number" name="report_fonds_caisse"
+                   value="{% if synthese %}{% with v=synthese.report_fonds_caisse %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+                   min="0" step="1000"
+                   style="width:110px;padding:.3rem .5rem;border:1.5px solid #E8E9EC;border-radius:6px;font-size:.78rem;text-align:right;font-family:inherit"
+                   onfocus="this.style.borderColor='#B84C4C'" onblur="this.style.borderColor='#E8E9EC'">
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#10705A;font-size:.78rem">
+            {% with v=entrees_auto.report_fonds_caisse|default:0 %}{{ v|floatformat:0|intcomma }}{% endwith %}
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#B84C4C;font-size:.78rem">—</td>
+          <td style="padding:.45rem .5rem;text-align:right;font-weight:700;color:#1B2B5E;font-size:.8rem">—</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
+          <td style="padding:.45rem .75rem;font-weight:600;color:#343A40;font-size:.8rem">Fonds de roulement</td>
+          <td style="padding:.35rem .5rem;text-align:right;background:rgba(184,76,76,.04)">
+            <input type="number" name="report_fonds_roulement"
+                   value="{% if synthese %}{% with v=synthese.report_fonds_roulement %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+                   min="0" step="1000"
+                   style="width:110px;padding:.3rem .5rem;border:1.5px solid #E8E9EC;border-radius:6px;font-size:.78rem;text-align:right;font-family:inherit"
+                   onfocus="this.style.borderColor='#B84C4C'" onblur="this.style.borderColor='#E8E9EC'">
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#10705A;font-size:.78rem">
+            {% with v=entrees_auto.report_fonds_roulement|default:0 %}{{ v|floatformat:0|intcomma }}{% endwith %}
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#B84C4C;font-size:.78rem">—</td>
+          <td style="padding:.45rem .5rem;text-align:right;font-weight:700;color:#1B2B5E;font-size:.8rem">—</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
+          <td style="padding:.45rem .75rem;font-weight:600;color:#343A40;font-size:.8rem">Frais exceptionnels</td>
+          <td style="padding:.35rem .5rem;text-align:right;background:rgba(184,76,76,.04)">
+            <input type="number" name="report_frais_exceptionnels"
+                   value="{% if synthese %}{% with v=synthese.report_frais_exceptionnels %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+                   min="0" step="1000"
+                   style="width:110px;padding:.3rem .5rem;border:1.5px solid #E8E9EC;border-radius:6px;font-size:.78rem;text-align:right;font-family:inherit"
+                   onfocus="this.style.borderColor='#B84C4C'" onblur="this.style.borderColor='#E8E9EC'">
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#10705A;font-size:.78rem">
+            {% with v=entrees_auto.report_frais_exceptionnels|default:0 %}{{ v|floatformat:0|intcomma }}{% endwith %}
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#B84C4C;font-size:.78rem">—</td>
+          <td style="padding:.45rem .5rem;text-align:right;font-weight:700;color:#1B2B5E;font-size:.8rem">—</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
+          <td style="padding:.45rem .75rem;font-weight:600;color:#343A40;font-size:.8rem">Mutuelle</td>
+          <td style="padding:.35rem .5rem;text-align:right;background:rgba(184,76,76,.04)">
+            <input type="number" name="report_mutuelle"
+                   value="{% if synthese %}{% with v=synthese.report_mutuelle %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+                   min="0" step="1000"
+                   style="width:110px;padding:.3rem .5rem;border:1.5px solid #E8E9EC;border-radius:6px;font-size:.78rem;text-align:right;font-family:inherit"
+                   onfocus="this.style.borderColor='#B84C4C'" onblur="this.style.borderColor='#E8E9EC'">
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#10705A;font-size:.78rem">
+            {% with v=entrees_auto.report_mutuelle|default:0 %}{{ v|floatformat:0|intcomma }}{% endwith %}
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#B84C4C;font-size:.78rem">—</td>
+          <td style="padding:.45rem .5rem;text-align:right;font-weight:700;color:#1B2B5E;font-size:.8rem">—</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
+          <td style="padding:.45rem .75rem;font-weight:600;color:#343A40;font-size:.8rem">Inscription</td>
+          <td style="padding:.35rem .5rem;text-align:right;background:rgba(184,76,76,.04)">
+            <input type="number" name="report_inscription"
+                   value="{% if synthese %}{% with v=synthese.report_inscription %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+                   min="0" step="1000"
+                   style="width:110px;padding:.3rem .5rem;border:1.5px solid #E8E9EC;border-radius:6px;font-size:.78rem;text-align:right;font-family:inherit"
+                   onfocus="this.style.borderColor='#B84C4C'" onblur="this.style.borderColor='#E8E9EC'">
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#10705A;font-size:.78rem">
+            {% with v=entrees_auto.report_inscription|default:0 %}{{ v|floatformat:0|intcomma }}{% endwith %}
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#B84C4C;font-size:.78rem">—</td>
+          <td style="padding:.45rem .5rem;text-align:right;font-weight:700;color:#1B2B5E;font-size:.8rem">—</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
+          <td style="padding:.45rem .75rem;font-weight:600;color:#343A40;font-size:.8rem">Pénalités</td>
+          <td style="padding:.35rem .5rem;text-align:right;background:rgba(184,76,76,.04)">
+            <input type="number" name="report_penalites"
+                   value="{% if synthese %}{% with v=synthese.report_penalites %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+                   min="0" step="1000"
+                   style="width:110px;padding:.3rem .5rem;border:1.5px solid #E8E9EC;border-radius:6px;font-size:.78rem;text-align:right;font-family:inherit"
+                   onfocus="this.style.borderColor='#B84C4C'" onblur="this.style.borderColor='#E8E9EC'">
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#10705A;font-size:.78rem">
+            {% with v=entrees_auto.report_penalites|default:0 %}{{ v|floatformat:0|intcomma }}{% endwith %}
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#B84C4C;font-size:.78rem">—</td>
+          <td style="padding:.45rem .5rem;text-align:right;font-weight:700;color:#1B2B5E;font-size:.8rem">—</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
+          <td style="padding:.45rem .75rem;font-weight:600;color:#343A40;font-size:.8rem">Sanctions</td>
+          <td style="padding:.35rem .5rem;text-align:right;background:rgba(184,76,76,.04)">
+            <input type="number" name="report_sanctions"
+                   value="{% if synthese %}{% with v=synthese.report_sanctions %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+                   min="0" step="1000"
+                   style="width:110px;padding:.3rem .5rem;border:1.5px solid #E8E9EC;border-radius:6px;font-size:.78rem;text-align:right;font-family:inherit"
+                   onfocus="this.style.borderColor='#B84C4C'" onblur="this.style.borderColor='#E8E9EC'">
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#10705A;font-size:.78rem">
+            {% with v=entrees_auto.report_sanctions|default:0 %}{{ v|floatformat:0|intcomma }}{% endwith %}
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#B84C4C;font-size:.78rem">—</td>
+          <td style="padding:.45rem .5rem;text-align:right;font-weight:700;color:#1B2B5E;font-size:.8rem">—</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
+          <td style="padding:.45rem .75rem;font-weight:600;color:#343A40;font-size:.8rem">Collation</td>
+          <td style="padding:.35rem .5rem;text-align:right;background:rgba(184,76,76,.04)">
+            <input type="number" name="report_collation"
+                   value="{% if synthese %}{% with v=synthese.report_collation %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+                   min="0" step="1000"
+                   style="width:110px;padding:.3rem .5rem;border:1.5px solid #E8E9EC;border-radius:6px;font-size:.78rem;text-align:right;font-family:inherit"
+                   onfocus="this.style.borderColor='#B84C4C'" onblur="this.style.borderColor='#E8E9EC'">
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#10705A;font-size:.78rem">
+            {% with v=entrees_auto.report_collation|default:0 %}{{ v|floatformat:0|intcomma }}{% endwith %}
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#B84C4C;font-size:.78rem">—</td>
+          <td style="padding:.45rem .5rem;text-align:right;font-weight:700;color:#1B2B5E;font-size:.8rem">—</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
+          <td style="padding:.45rem .75rem;font-weight:600;color:#343A40;font-size:.8rem">Intérêt bancaire</td>
+          <td style="padding:.35rem .5rem;text-align:right;background:rgba(184,76,76,.04)">
+            <input type="number" name="report_interet_bancaire"
+                   value="{% if synthese %}{% with v=synthese.report_interet_bancaire %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+                   min="0" step="1000"
+                   style="width:110px;padding:.3rem .5rem;border:1.5px solid #E8E9EC;border-radius:6px;font-size:.78rem;text-align:right;font-family:inherit"
+                   onfocus="this.style.borderColor='#B84C4C'" onblur="this.style.borderColor='#E8E9EC'">
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#10705A;font-size:.78rem">
+            {% with v=entrees_auto.report_interet_bancaire|default:0 %}{{ v|floatformat:0|intcomma }}{% endwith %}
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#B84C4C;font-size:.78rem">—</td>
+          <td style="padding:.45rem .5rem;text-align:right;font-weight:700;color:#1B2B5E;font-size:.8rem">—</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
+          <td style="padding:.45rem .75rem;font-weight:600;color:#343A40;font-size:.8rem">Foyer</td>
+          <td style="padding:.35rem .5rem;text-align:right;background:rgba(184,76,76,.04)">
+            <input type="number" name="report_foyer"
+                   value="{% if synthese %}{% with v=synthese.report_foyer %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+                   min="0" step="1000"
+                   style="width:110px;padding:.3rem .5rem;border:1.5px solid #E8E9EC;border-radius:6px;font-size:.78rem;text-align:right;font-family:inherit"
+                   onfocus="this.style.borderColor='#B84C4C'" onblur="this.style.borderColor='#E8E9EC'">
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#10705A;font-size:.78rem">
+            {% with v=entrees_auto.report_foyer|default:0 %}{{ v|floatformat:0|intcomma }}{% endwith %}
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#B84C4C;font-size:.78rem">—</td>
+          <td style="padding:.45rem .5rem;text-align:right;font-weight:700;color:#1B2B5E;font-size:.8rem">—</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
+          <td style="padding:.45rem .75rem;font-weight:600;color:#343A40;font-size:.8rem">Terrain</td>
+          <td style="padding:.35rem .5rem;text-align:right;background:rgba(184,76,76,.04)">
+            <input type="number" name="report_terrain"
+                   value="{% if synthese %}{% with v=synthese.report_terrain %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+                   min="0" step="1000"
+                   style="width:110px;padding:.3rem .5rem;border:1.5px solid #E8E9EC;border-radius:6px;font-size:.78rem;text-align:right;font-family:inherit"
+                   onfocus="this.style.borderColor='#B84C4C'" onblur="this.style.borderColor='#E8E9EC'">
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#10705A;font-size:.78rem">
+            {% with v=entrees_auto.report_terrain|default:0 %}{{ v|floatformat:0|intcomma }}{% endwith %}
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#B84C4C;font-size:.78rem">—</td>
+          <td style="padding:.45rem .5rem;text-align:right;font-weight:700;color:#1B2B5E;font-size:.8rem">—</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
+          <td style="padding:.45rem .75rem;font-weight:600;color:#343A40;font-size:.8rem">Intérêt épargne</td>
+          <td style="padding:.35rem .5rem;text-align:right;background:rgba(184,76,76,.04)">
+            <input type="number" name="report_interet_epargne"
+                   value="{% if synthese %}{% with v=synthese.report_interet_epargne %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+                   min="0" step="1000"
+                   style="width:110px;padding:.3rem .5rem;border:1.5px solid #E8E9EC;border-radius:6px;font-size:.78rem;text-align:right;font-family:inherit"
+                   onfocus="this.style.borderColor='#B84C4C'" onblur="this.style.borderColor='#E8E9EC'">
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#10705A;font-size:.78rem">
+            {% with v=entrees_auto.report_interet_epargne|default:0 %}{{ v|floatformat:0|intcomma }}{% endwith %}
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#B84C4C;font-size:.78rem">—</td>
+          <td style="padding:.45rem .5rem;text-align:right;font-weight:700;color:#1B2B5E;font-size:.8rem">—</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
+          <td style="padding:.45rem .75rem;font-weight:600;color:#343A40;font-size:.8rem">Aides LAGWE</td>
+          <td style="padding:.35rem .5rem;text-align:right;background:rgba(184,76,76,.04)">
+            <input type="number" name="report_aides_lagwe"
+                   value="{% if synthese %}{% with v=synthese.report_aides_lagwe %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+                   min="0" step="1000"
+                   style="width:110px;padding:.3rem .5rem;border:1.5px solid #E8E9EC;border-radius:6px;font-size:.78rem;text-align:right;font-family:inherit"
+                   onfocus="this.style.borderColor='#B84C4C'" onblur="this.style.borderColor='#E8E9EC'">
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#10705A;font-size:.78rem">
+            {% with v=entrees_auto.report_aides_lagwe|default:0 %}{{ v|floatformat:0|intcomma }}{% endwith %}
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#B84C4C;font-size:.78rem">—</td>
+          <td style="padding:.45rem .5rem;text-align:right;font-weight:700;color:#1B2B5E;font-size:.8rem">—</td>
+        </tr>
+        <tr style="border-bottom:1px solid #F4F5F7" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background=''">
+          <td style="padding:.45rem .75rem;font-weight:600;color:#343A40;font-size:.8rem">Dépôt Tchouamo</td>
+          <td style="padding:.35rem .5rem;text-align:right;background:rgba(184,76,76,.04)">
+            <input type="number" name="report_depot_tchouamo"
+                   value="{% if synthese %}{% with v=synthese.report_depot_tchouamo %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+                   min="0" step="1000"
+                   style="width:110px;padding:.3rem .5rem;border:1.5px solid #E8E9EC;border-radius:6px;font-size:.78rem;text-align:right;font-family:inherit"
+                   onfocus="this.style.borderColor='#B84C4C'" onblur="this.style.borderColor='#E8E9EC'">
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#10705A;font-size:.78rem">
+            {% with v=entrees_auto.report_depot_tchouamo|default:0 %}{{ v|floatformat:0|intcomma }}{% endwith %}
+          </td>
+          <td style="padding:.45rem .5rem;text-align:right;color:#B84C4C;font-size:.78rem">—</td>
+          <td style="padding:.45rem .5rem;text-align:right;font-weight:700;color:#1B2B5E;font-size:.8rem">—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ SECTION 2 : DISPOSITION DES FONDS ══════════════════════ -->
+<div>
+  <div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.08);margin-bottom:1.5rem">
+    <div style="background:#C9A84C;padding:.9rem 1.25rem;display:flex;align-items:center;gap:.75rem">
+      <i class="fas fa-university" style="color:#1B2B5E"></i>
+      <h3 style="color:#1B2B5E;margin:0;font-size:.95rem;font-weight:700">Disposition des fonds — {{ config_exercice.annee }}</h3>
+    </div>
+    <div style="padding:1.25rem">
+      <div style="font-size:.75rem;color:#6C757D;margin-bottom:1rem;padding:.6rem;background:#F4F5F7;border-radius:8px">
+        <i class="fas fa-info-circle" style="color:#C9A84C;margin-right:.4rem"></i>
+        Saisir les soldes depuis les relevés bancaires et états comptables.
+      </div>
+
+      <div style="margin-bottom:.9rem">
+        <label style="display:block;font-size:.72rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#6C757D;margin-bottom:.35rem">
+          Compte CCA <span style="font-size:.65rem;color:#ADB5BD;text-transform:none;letter-spacing:0;font-weight:400">— Relevé CCA</span>
+        </label>
+        <input type="number" name="compte_cca"
+               value="{% if synthese %}{% with v=synthese.compte_cca %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+               min="0" step="1000"
+               style="width:100%;padding:.7rem 1rem;border:2px solid #E8E9EC;border-radius:8px;font-family:inherit;font-size:.9rem;box-sizing:border-box;color:#212529"
+               onfocus="this.style.borderColor='#C9A84C'" onblur="this.style.borderColor='#E8E9EC'">
+      </div>
+      <div style="margin-bottom:.9rem">
+        <label style="display:block;font-size:.72rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#6C757D;margin-bottom:.35rem">
+          Compte MC² <span style="font-size:.65rem;color:#ADB5BD;text-transform:none;letter-spacing:0;font-weight:400">— Relevé MC²</span>
+        </label>
+        <input type="number" name="compte_mc2"
+               value="{% if synthese %}{% with v=synthese.compte_mc2 %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+               min="0" step="1000"
+               style="width:100%;padding:.7rem 1rem;border:2px solid #E8E9EC;border-radius:8px;font-family:inherit;font-size:.9rem;box-sizing:border-box;color:#212529"
+               onfocus="this.style.borderColor='#C9A84C'" onblur="this.style.borderColor='#E8E9EC'">
+      </div>
+      <div style="margin-bottom:.9rem">
+        <label style="display:block;font-size:.72rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#6C757D;margin-bottom:.35rem">
+          Compte AFRILAND <span style="font-size:.65rem;color:#ADB5BD;text-transform:none;letter-spacing:0;font-weight:400">— Relevé AFRILAND</span>
+        </label>
+        <input type="number" name="compte_afriland"
+               value="{% if synthese %}{% with v=synthese.compte_afriland %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+               min="0" step="1000"
+               style="width:100%;padding:.7rem 1rem;border:2px solid #E8E9EC;border-radius:8px;font-family:inherit;font-size:.9rem;box-sizing:border-box;color:#212529"
+               onfocus="this.style.borderColor='#C9A84C'" onblur="this.style.borderColor='#E8E9EC'">
+      </div>
+      <div style="margin-bottom:.9rem">
+        <label style="display:block;font-size:.72rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#6C757D;margin-bottom:.35rem">
+          Dette préfinancement LAGWE <span style="font-size:.65rem;color:#ADB5BD;text-transform:none;letter-spacing:0;font-weight:400">— État dettes</span>
+        </label>
+        <input type="number" name="dette_prefinancement_lagwe"
+               value="{% if synthese %}{% with v=synthese.dette_prefinancement_lagwe %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+               min="0" step="1000"
+               style="width:100%;padding:.7rem 1rem;border:2px solid #E8E9EC;border-radius:8px;font-family:inherit;font-size:.9rem;box-sizing:border-box;color:#212529"
+               onfocus="this.style.borderColor='#C9A84C'" onblur="this.style.borderColor='#E8E9EC'">
+      </div>
+      <div style="margin-bottom:.9rem">
+        <label style="display:block;font-size:.72rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#6C757D;margin-bottom:.35rem">
+          Dette Mr KOUATCHO <span style="font-size:.65rem;color:#ADB5BD;text-transform:none;letter-spacing:0;font-weight:400">— État dettes</span>
+        </label>
+        <input type="number" name="dette_mr_kouatcho"
+               value="{% if synthese %}{% with v=synthese.dette_mr_kouatcho %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+               min="0" step="1000"
+               style="width:100%;padding:.7rem 1rem;border:2px solid #E8E9EC;border-radius:8px;font-family:inherit;font-size:.9rem;box-sizing:border-box;color:#212529"
+               onfocus="this.style.borderColor='#C9A84C'" onblur="this.style.borderColor='#E8E9EC'">
+      </div>
+      <div style="margin-bottom:.9rem">
+        <label style="display:block;font-size:.72rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#6C757D;margin-bottom:.35rem">
+          Reste à récupérer conseil <span style="font-size:.65rem;color:#ADB5BD;text-transform:none;letter-spacing:0;font-weight:400">— État créances</span>
+        </label>
+        <input type="number" name="reste_a_recuperer_conseil"
+               value="{% if synthese %}{% with v=synthese.reste_a_recuperer_conseil %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+               min="0" step="1000"
+               style="width:100%;padding:.7rem 1rem;border:2px solid #E8E9EC;border-radius:8px;font-family:inherit;font-size:.9rem;box-sizing:border-box;color:#212529"
+               onfocus="this.style.borderColor='#C9A84C'" onblur="this.style.borderColor='#E8E9EC'">
+      </div>
+      <div style="margin-bottom:.9rem">
+        <label style="display:block;font-size:.72rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#6C757D;margin-bottom:.35rem">
+          Dettes tontines <span style="font-size:.65rem;color:#ADB5BD;text-transform:none;letter-spacing:0;font-weight:400">— État dettes tontines</span>
+        </label>
+        <input type="number" name="dettes_tontines"
+               value="{% if synthese %}{% with v=synthese.dettes_tontines %}{{ v|default:0|floatformat:0 }}{% endwith %}{% else %}0{% endif %}"
+               min="0" step="1000"
+               style="width:100%;padding:.7rem 1rem;border:2px solid #E8E9EC;border-radius:8px;font-family:inherit;font-size:.9rem;box-sizing:border-box;color:#212529"
+               onfocus="this.style.borderColor='#C9A84C'" onblur="this.style.borderColor='#E8E9EC'">
+      </div>
+
+      <!-- Fonds en circulation (calculé auto) -->
+      <div style="background:rgba(27,43,94,.05);border-radius:8px;padding:.75rem 1rem;margin-top:1rem">
+        <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;color:#6C757D;margin-bottom:.25rem">Fonds en circulation (auto)</div>
+        <div style="font-weight:700;font-size:1.1rem;color:#1B2B5E">{{ fonds_circulation|floatformat:0|intcomma }} FCFA</div>
+        <div style="font-size:.68rem;color:#ADB5BD">Calculé depuis les prêts en cours</div>
+      </div>
+
+      <!-- Autres disponibilités -->
+      <div style="margin-top:1rem">
+        <label style="display:block;font-size:.72rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#6C757D;margin-bottom:.35rem">
+          Autres disponibilités (libellé + montant)
+        </label>
+        <textarea name="autres_disponibilites" rows="3"
+                  placeholder="Ex: Caisse Mbogning 60 000, Djoukwe 90 000..."
+                  style="width:100%;padding:.7rem 1rem;border:2px solid #E8E9EC;border-radius:8px;font-family:inherit;font-size:.85rem;box-sizing:border-box;resize:vertical"
+                  onfocus="this.style.borderColor='#C9A84C'" onblur="this.style.borderColor='#E8E9EC'">{% if synthese %}{{ synthese.autres_disponibilites }}{% endif %}</textarea>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:.75rem">
+    <button type="submit"
+            style="flex:1;padding:.8rem 1.5rem;background:#1B2B5E;color:white;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:.5rem">
+      <i class="fas fa-save"></i> Enregistrer
+    </button>
+    <a href="{% url 'exercice:synthese' %}"
+       style="flex:1;padding:.8rem 1.5rem;background:white;color:#1B2B5E;border:2px solid #1B2B5E;border-radius:10px;font-size:.9rem;font-weight:700;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:.5rem">
+      <i class="fas fa-times"></i> Annuler
+    </a>
+  </div>
+</div>
+
+</div>
+</form>
+{% endblock %}
